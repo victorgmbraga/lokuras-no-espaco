@@ -1,0 +1,4 @@
+*.exe
+*.dll
+stderr.txt
+stdout.txt
