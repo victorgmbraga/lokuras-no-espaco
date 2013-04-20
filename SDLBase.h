@@ -9,7 +9,7 @@
 #define SDLBASE_H_
 
 #include <SDL/SDL.h>
-#include <SDL_image.h>
+#include <SDL/SDL_image.h>
 #include <iostream>
 #include <stdlib.h>
 #include <string>

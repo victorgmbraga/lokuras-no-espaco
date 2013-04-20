@@ -13,7 +13,7 @@ void SDLBase::inicializaSDL (void)
 {
 	SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	screen = SDL_SetVideoMode(800, 600, 32, SDL_SWSURFACE);
-	SDL_WM_SetCaption("Trabalho 1 10/0126481", "Trabalho 1 10/0126481");
+	SDL_WM_SetCaption("Exercicio 1 10/0126481", "Exercicio 1 10/0126481");
 }
 
 SDL_Surface* SDLBase::getScreen (void)
