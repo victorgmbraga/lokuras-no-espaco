@@ -7,57 +7,16 @@
 
 #include "Planet.h"
 
-Planet::Planet (Sprite *sprite, float hp = 20, float x = 0, float y = 0)
+Planet::Planet(Sprite *sprite, float x, float y, float hp): GameObject(x, y)
 {
 	this->sprite = sprite;
 	this->hp = hp;
-	this->x = x;
-	this->y = y;
 }
 
-Sprite* Planet::getSprite (void)
+void Planet::render(float cameraX, float cameraY)
 {
-	return sprite;
-}
-
-void Planet::setSprite (Sprite *sprite)
-{
-	this->sprite = sprite;
-}
-
-float Planet::getX (void)
-{
-	return x;
-}
-
-void Planet::setX (float x)
-{
-	this->x = x;
-}
-
-float Planet::getY (void)
-{
-	return y;
-}
-
-void Planet::setY (float y)
-{
-	this->y = y;
-}
-
-float Planet::getHP (void)
-{
-	return hp;
-}
-
-void Planet::setHP (float hp)
-{
-	this->hp = hp;
-}
-
-void Planet::render (void)
-{
-	sprite->render(x,y);
+	if(sprite)
+		sprite->render(x - cameraX, y - cameraY);
 }
 
 

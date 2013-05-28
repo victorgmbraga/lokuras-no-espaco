@@ -15,22 +15,21 @@
 #include <stdlib.h>
 #include <string>
 
-using namespace std;
-
 class Sprite
 {
 	private:
 		SDL_Surface* surface;
 		SDL_Rect clipRect;
+
 	public:
-		Sprite (string arquivo);
-		~Sprite (void);
-		void load (string arquivo);
-		void clip (int x, int y, int w, int h);
-		SDL_Rect getClip (void);
-		void render (int x, int y);
-		int getWidth (void);
-		int getHeight (void);
+		Sprite(string arquivo);
+		~Sprite();
+		void load(string arquivo);
+		void clip(int x, int y, int w, int h);
+		SDL_Rect* getClip();
+		void render(int x, int y);
+		int getWidth();
+		int getHeight();
 };
 
 #endif /* SPRITE_H_ */

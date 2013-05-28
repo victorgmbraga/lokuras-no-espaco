@@ -9,19 +9,19 @@
 
 SDL_Surface* SDLBase::screen = NULL;
 
-void SDLBase::inicializaSDL (void)
+void SDLBase::inicializaSDL()
 {
 	SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	screen = SDL_SetVideoMode(800, 600, 32, SDL_SWSURFACE);
-	SDL_WM_SetCaption("Exercicio 1 10/0126481", "Exercicio 1 10/0126481");
+	SDL_WM_SetCaption("Trabalho 2 10/0126481", "Trabalho 2 10/0126481");
 }
 
-SDL_Surface* SDLBase::getScreen (void)
+SDL_Surface* SDLBase::getScreen()
 {
 	return screen;
 }
 
-SDL_Surface* SDLBase::loadImage (string arquivo)
+SDL_Surface* SDLBase::loadImage(string arquivo)
 {
 	SDL_Surface *surface = 0;
 	SDL_Surface *surface_aux  = 0;
@@ -44,7 +44,7 @@ SDL_Surface* SDLBase::loadImage (string arquivo)
 
 
 
-void SDLBase::renderSurface (SDL_Surface* surface, SDL_Rect* clip = NULL, SDL_Rect* dst = NULL)
+void SDLBase::renderSurface(SDL_Surface* surface, SDL_Rect* clip = NULL, SDL_Rect* dst = NULL)
 {
 	// surface – a superfície que será colada
 	// clip – o retângulo da superfície a ser colado
@@ -55,7 +55,7 @@ void SDLBase::renderSurface (SDL_Surface* surface, SDL_Rect* clip = NULL, SDL_Re
 	SDL_BlitSurface(surface, clip, screen, dst);
 }
 
-void SDLBase::atualizarTela (void)
+void SDLBase::atualizarTela()
 {
 	// Atualiza a tela com as alterações
 	SDL_Flip(screen);

@@ -8,25 +8,18 @@
 #ifndef PLANET_H_
 #define PLANET_H_
 
+#include "GameObject.h"
 #include "Sprite.h"
 
-class Planet
+class Planet: public GameObject
 {
-	private:
-		Sprite *sprite;
-		float x, y;
-		float hp;
 	public:
-		Planet (Sprite *sprite, float hitpoints, float x, float y);
-		Sprite* getSprite (void);
-		void setSprite (Sprite *sprite);
-		float getX (void);
-		void setX (float x);
-		float getY (void);
-		void setY (float y);
-		float getHP (void);
-		void setHP (float hp);
-		void render(void);
+		Sprite *sprite;
+		float hp;
+		Planet(Sprite *sprite, float x, float y, float hp);
+		virtual ~Planet() {};
+		void render(float cameraX = 0.0, float cameraY = 0.0);
+		virtual void update(int dt) = 0;
 };
 
 #endif /* PLANET_H_ */

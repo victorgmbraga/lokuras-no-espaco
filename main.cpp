@@ -7,7 +7,9 @@
 
 #include "GameManager.h"
 
-int main (int argc, char *argv[])
+using namespace std;
+
+int main(int argc, char *argv[])
 {
 	GameManager *game = new GameManager();
 	game->run();

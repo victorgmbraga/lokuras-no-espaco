@@ -7,19 +7,19 @@
 
 #include "Sprite.h"
 
-Sprite::Sprite (string arquivo)
+Sprite::Sprite(string arquivo)
 {
 	surface = NULL;
 	load(arquivo);
 }
 
-Sprite::~Sprite (void)
+Sprite::~Sprite()
 {
 	if (surface != NULL)
 		SDL_FreeSurface(surface);
 }
 
-void Sprite::load (string arquivo)
+void Sprite::load(string arquivo)
 {
 	// Limpa a surface se não vazia
 	if (surface != NULL)
@@ -35,7 +35,7 @@ void Sprite::load (string arquivo)
 	clipRect.h = surface->h;
 }
 
-void Sprite::clip (int x, int y, int w, int h)
+void Sprite::clip(int x, int y, int w, int h)
 {
 	// Define o retângulo de clipping
 	clipRect.x = x;
@@ -44,12 +44,12 @@ void Sprite::clip (int x, int y, int w, int h)
 	clipRect.h = h;
 }
 
-SDL_Rect Sprite::getClip (void)
+SDL_Rect* Sprite::getClip()
 {
-	return clipRect;
+	return &clipRect;
 }
 
-void Sprite::render (int x, int y)
+void Sprite::render(int x, int y)
 {
 	SDL_Rect dst;
 
@@ -61,12 +61,12 @@ void Sprite::render (int x, int y)
 	SDLBase::renderSurface(surface, &clipRect, &dst);
 }
 
-int Sprite::getWidth (void)
+int Sprite::getWidth()
 {
 	return surface->w;
 }
 
-int Sprite::getHeight (void)
+int Sprite::getHeight()
 {
 	return surface->h;
 }

@@ -7,11 +7,10 @@
 
 #include "TileSet.h"
 
-TileSet::TileSet (int tileWidth, int tileHeight, std::string filePath)
+TileSet::TileSet(int tileWidth, int tileHeight, std::string filePath)
 {
 	this->tileWidth = tileWidth;
 	this->tileHeight = tileHeight;
-	//vTiles = NULL;
 	tileSet = new Sprite(filePath);
 	lines = (tileSet->getWidth())/tileWidth;
 	columns = (tileSet->getHeight())/tileHeight;
@@ -22,25 +21,23 @@ TileSet::TileSet (std::string filePath, int lines, int columns)
 {
 	this->lines = lines;
 	this->columns = columns;
-	//vTiles = NULL;
 	tileSet = new Sprite(filePath);
 	tileWidth = (tileSet->getWidth())/lines;
 	tileHeight = (tileSet->getHeight())/columns;
 	destRect = NULL;
 }
 
-TileSet::TileSet (int tileWidth, int tileHeight)
+TileSet::TileSet(int tileWidth, int tileHeight)
 {
 	lines = 0;
 	columns = 0;
 	this->tileWidth = tileWidth;
 	this->tileHeight = tileHeight;
 	tileSet = NULL;
-	//vTiles = new std::vector<Sprite*>;
 	destRect = NULL;
 }
 
-void TileSet::addTile (string filePath)
+void TileSet::addTile(string filePath)
 {
 	if(!usingSingleFile())
 	{
@@ -49,13 +46,20 @@ void TileSet::addTile (string filePath)
 	}
 }
 
-void TileSet::render (int index, float posX, float posY)
+void TileSet::render(int index, float posX, float posY)
 {
-	if (usingSingleFile()) // Falta implementar
+	if (usingSingleFile())
 	{
-		//int numTiles = lines*columns;
-		int indexLine = (index / columns) + 1;
+		int indexLine = index / columns;
 		int indexColumn = index % columns;
+
+		float clipX = indexColumn * tileWidth;
+		float clipY = indexLine * tileHeight;
+		float clipW = tileWidth;
+		float clipH = tileHeight;
+
+		tileSet->clip(clipX, clipY, clipW, clipH);
+		tileSet->render(posX, posY);
 	}
 	else
 	{
@@ -63,20 +67,20 @@ void TileSet::render (int index, float posX, float posY)
 	}
 }
 
-bool TileSet::usingSingleFile (void)
+bool TileSet::usingSingleFile()
 {
-	if (tileSet != NULL)
+	if(tileSet != NULL)
 		return true;
 	else
 		return false;
 }
 
-int TileSet::getTileWidth (void)
+int TileSet::getTileWidth()
 {
 	return tileWidth;
 }
 
-int TileSet::getTileHeight (void)
+int TileSet::getTileHeight()
 {
 	return tileHeight;
 }

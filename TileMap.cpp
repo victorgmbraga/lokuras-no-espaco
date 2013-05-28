@@ -7,7 +7,7 @@
 
 #include "TileMap.h"
 
-TileMap::TileMap (int mapWidth, int mapHeight, int mapLayers, TileSet* tileSet)
+TileMap::TileMap(int mapWidth, int mapHeight, int mapLayers, TileSet* tileSet)
 {
 	// Inicializa as variáveis do TileMap: width, height, layers e tileset.
 
@@ -39,7 +39,7 @@ TileMap::TileMap (int mapWidth, int mapHeight, int mapLayers, TileSet* tileSet)
 				tileMatrix[x][y][z] = -1;
 }
 
-TileMap::TileMap (std::string mapa, TileSet* tileSet)
+TileMap::TileMap(std::string mapa, TileSet* tileSet)
 {
 	// Define o tileset e inicializa width, height e layers com 0.
 
@@ -50,12 +50,48 @@ TileMap::TileMap (std::string mapa, TileSet* tileSet)
 
 	// Chama o método load(mapa) para carregar o tileMap do arquivo.
 
-	load(mapa); // Falta implementar
+	load(mapa);
 }
 
-void TileMap::load (std::string mapPath)
+void TileMap::load(std::string mapPath)
 {
-	// Falta implementar
+	ifstream map("map/tileMap.txt");
+	string value;
+
+	if(map.is_open())
+	{
+		getline( map, value, ',' );
+		mapWidth = atoi(string(value).c_str());
+		getline( map, value, ',' );
+		mapHeight = atoi(string(value).c_str());
+		getline( map, value, ',' );
+		mapLayers = atoi(string(value).c_str());
+
+		tileMatrix.resize(mapWidth);
+
+		for (unsigned int x = 0; x < tileMatrix.size(); ++x)
+			tileMatrix[x].resize(mapHeight);
+
+		for (unsigned int x = 0; x < tileMatrix.size(); ++x)
+			for (unsigned int y = 0; y < tileMatrix[0].size(); ++y)
+				tileMatrix[x][y].resize(mapLayers);
+
+		// Preenche a matriz com -1
+
+			for (unsigned int x = 0; x < tileMatrix.size(); ++x)
+				for (unsigned int y = 0; y < tileMatrix[x].size(); ++y)
+					for (unsigned int z = 0; z < tileMatrix[x][y].size(); ++z)
+						tileMatrix[x][y][z] = -1;
+
+		for(int i = 0; i < mapLayers; ++i)
+			for(int j = 0; j <  mapWidth; ++j)
+				for(int k = 0; k < mapHeight; ++k)
+				{
+					getline( map, value, ',' );
+					tileMatrix[j][k][i] = atoi(string(value).c_str());
+				}
+		map.close();
+	}
 }
 
 void TileMap::setTileSet (TileSet* tileSet)
@@ -65,7 +101,7 @@ void TileMap::setTileSet (TileSet* tileSet)
 	this->tileSet = tileSet;
 }
 
-int& TileMap::at (int x, int y, int z)
+int& TileMap::at(int x, int y, int z)
 {
 	// Retorna uma referência para o conteúdo do tileMap na posição x,y,z.
 	// Para facilitar o acesso a matrizes 2D, é definido 0 como padrão em z.
@@ -74,7 +110,7 @@ int& TileMap::at (int x, int y, int z)
 	return tileMatrix[x][y][z];
 }
 
-void TileMap::render (float cameraX, float cameraY)
+void TileMap::render(float cameraX, float cameraY)
 {
 	// Checa se o tileSet não é nulo.
 
@@ -94,28 +130,27 @@ void TileMap::render (float cameraX, float cameraY)
 				for (int k = 0; k < mapHeight; k++)
 				{
 					index = tileMatrix[j][k][i];
-					if (index > 0)
+					if (index >= 0)
 					{
-						posX = j*tileWidth;
-						posY = k*tileHeight;
+						posX = j*tileWidth - cameraX*(1 + 0.2*i);
+						posY = k*tileHeight - cameraY*(1 + 0.2*i);
 						tileSet->render(index, posX, posY);
 					}
 				}
-
 	}
 }
 
-int TileMap::width (void)
+int TileMap::width ()
 {
 	return mapWidth;
 }
 
-int TileMap::height (void)
+int TileMap::height ()
 {
 	return mapHeight;
 }
 
-int TileMap::layers (void)
+int TileMap::layers ()
 {
 	return mapLayers;
 }

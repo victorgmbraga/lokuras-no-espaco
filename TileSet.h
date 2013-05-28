@@ -20,14 +20,14 @@ class TileSet
 		std::vector<Sprite*> vTiles;
 		SDL_Rect* destRect;
 	public:
-		TileSet (int tileWidth, int tileHeight, std::string filePath);
-		TileSet (std::string filePath, int lines, int columns);
-		TileSet (int tileWidth, int tileHeight);
-		void addTile (string filePath);
-		void render (int index, float posX, float posY);
-		bool usingSingleFile (void);
-		int getTileWidth (void);
-		int getTileHeight (void);
+		TileSet(int tileWidth, int tileHeight, std::string filePath);
+		TileSet(std::string filePath, int lines, int columns);
+		TileSet(int tileWidth, int tileHeight);
+		void addTile(string filePath);
+		void render(int index, float posX, float posY);
+		bool usingSingleFile();
+		int getTileWidth();
+		int getTileHeight();
 };
 
 
