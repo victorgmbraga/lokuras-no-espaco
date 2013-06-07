@@ -11,6 +11,8 @@ GameObject::GameObject(float x, float y)
 {
 	this->x = x;
 	this->y = y;
+	//this->w = w;
+	//this->h = h;
 	camera = NULL;
 	inputManager = NULL;
 }

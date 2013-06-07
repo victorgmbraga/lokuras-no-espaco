@@ -10,6 +10,10 @@
 Sprite::Sprite(string arquivo)
 {
 	surface = NULL;
+	surfaceRotoZoom = NULL;
+	angle = 0;
+	scaleX = 1;
+	scaleY = 1;
 	load(arquivo);
 }
 
@@ -42,6 +46,9 @@ void Sprite::clip(int x, int y, int w, int h)
 	clipRect.y = y;
 	clipRect.w = w;
 	clipRect.h = h;
+
+	if(surfaceRotoZoom)
+		rotoZoom(angle, scaleX, scaleY, true);
 }
 
 SDL_Rect* Sprite::getClip()
@@ -58,7 +65,10 @@ void Sprite::render(int x, int y)
 	dst.w = 0;
 	dst.h = 0;
 
-	SDLBase::renderSurface(surface, &clipRect, &dst);
+	if(surfaceRotoZoom)
+		SDLBase::renderSurface(surfaceRotoZoom	, &clipRect, &dst);
+	else
+		SDLBase::renderSurface(surface, &clipRect, &dst);
 }
 
 int Sprite::getWidth()
@@ -71,5 +81,30 @@ int Sprite::getHeight()
 	return surface->h;
 }
 
+void Sprite::restore()
+{
+	if (surfaceRotoZoom != NULL)
+		SDL_FreeSurface(surfaceRotoZoom);
+}
 
+void Sprite::rotoZoom(float angle, float scaleX, float scaleY, bool force)
+{
+	if(this->angle != angle || this->scaleX != scaleX || this->scaleY != scaleY || force)
+	{
+		if (surfaceRotoZoom)
+			SDL_FreeSurface(surfaceRotoZoom);
 
+		this->angle = angle;
+		this->scaleX = scaleX;
+		this->scaleY = scaleY;
+
+		SDL_Rect clipRect = this->clipRect;
+
+		if(clipRect.x != 0 || clipRect.y != 0 || clipRect.w != surface->w || clipRect.h != surface->h)
+			surfaceRotoZoom = SDLBase::clip(surface, &clipRect);
+		else
+			surfaceRotoZoom = surface;
+
+		surfaceRotoZoom = SDLBase::rotoZoom(surfaceRotoZoom, angle, scaleX, scaleY);
+	}
+}

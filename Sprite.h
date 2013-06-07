@@ -17,19 +17,25 @@
 
 class Sprite
 {
-	private:
+	protected:
 		SDL_Surface* surface;
 		SDL_Rect clipRect;
+		SDL_Surface* surfaceRotoZoom;
+		float angle;
+		float scaleX, scaleY;
 
 	public:
 		Sprite(string arquivo);
-		~Sprite();
-		void load(string arquivo);
-		void clip(int x, int y, int w, int h);
+		virtual ~Sprite();
 		SDL_Rect* getClip();
-		void render(int x, int y);
 		int getWidth();
 		int getHeight();
+		void load(string arquivo);
+		void clip(int x, int y, int w, int h);
+		//virtual void update(int dt);
+		void render(int x, int y);
+		void rotoZoom(float angle, float scalex = 1.0f, float scaley = 1.0f, bool force = false);
+		void restore();
 };
 
 #endif /* SPRITE_H_ */

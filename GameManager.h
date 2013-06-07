@@ -21,6 +21,7 @@
 #include "TileSet.h"
 #include "TileMap.h"
 #include "InputManager.h"
+#include "FollowerObject.h"
 #include <stdlib.h>
 #include <vector>
 
@@ -33,11 +34,13 @@ class GameManager
 		Sprite *planetSprite;
 		Sprite *earthSprite;
 		Sprite *moonSprite;
+		Sprite *ufoSprite;
 		std::vector<Planet*> planetArray;
 		TileSet *tileSet;
 		TileMap *tileMap;
 		Earth *earth;
 		Moon *moon;
+		FollowerObject *ufo;
 		bool quit;
 		int dt, frameStart, frameEnd;
 

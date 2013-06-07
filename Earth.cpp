@@ -18,7 +18,7 @@ void Earth::update(int dt)
 	if(inputManager->getInstance().isKeyDown(SDLK_d))
 		vx = EARTH_SPEED * dt;
 	else if(inputManager->getInstance().isKeyUp(SDLK_d))
-		vx = 0	;
+		vx = 0;
 
 	if(inputManager->getInstance().isKeyDown(SDLK_a))
 		vx = - EARTH_SPEED * dt;

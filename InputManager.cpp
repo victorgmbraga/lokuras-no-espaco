@@ -139,5 +139,3 @@ bool InputManager::quitGame()
 	return quit;
 }
 
-
-

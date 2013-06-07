@@ -24,6 +24,9 @@ GameManager::GameManager()
 	moonSprite = new Sprite("img/Lua.png");
 	moon = new Moon(moonSprite, 1, earth);
 
+	ufoSprite = new Sprite("img/ufo.png");
+	ufo = new FollowerObject(ufoSprite, 10, 10);
+
 	// Carrega o BG
 	bg = new Sprite("img/fundo.png");
 
@@ -48,6 +51,8 @@ GameManager::~GameManager()
 	planetArray.erase(planetArray.begin(),planetArray.end());
 	delete(camera);
 	delete(inputManager);
+	delete(ufo);
+	delete(ufoSprite);
 }
 
 void GameManager::run()
@@ -82,6 +87,7 @@ void GameManager::update(int dt)
 	checkPlanets();
 	earth->update(dt);
 	moon->update(dt);
+	ufo->update(dt);
 
 	if(inputManager->getInstance().quitGame())
 		quit = true;
@@ -100,6 +106,8 @@ void GameManager::render()
 		(*it)->render(cameraX, cameraY);
 	earth->render(cameraX, cameraY);
 	moon->render(cameraX, cameraY);
+	ufo->renderQueueLines(cameraX, cameraY);
+	ufo->render(cameraX, cameraY);
 }
 
 void GameManager::addPlanet()
