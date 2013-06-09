@@ -20,7 +20,6 @@ class Moon: public Planet
 		float radius;
 		float angle;
 		Planet* center;
-
 	public:
 		Moon(Sprite* sprite, int hp = 1, Planet* center = NULL);
 		virtual void update(int dt);

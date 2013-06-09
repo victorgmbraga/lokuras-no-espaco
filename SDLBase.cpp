@@ -12,8 +12,8 @@ SDL_Surface* SDLBase::screen = NULL;
 void SDLBase::inicializaSDL()
 {
 	SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER);
-	screen = SDL_SetVideoMode(800, 600, 32, SDL_SWSURFACE);
-	SDL_WM_SetCaption("Exercicio 3 10/0126481", "Exercicio 3 10/0126481");
+	screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 32, SDL_SWSURFACE);
+	SDL_WM_SetCaption(GAME_NAME, GAME_NAME);
 }
 
 SDL_Surface* SDLBase::getScreen()
@@ -144,7 +144,7 @@ void SDLBase::drawLine(int x1, int y1, int x2, int y2, int rgb, int spacing)
 
 SDL_Surface* SDLBase::clip(SDL_Surface* original, SDL_Rect* clip)
 {
-	SDL_Surface* new_surface = NULL;
+	static SDL_Surface *new_surface = NULL;
 	SDL_Rect dstrect;
 
 	dstrect.x = 0;
@@ -152,15 +152,10 @@ SDL_Surface* SDLBase::clip(SDL_Surface* original, SDL_Rect* clip)
 	dstrect.w = 0;
 	dstrect.h = 0;
 
-	int width = clip->w;
-	int height = clip->h;
+	float width = clip->w;
+	float height = clip->h;
 
-	Uint32 rmask = 0xff000000;
-	Uint32 gmask = 0x00ff0000;
-	Uint32 bmask = 0x0000ff00;
-	Uint32 amask = 0x000000ff;
-
-	SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 32, rmask, gmask, bmask, amask);
+	new_surface = SDL_CreateRGBSurface(0,width,height,32,0,0,0,0);
 
 	SDL_BlitSurface(original, clip, new_surface, &dstrect);
 

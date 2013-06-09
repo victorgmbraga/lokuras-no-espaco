@@ -17,14 +17,13 @@ class Animation: public Sprite
 		int time;
 		int frameSkip;
 		int frameTime;
-		SDL_Rect clipRect;
 	public:
 		Animation(string filename, int frameTime, int n_sprites);
 		virtual ~Animation();
 		void update(int dt);
 		void setFrame(int frame);
 		void setFrameTime(int time);
-		int getframeTime();
+		int getFrameTime();
 };
 
 #endif /* ANIMATION_H_ */

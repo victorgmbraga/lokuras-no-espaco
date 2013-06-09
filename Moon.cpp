@@ -11,7 +11,7 @@ Moon::Moon(Sprite* sprite, int hp, Planet* center): Planet(sprite, center->x, ce
 {
 	this->center = center;
 	angle = 0;
-	radius = 50;
+	radius = 200;
 }
 
 void Moon::update(int dt)

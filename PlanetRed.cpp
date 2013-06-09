@@ -21,8 +21,8 @@ void PlanetRed::update(int dt)
 	rect.h = sprite->getHeight();
 
 
-	if(inputManager->getInstance().isMouseDown(1))
+	/*if(inputManager->getInstance().isMouseDown(1))
 		if(inputManager->getInstance().isMouseInside(&rect))
-			hp -= (rand() % 10 + 10);
+			hp -= (rand() % 10 + 10);*/
 }
 

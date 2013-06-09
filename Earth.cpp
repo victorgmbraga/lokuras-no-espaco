@@ -15,6 +15,7 @@ Earth::Earth(Sprite* sprite, float x, float y, int hp): Planet(sprite, x, y, hp)
 
 void Earth::update(int dt)
 {
+/*
 	if(inputManager->getInstance().isKeyDown(SDLK_d))
 		vx = EARTH_SPEED * dt;
 	else if(inputManager->getInstance().isKeyUp(SDLK_d))
@@ -37,6 +38,7 @@ void Earth::update(int dt)
 
 	x += vx;
 	y += vy;
+*/
 }
 
 

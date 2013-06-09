@@ -8,6 +8,10 @@
 #ifndef SDLBASE_H_
 #define SDLBASE_H_
 
+#define SCREEN_W 800
+#define SCREEN_H 600
+#define GAME_NAME "Trabalho 3 10/0126481"
+
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 #include <SDL/SDL_rotozoom.h>
@@ -21,7 +25,6 @@ class SDLBase
 {
 	private:
 		static SDL_Surface *screen;
-
 	public:
 		static void inicializaSDL();
 		static SDL_Surface* getScreen();

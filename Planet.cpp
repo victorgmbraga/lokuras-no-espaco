@@ -7,7 +7,7 @@
 
 #include "Planet.h"
 
-Planet::Planet(Sprite *sprite, float x, float y, float hp): GameObject(x, y)
+Planet::Planet(Sprite *sprite, float x, float y, float hp): GameObject(x, y, sprite->getWidth(), sprite->getHeight())
 {
 	this->sprite = sprite;
 	this->hp = hp;

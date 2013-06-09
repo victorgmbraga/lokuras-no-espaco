@@ -7,7 +7,7 @@
 
 #include "FollowerObject.h"
 
-FollowerObject::FollowerObject(Sprite* sprite, float x, float y): GameObject(x, y)
+FollowerObject::FollowerObject(Sprite* sprite, float x, float y): GameObject(x, y, sprite->getWidth(), sprite->getHeight())
 {
 	this->sprite = sprite;
 	speedX = 0;
@@ -43,23 +43,20 @@ void FollowerObject::update(int dt)
 		speedX = 0.001 * deltaX * dt;
 		speedY = 0.001 * deltaY * dt;
 
-		if((deltaX > 0 && x >= xCoordinatesQueue->front()) || (deltaX < 0 && x <= xCoordinatesQueue->front()))
+		if((deltaX >= 0 && x >= xCoordinatesQueue->front()) || (deltaX <= 0 && x <= xCoordinatesQueue->front()) ||
+			(deltaY >= 0 && y >= yCoordinatesQueue->front()) || (deltaY <= 0 && y <= yCoordinatesQueue->front()))
 		{
-			if((deltaY > 0 && y >= yCoordinatesQueue->front()) || (deltaY < 0 && y <= yCoordinatesQueue->front()))
-			{
-				x = xCoordinatesQueue->front();
-				y = yCoordinatesQueue->front();
+			x = xCoordinatesQueue->front();
+			y = yCoordinatesQueue->front();
 
-				xCoordinatesQueue->pop();
-				yCoordinatesQueue->pop();
+			xCoordinatesQueue->pop();
+			yCoordinatesQueue->pop();
 
-				speedX = 0;
-				speedY = 0;
+			speedX = 0;
+			speedY = 0;
 
-				deltaX = 0;
-				deltaY = 0;
-			}
-
+			deltaX = 0;
+			deltaY = 0;
 		}
 		else
 		{

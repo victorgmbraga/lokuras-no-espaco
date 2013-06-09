@@ -8,23 +8,27 @@
 #ifndef GAMEOBJECT_H_
 #define GAMEOBJECT_H_
 
-#include "Camera.h"
 #include "InputManager.h"
 #include "Rect.h"
+
+class Camera;
+
+#include "Camera.h"
+
 
 class GameObject
 {
 	protected:
-		Camera* camera;
+		Camera *camera;
 		InputManager *inputManager;
 		Rect box;
 	public:
-		float x, y;//, w, h;
-		GameObject(float x, float y);
+		float x, y, w, h;
+		GameObject(float x, float y, float w, float h);
 		virtual ~GameObject() {};
 		virtual void update(int dt) = 0;
 		virtual void render(float cameraX, float cameraY) = 0;
-		void collidesWith(GameObject* other);
+		bool collidesWith(GameObject* other);
 };
 
 #endif /* GAMEOBJECT_H_ */

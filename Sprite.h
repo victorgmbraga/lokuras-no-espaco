@@ -23,7 +23,6 @@ class Sprite
 		SDL_Surface* surfaceRotoZoom;
 		float angle;
 		float scaleX, scaleY;
-
 	public:
 		Sprite(string arquivo);
 		virtual ~Sprite();
@@ -32,7 +31,7 @@ class Sprite
 		int getHeight();
 		void load(string arquivo);
 		void clip(int x, int y, int w, int h);
-		//virtual void update(int dt);
+		virtual void update(int dt) { };
 		void render(int x, int y);
 		void rotoZoom(float angle, float scalex = 1.0f, float scaley = 1.0f, bool force = false);
 		void restore();
