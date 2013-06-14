@@ -16,7 +16,7 @@ TileMap::TileMap(int mapWidth, int mapHeight, int mapLayers, TileSet* tileSet)
 	this->mapLayers = mapLayers;
 	this->tileSet = tileSet;
 
-	// Redimensiona a tileMatrix para as dimensões corretas e a inicializa com -1.
+	// Redimensiona a tileMatrix para as dimensões corretas e a inicializa com 0.
 
 	tileMatrix.resize(mapWidth);
 
@@ -31,12 +31,12 @@ TileMap::TileMap(int mapWidth, int mapHeight, int mapLayers, TileSet* tileSet)
 		for (y = 0; y < tileMatrix[0].size(); ++y)
 			tileMatrix[x][y].resize(mapLayers);
 
-	// Preenche a matriz com -1
+	// Preenche a matriz com 0
 
 	for (x = 0; x < tileMatrix.size(); ++x)
 		for (y = 0; y < tileMatrix[x].size(); ++y)
 			for (z = 0; z < tileMatrix[x][y].size(); ++z)
-				tileMatrix[x][y][z] = -1;
+				tileMatrix[x][y][z] = 0;
 }
 
 TileMap::TileMap(std::string mapa, TileSet* tileSet)
@@ -76,12 +76,11 @@ void TileMap::load(std::string mapPath)
 			for (unsigned int y = 0; y < tileMatrix[0].size(); ++y)
 				tileMatrix[x][y].resize(mapLayers);
 
-		// Preenche a matriz com -1
-
-			for (unsigned int x = 0; x < tileMatrix.size(); ++x)
-				for (unsigned int y = 0; y < tileMatrix[x].size(); ++y)
-					for (unsigned int z = 0; z < tileMatrix[x][y].size(); ++z)
-						tileMatrix[x][y][z] = -1;
+		// Preenche a matriz com 0
+		for (unsigned int x = 0; x < tileMatrix.size(); ++x)
+			for (unsigned int y = 0; y < tileMatrix[x].size(); ++y)
+				for (unsigned int z = 0; z < tileMatrix[x][y].size(); ++z)
+					tileMatrix[x][y][z] = 0;
 
 		for(int i = 0; i < mapLayers; ++i)
 			for(int j = 0; j <  mapWidth; ++j)
@@ -120,21 +119,28 @@ void TileMap::render(float cameraX, float cameraY)
 		// renderiza aquele tile.
 
 		int index = 0;
-		int posX = 0;
-		int posY = 0;
+		float posX = 0;
+		float posY = 0;
 		int tileWidth = tileSet->getTileWidth();
 		int tileHeight = tileSet->getTileHeight();
+
+		// Número para o cálculo do parallax
+		float parallaxConst = 0.75 / mapLayers;
+
 
 		for (int i = 0; i < mapLayers; i++)
 			for (int j = 0; j < mapWidth; j++)
 				for (int k = 0; k < mapHeight; k++)
 				{
-					index = tileMatrix[j][k][i];
-					if (index >= 0)
+					index = tileMatrix[k][j][i];
+					if (index > 0)
 					{
-						posX = j*tileWidth - cameraX*(1 + 0.2*i);
-						posY = k*tileHeight - cameraY*(1 + 0.2*i);
-						tileSet->render(index, posX, posY);
+						// A constante que multiplica a câmera nunca é maior que 1
+						// Isso garante que os objetos "soltos" no mapa se movam na
+						// mesma velocidade da camada superior do tilemap.
+						posX = j * tileWidth - cameraX * (0.25 + parallaxConst * (i + 1));
+						posY = k * tileHeight - cameraY * (0.25 + parallaxConst * (i + 1));
+						tileSet->render(index - 1, posX, posY);
 					}
 				}
 	}

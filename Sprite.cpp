@@ -86,13 +86,7 @@ void Sprite::render(int x, int y)
 		dst.w = 0;
 		dst.h = 0;
 
-		// Cria um novo clipRect de acordo com o tamanho da surfaceRotoZoom.
-		// Não sei se a solução adequada, mas funciona.
-		SDL_Rect newClipRect = clipRect;
-		newClipRect.w = surfaceRotoZoom->w;
-		newClipRect.h = surfaceRotoZoom->h;
-
-		SDLBase::renderSurface(surfaceRotoZoom, &newClipRect, &dst);
+		SDLBase::renderSurface(surfaceRotoZoom, NULL, &dst);
 	}
 	else
 	{
@@ -148,9 +142,9 @@ void Sprite::rotoZoom(float angle, float scaleX, float scaleY, bool force)
 		// surface usa clip. Caso use, é necessário “clipar” a surface antes de alterá-la.
 		if(clipRect.x != 0 || clipRect.y != 0 || clipRect.w != surface->w || clipRect.h != surface->h)
 		{
-			// TODO Ver se isso dá leak de memória.
-			surfaceRotoZoom = SDLBase::clip(surface, &newClipRect);
-			surfaceRotoZoom = SDLBase::rotoZoom(surfaceRotoZoom, angle, scaleX, scaleY);
+			SDL_Surface *tempSurface = SDLBase::clip(surface, &newClipRect);
+			surfaceRotoZoom = SDLBase::rotoZoom(tempSurface, angle, scaleX, scaleY);
+			SDL_FreeSurface(tempSurface);
 		}
 		else
 			surfaceRotoZoom = SDLBase::rotoZoom(surface, angle, scaleX, scaleY);

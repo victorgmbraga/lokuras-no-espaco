@@ -9,11 +9,18 @@
 
 SDL_Surface* SDLBase::screen = NULL;
 
-void SDLBase::inicializaSDL()
+void SDLBase::loadSDL()
 {
 	SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 32, SDL_SWSURFACE);
+	TTF_Init();
+	Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024);
 	SDL_WM_SetCaption(GAME_NAME, GAME_NAME);
+}
+
+void SDLBase::unloadSDL()
+{
+	TTF_Quit();
 }
 
 SDL_Surface* SDLBase::getScreen()
@@ -145,19 +152,13 @@ void SDLBase::drawLine(int x1, int y1, int x2, int y2, int rgb, int spacing)
 SDL_Surface* SDLBase::clip(SDL_Surface* original, SDL_Rect* clip)
 {
 	static SDL_Surface *new_surface = NULL;
-	SDL_Rect dstrect;
-
-	dstrect.x = 0;
-	dstrect.y = 0;
-	dstrect.w = 0;
-	dstrect.h = 0;
 
 	float width = clip->w;
 	float height = clip->h;
 
-	new_surface = SDL_CreateRGBSurface(0,width,height,32,0,0,0,0);
+	new_surface = SDL_CreateRGBSurface(screen->flags, width, height, screen->format->BitsPerPixel, 0 , 0, 0, 0);
 
-	SDL_BlitSurface(original, clip, new_surface, &dstrect);
+	SDL_BlitSurface(original, clip, new_surface, NULL);
 
 	return new_surface;
 }
@@ -167,6 +168,17 @@ SDL_Surface* SDLBase::rotoZoom(SDL_Surface* surface, float angle, float scalex, 
 	if(surface != NULL && scalex > 0 && scaley > 0)
 		return rotozoomSurfaceXY(surface, angle, scalex, scaley, 1);
 	return NULL;
+}
+
+void SDLBase::drawRect(int x, int y, int w, int h, int rgb)
+{
+	SDL_Rect rect;
+	rect.x = x;
+	rect.y = y;
+	rect.w = w;
+	rect.h = h;
+
+	SDL_FillRect(screen, &rect, rgb);
 }
 
 

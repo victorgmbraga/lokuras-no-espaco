@@ -5,15 +5,13 @@
  *      Author: Victor
  */
 
-#include "GameManager.h"
-
-using namespace std;
+#include "StateManager.h"
 
 int main(int argc, char *argv[])
 {
-	GameManager *game = new GameManager();
-	game->run();
-	delete(game);
+	StateManager *state = new StateManager();
+	state->run();
+	delete(state);
 	return 0;
 }
 

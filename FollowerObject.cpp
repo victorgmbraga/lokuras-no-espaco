@@ -91,7 +91,7 @@ void FollowerObject::renderQueueLines(float cameraX, float cameraY)
 		 destX = xCoordinatesQueue->front();
 		 destY = yCoordinatesQueue->front();
 
-		 SDLBase::drawLine(x - cameraX, y - cameraY, destX - cameraX, destY - cameraY, 111111, 1);
+		 SDLBase::drawLine(x - cameraX, y - cameraY, destX - cameraX, destY - cameraY, 0xFFFFFF, 1);
 
 		 x = destX;
 		 y = destY;

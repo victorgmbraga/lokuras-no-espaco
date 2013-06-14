@@ -9,6 +9,7 @@
 #define ACCOBJECT_H_
 
 #define PI 3.1415
+#define MAX_SPEED 1.5
 
 #include "GameObject.h"
 #include "Animation.h"
@@ -20,6 +21,7 @@ class AccObject: public GameObject
 		float speed;
 		float acceleration;
 		float rotation;
+		bool atrito;
 	public:
 		int hp;
 		AccObject(Animation* animation, float x, float y, float w, float h, int hp);

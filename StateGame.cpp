@@ -5,60 +5,66 @@
  *      Author: Victor
  */
 
-#include "GameManager.h"
+#include "StateGame.h"
 
-GameManager::GameManager()
+void StateGame::load(int stack)
 {
-	SDLBase::inicializaSDL();
-
+	// Câmera e Input Manager
 	camera = NULL;
 	inputManager = NULL;
-	quit = false;
-	dt = 0;
-	frameStart = 0;
-	frameEnd = 0;
 
-	// Inicializa a terra.
+	// Terra
 	earthSprite = new Sprite("img/PlanetaTerra.png");
-	earthSprite->rotoZoom(0, 3, 3, 1);
-	earth = new Earth(earthSprite, 1678, 2588, 100);
+	earthSprite->rotoZoom(0, 3, 3, 0);
+	earth = new Earth(earthSprite, 1000, 1600, 100);
 
-	// Inicializa a lua ao redor da terra.
+	// Lua
 	moonSprite = new Sprite("img/Lua.png");
 	moon = new Moon(moonSprite, 1, earth);
 
-	// Inicializa o UFO.
+	// UFO
 	ufoSprite = new Sprite("img/ufo.png");
 	ufoSprite->rotoZoom(0, 3, 3, 0);
 	ufo = new FollowerObject(ufoSprite, 960, 435);
 
-	// Inicializa a nave.
+	// Nave
 	shipAnimation = new Animation("img/NaveSheet.png", 200, 4);
-	//shipAnimation->setFrame(1);
-	ship = new AccObject(shipAnimation, 0, 0, 94, 100, 20);
+	ship = new AccObject(shipAnimation, 0, 0, 94, 100, 100);
 
-	// Inicializa a animação de explosão;
+	// Explosão
 	boom = new Animation("img/BoomSheet.png", 200, 8);
 	boomX = 0;
 	boomY = 0;
 
-	// Carrega o BG
+	// Background
 	bg = new Sprite("img/fundo.png");
 
-	// Cria o TileSet
+	// TileSet e TileMap
 	tileSet = new TileSet(75, 75, "img/Tileset.png");
-
-	// Cria o TileMap
 	tileMap = new TileMap("map/tileMap.txt", tileSet);
 
-	// Carrega o sprite do planeta vermelho.
+	// Planetas Vermelhos
 	redPlanetSprite = new Sprite("img/PlanetaVermelho.png");
+	redPlanetCoolDown = new Timer();
+	redPlanetCoolDown->start();
 
 	// Atribui a câmera à nave.
 	camera->getInstance().bind(ship);
+
+	// Música e sons
+	sfx = new Audio("sfx/boom.wav", AUDIOTYPE_SOUND);
+	music = new Audio("sfx/stateGame.ogg", AUDIOTYPE_MUSIC);
+	music->play(-1);
+
+	// HUD
+	hud = new HUD();
+
+	// Variáveis de retorno
+	returnState = 0;
+	returnStack = 0;
 }
 
-GameManager::~GameManager()
+int StateGame::unload()
 {
 	delete(bg);
 	delete(redPlanetSprite);
@@ -74,107 +80,111 @@ GameManager::~GameManager()
 	delete(ship);
 	delete(shipAnimation);
 	delete(boom);
+	delete(hud);
+	return returnStack;
 }
 
-void GameManager::run()
+int StateGame::update(int dt)
 {
-	while(!SDL_QuitRequested())
-	{
-		frameStart = SDL_GetTicks();
-		dt = frameStart - frameEnd;
-
-		// Atualização dos objetos
-		update(dt);
-
-		// Renderização
-		render();
-
-		// Atualizar a tela
-		SDLBase::atualizarTela();
-
-		// Delay (p/ 60 fps)
-		SDL_Delay(13);
-
-		frameEnd = frameStart;
-	}
-}
-
-void GameManager::update(int dt)
-{
-	inputManager->getInstance().update();
-
+	// Planetas vermelhos
 	for(std::vector<Planet*>::iterator it = planetArray.begin(); it != planetArray.end(); ++it)
 		(*it)->update(dt);
+
+	// Terra
 	earth->update(dt);
+
+	// Lua
 	moon->update(dt);
+
+	// UFO
 	if(ufo)
 		ufo->update(dt);
+
+	// Nave
 	if(ship)
 		ship->update(dt);
+
+	// Explosão
 	boom->update(dt);
 
+	// Verifica se deve sair do jogo
 	if(inputManager->getInstance().quitGame())
-		quit = true;
+		returnState = -1;
+
+	// Adiciona os planetas vermelhos ao pressionar o mouse
 	if(inputManager->getInstance().isMouseDown(1) && ufo != NULL)
 		addPlanet();
 
+	// Câmera
 	camera->getInstance().update();
 
+	// Colisões
 	checkCollision(dt);
+
+	return returnState;
 }
 
-void GameManager::render()
+void StateGame::render()
 {
 	float cameraX = camera->getInstance().getX();
 	float cameraY = camera->getInstance().getY();
 
+	// Background
 	bg->render(0,0);
+
+	// Tilemap
 	tileMap->render(cameraX, cameraY);
+
+	// Planetas vermelhos
 	for(std::vector<Planet*>::iterator it = planetArray.begin(); it != planetArray.end(); ++it)
 		(*it)->render(cameraX, cameraY);
+
+	// Terra
 	earth->render(cameraX, cameraY);
+
+	// Lua
 	moon->render(cameraX, cameraY);
+
+	// UFO e suas linhas
 	if(ufo)
 	{
 		ufo->renderQueueLines(cameraX, cameraY);
 		ufo->render(cameraX, cameraY);
 	}
+
+	// Nave
 	if(ship)
 		ship->render(cameraX, cameraY);
-	if(boomX != 0 || boomY != 0)
+
+	// Explosão
+	if(boomX != 0 || boomY != 0 || !ship)
 		boom->render(boomX - cameraX, boomY - cameraY);
+
+	// Texto
+	hud->render();
 }
 
-void GameManager::addPlanet()
+void StateGame::addPlanet()
 {
-	// Pega o tamanho da tela
-	int screenWidth = bg->getWidth();
-	int screenHeight = bg->getHeight();
-
-	// Cria uma posição aleatória dentro da tela
-	int planetX = camera->getInstance().getX() + (rand() % screenWidth);
-	int planetY = camera->getInstance().getY() + (rand() % screenHeight);
-
-	// Adiciona o planeta na posição
-	PlanetRed *planetRed = new PlanetRed(redPlanetSprite, planetX, planetY, 20);
-	planetArray.push_back(planetRed);
-}
-
-void GameManager::checkPlanets()
-{
-	std::vector<Planet*>::iterator it = planetArray.begin();
-
-	// Deleta os planetas com HP <= 0
-	while(it != planetArray.end())
+	if(redPlanetCoolDown->getTime() > 3000)
 	{
-		if((*it)->hp <= 0)
-			it = planetArray.erase(it);
-		else
-			++it;
+		redPlanetCoolDown->start();
+
+		// Pega o tamanho da tela
+		int screenWidth = bg->getWidth();
+		int screenHeight = bg->getHeight();
+
+		// Cria uma posição aleatória dentro da tela
+		int planetX = camera->getInstance().getX() + (rand() % screenWidth);
+		int planetY = camera->getInstance().getY() + (rand() % screenHeight);
+
+		// Adiciona o planeta na posição
+		PlanetRed *planetRed = new PlanetRed(redPlanetSprite, planetX, planetY, 20);
+		planetArray.push_back(planetRed);
 	}
 }
 
-void GameManager::checkCollision(int dt)
+void StateGame::checkCollision(int dt)
 {
 	// Se UFO e Ship existem.
 	if(ship && ufo)
@@ -193,8 +203,14 @@ void GameManager::checkCollision(int dt)
 				// Remove o planeta do vector.
 				it = planetArray.erase(it);
 
-				// Diminui o hp da Ship em 1.
-				ship->hp -= 1;
+				// Diminui o hp da Ship em 5.
+				ship->hp -= 5;
+
+				// Muda a vida no HUD
+				hud->setLife(ship->hp);
+
+				// Toca o som da explosão
+				sfx->play(0);
 			}
 			else
 				++it;
@@ -222,6 +238,13 @@ void GameManager::checkCollision(int dt)
 			// De um update na boom.
 			boom->update(dt);
 
+			// Toca o som de explosão
+			sfx->play(0);
+
+			// Chama a tela de derrota
+			returnState = 3;
+			returnStack = 0;
+
 			return;
 		}
 
@@ -244,6 +267,10 @@ void GameManager::checkCollision(int dt)
 
 			// De um update na boom.
 			boom->update(dt);
+
+			// Chama a tela de vitória
+			returnState = 3;
+			returnStack = 1;
 
 			return;
 		}

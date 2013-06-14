@@ -17,7 +17,7 @@ TileSet::TileSet(int tileWidth, int tileHeight, std::string filePath)
 	destRect = NULL;
 }
 
-TileSet::TileSet (std::string filePath, int lines, int columns)
+TileSet::TileSet(std::string filePath, int lines, int columns)
 {
 	this->lines = lines;
 	this->columns = columns;
