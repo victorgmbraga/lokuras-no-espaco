@@ -39,12 +39,14 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 
 **Requisitos**
 
-- Windows;
-- MinGW-w64 **i686** (msvcrt, posix) com `g++`.
+- Windows 10+;
+- MinGW-w64 **i686** (msvcrt, posix) com `g++` — ou deixe o `build.bat` baixar automaticamente (veja abaixo).
 
 As bibliotecas **SDL 1.2 + SDL_image + SDL_gfx + SDL_ttf + SDL_mixer** (headers e libs de importação) já estão versionadas no próprio repositório, em `lib/` — não é preciso instalar o SDL para compilar.
 
-O script `build.bat` compila as fontes de `src/` (usando `lib/`) e gera `bin\game.exe`. Só é preciso ajustar a variável `MINGW` no topo do script apontando para a sua instalação:
+O script `build.bat` gera `bin\game.exe` e resolve o compilador em cascata: variável de ambiente `MINGW` → caminho configurado no script → instalação do auto-bootstrap → `PATH`. Se o `g++` não for encontrado, ele chama `tools/setup-mingw.ps1`, que **oferece baixar o toolchain winlibs i686** (GCC 16.2.0, msvcrt, ~270 MB): download com retomada, verificação de **SHA-256** e extração em `%LOCALAPPDATA%\projeto-idj\mingw32` (sem alterar `PATH` nem Registro).
+
+Para usar um MinGW já existente, defina a variável de ambiente `MINGW`:
 
 ```bat
 set MINGW=<caminho>\mingw32\bin
@@ -200,7 +202,8 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 ├── sfx/                     # músicas (mp3) e boom.wav
 ├── ttf/                     # Pirata One e Space Age
 ├── build.bat                # compilação (MinGW + SDL 1.2 de lib/) -> bin/game.exe
-└── run.bat                  # executa o jogo a partir da raiz
+├── run.bat                  # executa o jogo a partir da raiz
+└── tools/setup-mingw.ps1    # auto-bootstrap do MinGW (download com SHA-256)
 ```
 
 As versões anteriores — com os PDFs de cada entrega (`_Trabalho1.pdf`, `_Exercicio2.pdf` etc.) — estão preservadas nos commits do histórico; use `git log --oneline` e `git show <commit>` para navegar entre elas.
