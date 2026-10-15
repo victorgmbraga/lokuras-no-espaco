@@ -194,7 +194,7 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 │   ├── TileSet.* TileMap.* Rect.h Point.*
 │   └── GameObject.* Planet.* PlanetRed.* Earth.* Moon.* FollowerObject.* AccObject.* HUD.*
 ├── bin/                     # DLLs de runtime versionadas + game.exe (compilado, ignorado)
-├── img/                     # sprites, telas de menu/vitória/derrota e tileset
+├── img/                     # sprites (nave, planetas, UFO), telas de menu/vitória/derrota e Tileset.png
 ├── map/tileMap.txt          # mapa em camadas
 ├── sfx/                     # músicas (mp3) e boom.wav
 ├── ttf/                     # Pirata One e Space Age
