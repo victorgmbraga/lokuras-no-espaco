@@ -3,17 +3,16 @@ rem Build do jogo (SDL 1.2, MinGW i686 + msvcrt)
 rem SDL 1.2 (headers e libs) versionado em lib\; nao e preciso instalar o SDL.
 rem O compilador MinGW e resolvido em cascata:
 rem   1) variavel de ambiente MINGW (pasta bin), se definida
-rem   2) caminho personalizado abaixo (ajuste para o seu MinGW, se tiver um)
-rem   3) pasta instalada pelo auto-bootstrap (%LOCALAPPDATA%\projeto-idj\mingw32\bin)
-rem   4) g++ no PATH
-rem   5) auto-bootstrap via tools\setup-mingw.ps1 (download do winlibs i686)
+rem      ex.: set "MINGW=C:\caminho\para\o\seu\mingw32\bin"
+rem   2) tools\mingw32\bin (MinGW baixado pelo proprio build.bat)
+rem   3) g++ no PATH
+rem   4) auto-bootstrap via tools\setup-mingw.ps1 (baixa o winlibs i686)
 setlocal EnableExtensions
 cd /d "%~dp0"
 
 set "GXX="
-if not defined MINGW set "MINGW=C:\Users\victor.braga\dev\extract\mingw32\bin"
-if exist "%MINGW%\g++.exe" set "GXX=%MINGW%\g++.exe"
-if not defined GXX if exist "%LOCALAPPDATA%\projeto-idj\mingw32\bin\g++.exe" set "GXX=%LOCALAPPDATA%\projeto-idj\mingw32\bin\g++.exe"
+if defined MINGW if exist "%MINGW%\g++.exe" set "GXX=%MINGW%\g++.exe"
+if not defined GXX if exist "tools\mingw32\bin\g++.exe" set "GXX=%~dp0tools\mingw32\bin\g++.exe"
 if not defined GXX for /f "delims=" %%i in ('where g++ 2^>nul') do if not defined GXX set "GXX=%%i"
 
 if not defined GXX goto :bootstrap
@@ -23,14 +22,14 @@ goto :compilar
 echo.
 echo MinGW (g++) nao encontrado no sistema. Iniciando configuracao automatica...
 powershell -NoProfile -ExecutionPolicy Bypass -File "tools\setup-mingw.ps1"
-if exist "%LOCALAPPDATA%\projeto-idj\mingw32\bin\g++.exe" set "GXX=%LOCALAPPDATA%\projeto-idj\mingw32\bin\g++.exe"
+if exist "tools\mingw32\bin\g++.exe" set "GXX=%~dp0tools\mingw32\bin\g++.exe"
 if defined GXX goto :compilar
 echo.
 echo Nao foi possivel configurar o MinGW automaticamente.
 echo Baixe manualmente em:
 echo   https://github.com/brechtsanders/winlibs_mingw/releases/tag/16.2.0posix-14.0.0-msvcrt-r2
 echo   (winlibs-i686-posix-dwarf-gcc-16.2.0-mingw-w64msvcrt-14.0.0-r2.zip)
-echo Extraia o zip e defina a variavel de ambiente MINGW para a pasta "mingw32\bin".
+echo Extraia o zip e coloque a pasta "mingw32" em tools\ (ou defina a variavel de ambiente MINGW).
 echo.
 pause
 exit /b 1

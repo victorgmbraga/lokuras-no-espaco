@@ -2,18 +2,18 @@
 #
 # Chamado automaticamente pelo build.bat quando o g++ nao e encontrado.
 # Faz download do winlibs com retomada, verifica o SHA-256 e extrai em
-# %LOCALAPPDATA%\projeto-idj\mingw32 (nao altera PATH nem Registro).
+# tools\mingw32 - tudo dentro da pasta do projeto (nada e gravado fora dela).
 #
 # Saida: exit 0 = pronto para uso | exit 1 = cancelado ou falha.
 
 $ErrorActionPreference = 'Stop'
 
-$Url     = 'https://github.com/brechtsanders/winlibs_mingw/releases/download/16.2.0posix-14.0.0-msvcrt-r2/winlibs-i686-posix-dwarf-gcc-16.2.0-mingw-w64msvcrt-14.0.0-r2.zip'
-$Sha256  = 'f1fab67fbe6ed1b0a390d06db6af8b4f0ca25fceab4f51bac2a88af8b81a93ec'
-$DestRoot = Join-Path $env:LOCALAPPDATA 'projeto-idj'
-$MingwDir = Join-Path $DestRoot 'mingw32'
+$Url      = 'https://github.com/brechtsanders/winlibs_mingw/releases/download/16.2.0posix-14.0.0-msvcrt-r2/winlibs-i686-posix-dwarf-gcc-16.2.0-mingw-w64msvcrt-14.0.0-r2.zip'
+$Sha256   = 'f1fab67fbe6ed1b0a390d06db6af8b4f0ca25fceab4f51bac2a88af8b81a93ec'
+$ToolsDir = $PSScriptRoot
+$MingwDir = Join-Path $ToolsDir 'mingw32'
 $DestBin  = Join-Path $MingwDir 'bin'
-$ZipPath  = Join-Path $env:TEMP 'winlibs-i686-gcc16.2.0-msvcrt.zip'
+$ZipPath  = Join-Path $ToolsDir 'winlibs-i686.zip'
 
 trap {
     Write-Host ""
@@ -70,16 +70,12 @@ Write-Host "Este script pode baixar o toolchain MinGW-w64 automaticamente:"
 Write-Host "  - winlibs i686 (32 bits), GCC 16.2.0, msvcrt, posix, dwarf"
 Write-Host "  - download: ~270 MB (zip) / ~950 MB depois de extraido"
 Write-Host "  - origem:   GitHub - brechtsanders/winlibs_mingw"
-Write-Host "  - destino:  $DestRoot"
+Write-Host "  - destino:  $MingwDir"
 Write-Host ""
 $answer = Read-Host "Baixar e instalar agora? [S/N]"
 if ([string]$answer -notmatch '^[SsYy]') {
     Write-Host "Cancelado pelo usuario."
     exit 1
-}
-
-if (-not (Test-Path $DestRoot)) {
-    New-Item -ItemType Directory -Path $DestRoot | Out-Null
 }
 
 Write-Host ""
@@ -100,7 +96,7 @@ if (Test-Path $MingwDir) {
 }
 
 Write-Host "Extraindo (pode demorar alguns minutos)..."
-Expand-Zip $ZipPath $DestRoot
+Expand-Zip $ZipPath $ToolsDir
 Remove-Item $ZipPath -Force -ErrorAction SilentlyContinue
 
 if (-not (Test-Gxx)) {
