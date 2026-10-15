@@ -40,29 +40,29 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 **Requisitos**
 
 - Windows;
-- MinGW-w64 **i686** (msvcrt, posix) com `g++`;
-- SDL 1.2 + SDL_image + SDL_gfx + SDL_ttf + SDL_mixer (headers e libs).
+- MinGW-w64 **i686** (msvcrt, posix) com `g++`.
 
-O script `build.bat` compila as fontes de `src/` e gera `bin\game.exe`. Edite as variáveis `MINGW` e `SDL` no topo do script apontando para a sua instalação:
+As bibliotecas **SDL 1.2 + SDL_image + SDL_gfx + SDL_ttf + SDL_mixer** (headers e libs de importação) já estão versionadas no próprio repositório, em `lib/` — não é preciso instalar o SDL para compilar.
+
+O script `build.bat` compila as fontes de `src/` (usando `lib/`) e gera `bin\game.exe`. Só é preciso ajustar a variável `MINGW` no topo do script apontando para a sua instalação:
 
 ```bat
 set MINGW=<caminho>\mingw32\bin
-set SDL=<caminho>\sdl12
 ```
 
-> O PDF `SDL-Tutorial_Windows.pdf` (no repositório) cobre a instalação do SDL 1.2 no Windows.
+> O PDF `SDL-Tutorial_Windows.pdf` presente no histórico do repositório cobre a instalação do SDL 1.2 no Windows.
 
 A linha de compilação usada é, resumidamente:
 
 ```bat
-g++ -std=gnu++11 -O2 -w -Dmain=SDL_main -I"%SDL%\include" -I"%SDL%\include\SDL" -I"src" ^
+g++ -std=gnu++11 -O2 -w -Dmain=SDL_main -I"lib\include" -I"lib\include\SDL" -I"src" ^
   src\AccObject.cpp src\Animation.cpp src\Audio.cpp src\Camera.cpp src\Earth.cpp ^
   src\FollowerObject.cpp src\GameObject.cpp src\HUD.cpp src\InputManager.cpp src\main.cpp ^
   src\Moon.cpp src\Planet.cpp src\PlanetRed.cpp src\Point.cpp src\SDLBase.cpp ^
   src\Sprite.cpp src\StateGame.cpp src\StateManager.cpp src\StateMenu.cpp ^
   src\StateWinLose.cpp src\Text.cpp src\TileMap.cpp src\TileSet.cpp src\Timer.cpp ^
   -o bin\game.exe ^
-  -L"%SDL%\lib" -lmingw32 -lSDLmain -lSDL_gfx -lSDL_image -lSDL_ttf -lSDL_mixer -lSDL ^
+  -L"lib\lib" -lmingw32 -lSDLmain -lSDL_gfx -lSDL_image -lSDL_ttf -lSDL_mixer -lSDL ^
   -static-libgcc -static-libstdc++
 ```
 
@@ -193,19 +193,17 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 │   ├── InputManager.* Camera.* State.* StateManager.* StateMenu.* StateGame.* StateWinLose.*
 │   ├── TileSet.* TileMap.* Rect.h Point.*
 │   └── GameObject.* Planet.* PlanetRed.* Earth.* Moon.* FollowerObject.* AccObject.* HUD.*
+├── lib/                     # SDL 1.2: headers (include/), libs de importação (lib/) e licenças (LICENSES/)
 ├── bin/                     # DLLs de runtime versionadas + game.exe (compilado, ignorado)
 ├── img/                     # sprites (nave, planetas, UFO), telas de menu/vitória/derrota e Tileset.png
 ├── map/tileMap.txt          # mapa em camadas
 ├── sfx/                     # músicas (mp3) e boom.wav
 ├── ttf/                     # Pirata One e Space Age
-├── build.bat                # compilação (MinGW + SDL 1.2) -> bin/game.exe
-├── run.bat                  # executa o jogo a partir da raiz
-├── README.txt               # notas da entrega original do Trabalho 4
-├── _Trabalho4.pdf           # especificação oficial desta versão
-└── SDL-Tutorial_Windows.pdf # tutorial de setup do SDL 1.2 no Windows
+├── build.bat                # compilação (MinGW + SDL 1.2 de lib/) -> bin/game.exe
+└── run.bat                  # executa o jogo a partir da raiz
 ```
 
-As versões anteriores (e os PDFs `_Exercicio1.pdf`, `_Trabalho1.pdf` etc.) estão preservadas nos commits do histórico — use `git log --oneline` e `git show <commit>` para navegar entre elas.
+As versões anteriores — com os PDFs de cada entrega (`_Trabalho1.pdf`, `_Exercicio2.pdf` etc.) — estão preservadas nos commits do histórico; use `git log --oneline` e `git show <commit>` para navegar entre elas.
 
 ---
 
@@ -213,7 +211,7 @@ As versões anteriores (e os PDFs `_Exercicio1.pdf`, `_Trabalho1.pdf` etc.) est�
 
 - Desenvolvido por **Victor Braga** (matrícula 10/0126481), 2013.
 - Disciplina **Introdução ao Desenvolvimento de Jogos** — Profª. Carla Denise Castanho, UnB/CIC (Turma A, 2013); especificações (PDFs) de autoria da equipe da disciplina.
-- Bibliotecas: [SDL 1.2](https://www.libsdl.org/) e SDL_image/SDL_gfx/SDL_ttf/SDL_mixer.
+- Bibliotecas: [SDL 1.2](https://www.libsdl.org/) e SDL_image/SDL_gfx/SDL_ttf/SDL_mixer — versionadas em `lib/`, com as licenças de terceiros em [`lib/LICENSES/`](lib/LICENSES/NOTICE.md).
 - Sprites da nave: *Spaceship Sprite Package by Kryptid*; tiles espaciais *SpaceTile*; demais imagens e músicas utilizadas nas aulas da disciplina.
 
 Projeto acadêmico, sem fins comerciais.
