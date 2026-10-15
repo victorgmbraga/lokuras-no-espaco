@@ -66,7 +66,7 @@ g++ -std=gnu++11 -O2 -w -Dmain=SDL_main -I"%SDL%\include" -I"%SDL%\include\SDL" 
   -static-libgcc -static-libstdc++
 ```
 
-As DLLs de runtime necessárias estão versionadas em `bin/` (SDL.dll, SDL_image.dll, SDL_ttf.dll, SDL_mixer.dll e dependências como `libpng15-15`, `zlib1`, `libjpeg-8`, `libfreetype-6`, entre outras), junto do executável. Depois de compilar, execute `run.bat` — ou `bin\game.exe` a partir da raiz do projeto, pois o jogo carrega os assets por caminhos relativos.
+As DLLs de runtime necessárias estão versionadas em `bin/` (SDL.dll, SDL_image.dll, SDL_ttf.dll, SDL_mixer.dll e dependências como `libpng15-15`, `zlib1`, `libjpeg-8`, `libfreetype-6`, além de `smpeg.dll` — decodificador de MP3 — e das runtimes `libstdc++-6`/`libgcc_s_dw2-1` exigidas por ele), junto do executável. Depois de compilar, execute `run.bat` — ou `bin\game.exe` a partir da raiz do projeto, pois o jogo carrega os assets por caminhos relativos.
 
 ---
 
