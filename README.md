@@ -1,6 +1,6 @@
 # Lokuras no Espaço
 
-![Gameplay de Lokuras no Espaço](game.png)
+![Gameplay de Lokuras no Espaço](game.jpg)
 
 Jogo 2D em **C++ com SDL 1.2**, desenvolvido para a disciplina **Introdução ao Desenvolvimento de Jogos (IDJ)** da Universidade de Brasília (UnB/CIC, Turma A, 2013 — Profª. Carla Denise Castanho).
 
