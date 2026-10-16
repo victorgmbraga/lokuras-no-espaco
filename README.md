@@ -64,7 +64,7 @@ g++ -std=gnu++11 -O2 -w -Dmain=SDL_main -I"lib\include" -I"lib\include\SDL" -I"s
   src\Sprite.cpp src\StateGame.cpp src\StateManager.cpp src\StateMenu.cpp ^
   src\StateWinLose.cpp src\Text.cpp src\TileMap.cpp src\TileSet.cpp src\Timer.cpp ^
   -o bin\game.exe ^
-  -L"lib\lib" -lmingw32 -lSDLmain -lSDL_gfx -lSDL_image -lSDL_ttf -lSDL_mixer -lSDL ^
+  -mwindows -L"lib\lib" -lmingw32 -lSDLmain -lSDL_gfx -lSDL_image -lSDL_ttf -lSDL_mixer -lSDL ^
   -static-libgcc -static-libstdc++
 ```
 
