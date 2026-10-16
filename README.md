@@ -217,6 +217,6 @@ As versões anteriores — com os PDFs de cada entrega (`_Trabalho1.pdf`, `_Exer
 - Desenvolvido por **Victor Braga** (matrícula 10/0126481), 2013.
 - Disciplina **Introdução ao Desenvolvimento de Jogos** — Profª. Carla Denise Castanho, UnB/CIC (Turma A, 2013); especificações (PDFs) de autoria da equipe da disciplina.
 - Bibliotecas: [SDL 1.2](https://www.libsdl.org/) e SDL_image/SDL_gfx/SDL_ttf/SDL_mixer — versionadas em `lib/`, com as licenças de terceiros em [`lib/LICENSES/`](lib/LICENSES/NOTICE.md).
-- Sprites da nave: *Spaceship Sprite Package by Kryptid*; tiles espaciais *SpaceTile*; demais imagens e músicas utilizadas nas aulas da disciplina.
+- Assets (arte, música, efeitos e fontes): próprios, CC0 ou livremente redistribuíveis — detalhes e atribuições em [CREDITS.md](CREDITS.md).
 
 Projeto acadêmico, sem fins comerciais.

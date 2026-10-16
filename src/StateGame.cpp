@@ -9,7 +9,7 @@
 
 void StateGame::load(int stack)
 {
-	// C‚mera e Input Manager
+	// C√¢mera e Input Manager
 	camera = NULL;
 	inputManager = NULL;
 
@@ -31,7 +31,7 @@ void StateGame::load(int stack)
 	shipAnimation = new Animation("img/NaveSheet.png", 200, 4);
 	ship = new AccObject(shipAnimation, 0, 0, 94, 100, 100);
 
-	// Explos„o
+	// Explos√£o
 	boom = new Animation("img/BoomSheet.png", 200, 8);
 	boomX = 0;
 	boomY = 0;
@@ -48,10 +48,10 @@ void StateGame::load(int stack)
 	redPlanetCoolDown = new Timer();
 	redPlanetCoolDown->start();
 
-	// Atribui a c‚mera ‡ nave.
+	// Atribui a c√¢mera √† nave.
 	camera->getInstance().bind(ship);
 
-	// M˙sica e sons
+	// M√∫sica e sons
 	sfx = new Audio("sfx/boom.wav", AUDIOTYPE_SOUND);
 	music = new Audio("sfx/stateGame.ogg", AUDIOTYPE_MUSIC);
 	music->play(-1);
@@ -59,7 +59,7 @@ void StateGame::load(int stack)
 	// HUD
 	hud = new HUD();
 
-	// Vari·veis de retorno
+	// Vari√°veis de retorno
 	returnState = 0;
 	returnStack = 0;
 }
@@ -104,7 +104,7 @@ int StateGame::update(int dt)
 	if(ship)
 		ship->update(dt);
 
-	// Explos„o
+	// Explos√£o
 	boom->update(dt);
 
 	// Verifica se deve sair do jogo
@@ -115,10 +115,10 @@ int StateGame::update(int dt)
 	if(inputManager->getInstance().isMouseDown(1) && ufo != NULL)
 		addPlanet();
 
-	// C‚mera
+	// C√¢mera
 	camera->getInstance().update();
 
-	// Colisıes
+	// Colis√µes
 	checkCollision(dt);
 
 	return returnState;
@@ -156,7 +156,7 @@ void StateGame::render()
 	if(ship)
 		ship->render(cameraX, cameraY);
 
-	// Explos„o
+	// Explos√£o
 	if(boomX != 0 || boomY != 0 || !ship)
 		boom->render(boomX - cameraX, boomY - cameraY);
 
@@ -174,11 +174,11 @@ void StateGame::addPlanet()
 		int screenWidth = bg->getWidth();
 		int screenHeight = bg->getHeight();
 
-		// Cria uma posiÁ„o aleatÛria dentro da tela
+		// Cria uma posi√ß√£o aleat√≥ria dentro da tela
 		int planetX = camera->getInstance().getX() + (rand() % screenWidth);
 		int planetY = camera->getInstance().getY() + (rand() % screenHeight);
 
-		// Adiciona o planeta na posiÁ„o
+		// Adiciona o planeta na posi√ß√£o
 		PlanetRed *planetRed = new PlanetRed(redPlanetSprite, planetX, planetY, 20);
 		planetArray.push_back(planetRed);
 	}
@@ -189,14 +189,14 @@ void StateGame::checkCollision(int dt)
 	// Se UFO e Ship existem.
 	if(ship && ufo)
 	{
-		// Testa a colis„o da Ship contra cada um dos planetas.
+		// Testa a colis√£o da Ship contra cada um dos planetas.
 		std::vector<Planet*>::iterator it = planetArray.begin();
 
 		while(it != planetArray.end())
 			// Se colidir
 			if((*it)->collidesWith(ship))
 			{
-				// Altera a posiÁ„o de boomX e boomY para para a posiÁ„o do planeta.
+				// Altera a posi√ß√£o de boomX e boomY para para a posi√ß√£o do planeta.
 				boomX = (*it)->x;
 				boomY = (*it)->y;
 
@@ -209,14 +209,14 @@ void StateGame::checkCollision(int dt)
 				// Muda a vida no HUD
 				hud->setLife(ship->hp);
 
-				// Toca o som da explos„o
+				// Toca o som da explos√£o
 				sfx->play(0);
 			}
 			else
 				++it;
 
 
-		// Teste a colis„o da Ship com o UFO. Caso seja true, defina os hitPoints
+		// Teste a colis√£o da Ship com o UFO. Caso seja true, defina os hitPoints
 		// da Ship como 0.
 		if(ship->collidesWith(ufo))
 			ship->hp = 0;
@@ -224,11 +224,11 @@ void StateGame::checkCollision(int dt)
 		// Teste os hitpoints da Ship. Se for <= 0, o UFO ganhou.
 		if(ship->hp <= 0)
 		{
-			// Defina a posiÁ„o de boomX e boomY como a posiÁ„o da Ship.
+			// Defina a posi√ß√£o de boomX e boomY como a posi√ß√£o da Ship.
 			boomX = ship->x;
 			boomY = ship->y;
 
-			// "Libera" a c‚mera
+			// "Libera" a c√¢mera
 			camera->getInstance().unBind();
 
 			// Delete a Ship, e torne seu ponteiro nulo.
@@ -238,7 +238,7 @@ void StateGame::checkCollision(int dt)
 			// De um update na boom.
 			boom->update(dt);
 
-			// Toca o som de explos„o
+			// Toca o som de explos√£o
 			sfx->play(0);
 
 			// Chama a tela de derrota
@@ -248,17 +248,17 @@ void StateGame::checkCollision(int dt)
 			return;
 		}
 
-		// Teste a colis„o da Ship com a Earth. Se for true, a Ship ganhou.
+		// Teste a colis√£o da Ship com a Earth. Se for true, a Ship ganhou.
 		if(ship->collidesWith(earth))
 		{
 			// Para a nave.
 			ship->stop();
 
-			// Defina a posiÁ„o de boomX e boomY como a posiÁ„o do UFO.
+			// Defina a posi√ß√£o de boomX e boomY como a posi√ß√£o do UFO.
 			boomX = ufo->x;
 			boomY = ufo->y;
 
-			// "Libera" a c‚mera
+			// "Libera" a c√¢mera
 			camera->getInstance().unBind();
 
 			// Delete o UFO, e torne seu ponteiro nulo.
@@ -268,7 +268,7 @@ void StateGame::checkCollision(int dt)
 			// De um update na boom.
 			boom->update(dt);
 
-			// Chama a tela de vitÛria
+			// Chama a tela de vit√≥ria
 			returnState = 3;
 			returnStack = 1;
 

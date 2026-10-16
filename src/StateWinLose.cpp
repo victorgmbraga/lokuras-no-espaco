@@ -18,7 +18,7 @@ void StateWinLose::load(int stack)
 	else if(stack == WIN)
 	{
 		bg = new Sprite("img/stateWin.jpg");
-		txt = new Text("ttf/PirataOne-Regular.ttf", "PARABÉNS AE MANOLO", 28, 0, {255, 255, 255}, 0, 0);
+		txt = new Text("ttf/PirataOne-Regular.ttf", "PARABÃ‰NS AE MANOLO", 28, 0, {255, 255, 255}, 0, 0);
 		music = new Audio("sfx/stateWin.mp3", AUDIOTYPE_MUSIC);
 	}
 
