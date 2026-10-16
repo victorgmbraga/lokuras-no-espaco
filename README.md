@@ -200,7 +200,7 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 ├── img/                     # sprites (nave, planetas, UFO), telas de menu/vitória/derrota e Tileset.png
 ├── map/tileMap.txt          # mapa em camadas
 ├── sfx/                     # músicas (mp3) e boom.wav
-├── ttf/                     # Pirata One e Space Age
+├── ttf/                     # PirataOne e SpaceAge
 ├── build.bat                # compilação (MinGW + SDL 1.2 de lib/) -> bin/game.exe
 ├── run.bat                  # executa o jogo (compila antes, se necessário)
 └── tools/
@@ -212,6 +212,16 @@ As versões anteriores — com os PDFs de cada entrega (`_Trabalho1.pdf`, `_Exer
 
 ---
 
+## Licença
+
+- **Código-fonte** (`src/`, `tools/` e scripts de build): licença **MIT** — texto completo em [`LICENSE`](LICENSE).
+- **Assets do jogo** (`img/`, `sfx/`, `map/`): **CC0 / domínio público** — gerados pelo próprio projeto ou obtidos sob CC0; atribuições em [CREDITS.md](CREDITS.md).
+- **Fontes**: *Pirata One* (SIL OFL 1.1 — texto em `lib/LICENSES/OFL-PirataOne.txt`) e *Space Age* (distribuição livre pelo autor).
+- **Bibliotecas de terceiros** (`lib/` e `bin/`): SDL 1.2 e dependências (LGPL/zlib e afins) — avisos e textos em [`lib/LICENSES/NOTICE.md`](lib/LICENSES/NOTICE.md).
+- `img/PlanetaTerra.png`: foto do acervo da NASA (uso livre, sem royalties).
+
+---
+
 ## Créditos
 
 - Desenvolvido por **Victor Braga** (matrícula 10/0126481), 2013.
@@ -219,4 +229,4 @@ As versões anteriores — com os PDFs de cada entrega (`_Trabalho1.pdf`, `_Exer
 - Bibliotecas: [SDL 1.2](https://www.libsdl.org/) e SDL_image/SDL_gfx/SDL_ttf/SDL_mixer — versionadas em `lib/`, com as licenças de terceiros em [`lib/LICENSES/`](lib/LICENSES/NOTICE.md).
 - Assets (arte, música, efeitos e fontes): próprios, CC0 ou livremente redistribuíveis — detalhes e atribuições em [CREDITS.md](CREDITS.md).
 
-Projeto acadêmico, sem fins comerciais.
+*Projeto de origem acadêmica (UnB/IDJ, 2013), publicado como código aberto.*

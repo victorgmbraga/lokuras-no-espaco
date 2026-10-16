@@ -30,9 +30,6 @@ domínio público:
 | `ttf/PirataOne-Regular.ttf` | "Pirata One" (Rodrigo Fuenzalida e Nicolas Massi, 2012) | SIL Open Font License 1.1 — texto em `lib/LICENSES/OFL-PirataOne.txt` |
 | `ttf/SpaceAge.ttf` | "Space Age" (Justin Callaghan, 2002) | distribuição livre ("Distribute freely") |
 
-> O nome do arquivo `PirataOne-Regular.ttf` foi mantido por compatibilidade com o
-> código; o conteúdo é a fonte Pirata One (OFL).
-
 ## Imagens
 
 | Arquivo | Origem | Licença |
