@@ -289,84 +289,108 @@ def draw_ufo():
 
 # -------------------------------------------------------------------- tiles
 
-def make_tile(kind, seed):
-    """Um tile 75x75 transparente com decoracao espacial."""
-    rnd = random.Random(seed)
+def metal_plate(outer, detail, seed):
+    """Placa metalica 75x75 (plataforma). outer: lados externos com borda."""
     S = 75 * SS
+    rnd = random.Random(seed)
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
+    edge = (20, 23, 30, 255)
+    lightline = (150, 158, 172, 255)
+    darkline = (34, 38, 46, 255)
 
-    def stars(n, big=False):
-        for _ in range(n):
-            x = rnd.uniform(4, 71) * SS
-            y = rnd.uniform(4, 71) * SS
-            r = rnd.choice([1, 1, 1, 2]) * SS
-            a = rnd.randint(120, 240)
-            col = rnd.choice([(255, 255, 255), (210, 225, 255), (255, 235, 210)])
-            d.ellipse([x - r, y - r, x + r, y + r], fill=col + (a,))
+    for y in range(S):
+        d.line([(0, y), (S, y)], fill=lerp((66, 72, 84), (92, 99, 112), y / S) + (255,))
+    for _ in range(150):
+        x = rnd.randrange(S)
+        y = rnd.randrange(S)
+        r, g, b, a = img.getpixel((x, y))
+        v = rnd.randint(-12, 12)
+        img.putpixel((x, y), (clamp(r + v), clamp(g + v), clamp(b + v), 255))
 
-    def rock(x, y, r, seed2):
-        r2 = random.Random(seed2)
-        pts = []
-        k = r2.randint(6, 9)
-        for j in range(k):
-            ang = j / k * 2 * math.pi
-            rr = r * r2.uniform(0.7, 1.15)
-            pts.append(((x + math.cos(ang) * rr) * SS, (y + math.sin(ang) * rr) * SS))
-        d.polygon(pts, fill=(128, 126, 122, 255), outline=(92, 90, 88, 255))
+    t = 3 * SS
+    if outer in ("tl", "t", "tr"):
+        d.rectangle([0, 0, S - 1, t], fill=edge)
+        d.line([(0, t + SS), (S, t + SS)], fill=(120, 128, 142, 160), width=SS)
+    if outer in ("bl", "b", "br"):
+        d.rectangle([0, S - 1 - t, S - 1, S - 1], fill=edge)
+        d.line([(0, S - t - 2 * SS), (S, S - t - 2 * SS)], fill=(120, 128, 142, 120), width=SS)
+    if outer in ("tl", "l", "bl"):
+        d.rectangle([0, 0, t, S - 1], fill=edge)
+    if outer in ("tr", "r", "br"):
+        d.rectangle([S - 1 - t, 0, S - 1, S - 1], fill=edge)
+    if outer == "all":
+        d.rectangle([0, 0, S - 1, S - 1], outline=edge, width=t)
 
-    if kind == "stars_sparse":
-        stars(rnd.randint(3, 6))
-    elif kind == "stars_dense":
-        stars(rnd.randint(10, 16))
-    elif kind == "nebula":
-        color = rnd.choice([(90, 40, 170), (30, 70, 190), (170, 50, 110), (30, 140, 160)])
-        neb = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-        nd = ImageDraw.Draw(neb)
-        for _ in range(3):
-            cx = rnd.uniform(15, 60) * SS
-            cy = rnd.uniform(15, 60) * SS
-            rx = rnd.uniform(10, 26) * SS
-            nd.ellipse([cx - rx, cy - rx * 0.7, cx + rx, cy + rx * 0.7], fill=color + (95,))
-        neb = neb.filter(ImageFilter.GaussianBlur(9))
-        img = Image.alpha_composite(img, neb)
-        stars(5)
-    elif kind == "planet":
-        size = rnd.randint(26, 40)
-        base = rnd.choice([(90, 140, 220), (210, 110, 70), (190, 170, 110), (150, 100, 200)])
-        p = sphere(size, base, (30, 30, 45), (90, 90, 90), seed=seed, craters=rnd.randint(0, 3))
-        x = rnd.randint(2, max(2, 75 - size - 2)) * SS
-        y = rnd.randint(2, max(2, 75 - size - 2)) * SS
-        img.alpha_composite(p, (x, y))
-        stars(3)
-    elif kind == "asteroids":
-        for _ in range(rnd.randint(3, 6)):
-            rock(rnd.uniform(10, 65), rnd.uniform(10, 65), rnd.uniform(3, 7), rnd.randint(0, 9999))
-        stars(2)
-    elif kind == "flare":
-        x, y = rnd.uniform(25, 50) * SS, rnd.uniform(25, 50) * SS
-        for ln, a in ((10, 60), (6, 120), (3, 200)):
-            d.line([x - ln * SS, y, x + ln * SS, y], fill=(230, 240, 255, a), width=SS)
-            d.line([x, y - ln * SS, x, y + ln * SS], fill=(230, 240, 255, a), width=SS)
-        d.ellipse([x - 3 * SS, y - 3 * SS, x + 3 * SS, y + 3 * SS], fill=(255, 255, 255, 240))
-        stars(3)
-    elif kind == "comet":
-        x, y = rnd.uniform(30, 60) * SS, rnd.uniform(15, 40) * SS
-        ang = rnd.uniform(0.5, 1.1)
-        dx, dy = math.cos(ang), math.sin(ang)
-        for t in range(30):
-            a = clamp(150 - t * 5)
-            xx = x - dx * t * SS
-            yy = y - dy * t * SS
-            d.ellipse([xx - SS, yy - SS, xx + SS, yy + SS], fill=(200, 230, 255, a))
-        d.ellipse([x - 3 * SS, y - 3 * SS, x + 3 * SS, y + 3 * SS], fill=(255, 255, 255, 250))
+    m = 6 * SS
+    d.rectangle([m, m, S - 1 - m, S - 1 - m], fill=(82, 88, 101, 255))
+    d.line([(m, m), (S - m, m)], fill=lightline, width=SS)
+    d.line([(m, m), (m, S - m)], fill=lightline, width=SS)
+    d.line([(S - m, m), (S - m, S - m)], fill=darkline, width=SS)
+    d.line([(m, S - m), (S - m, S - m)], fill=darkline, width=SS)
+
+    for x, y in ((4, 4), (S - 5, 4), (4, S - 5), (S - 5, S - 5),
+                 (S // 2, 4), (S // 2, S - 5), (4, S // 2), (S - 5, S // 2)):
+        d.ellipse([x - 2 * SS, y - 2 * SS, x + 2 * SS, y + 2 * SS],
+                  fill=(156, 162, 174, 255), outline=edge)
+
+    if detail == "vent":
+        for i in range(3):
+            y0 = (24 + i * 10) * SS
+            d.rectangle([22 * SS, y0, 53 * SS, y0 + 4 * SS], fill=(52, 57, 68, 255))
+            d.line([(22 * SS, y0), (53 * SS, y0)], fill=lightline, width=SS)
+    elif detail == "grate":
+        for i in range(5):
+            x0 = (14 + i * 10) * SS
+            d.rectangle([x0, 16 * SS, x0 + 5 * SS, 59 * SS], fill=(50, 55, 66, 255))
+            d.line([(x0, 16 * SS), (x0, 59 * SS)], fill=(110, 118, 132, 200), width=SS)
+    elif detail == "hazard":
+        sy = 52 * SS
+        d.rectangle([8 * SS, sy, 67 * SS, sy + 10 * SS], fill=(200, 170, 40, 255))
+        for i in range(-2, 14):
+            x0 = (8 + i * 6) * SS
+            d.line([(x0, sy + 10 * SS), (x0 + 6 * SS, sy)], fill=(30, 30, 30, 255), width=2 * SS)
+    elif detail == "lights":
+        for i in range(4):
+            x0 = (16 + i * 12) * SS
+            d.ellipse([x0, 32 * SS, x0 + 5 * SS, 37 * SS], fill=(70, 220, 235, 255))
+            d.ellipse([x0 + SS, 33 * SS, x0 + 4 * SS, 36 * SS], fill=(210, 250, 255, 255))
+    elif detail == "door":
+        d.rectangle([18 * SS, 14 * SS, 57 * SS, 61 * SS], fill=(58, 63, 75, 255),
+                    outline=darkline, width=2 * SS)
+        d.line([(37 * SS, 14 * SS), (37 * SS, 61 * SS)], fill=darkline, width=2 * SS)
+        d.ellipse([31 * SS, 36 * SS, 34 * SS, 39 * SS], fill=(150, 156, 168, 255))
+        d.ellipse([41 * SS, 36 * SS, 44 * SS, 39 * SS], fill=(150, 156, 168, 255))
+    elif detail == "panel":
+        d.rectangle([22 * SS, 22 * SS, 53 * SS, 53 * SS], fill=(88, 95, 108, 255),
+                    outline=darkline, width=2 * SS)
+        d.line([(22 * SS, 22 * SS), (53 * SS, 22 * SS)], fill=lightline, width=SS)
+    elif detail in ("winl", "winm", "winr"):
+        y0, y1 = 28 * SS, 46 * SS
+        d.rectangle([6 * SS, y0, 69 * SS, y1], fill=(40, 46, 60, 255))
+        for i in range(3):
+            x0 = (10 + i * 20) * SS
+            d.rectangle([x0, y0 + 3 * SS, x0 + 12 * SS, y1 - 3 * SS], fill=(80, 170, 220, 255))
+            d.line([(x0, y0 + 3 * SS), (x0 + 12 * SS, y0 + 3 * SS)],
+                   fill=(180, 230, 250, 255), width=SS)
     return img.resize((75, 75), LANCZOS)
 
 
+PLATE_ROLES = [
+    ("tl", None), ("t", None), ("t", "vent"), ("all", "hazard"),
+    ("t", "lights"), ("tr", None), ("l", None), ("none", "door"),
+    ("none", "grate"), ("none", "panel"), ("all", "hazard"), ("r", "vent"),
+    ("l", "lights"), ("none", None), ("none", None), ("none", "panel"),
+    ("none", None), ("r", "lights"), ("l", "grate"), ("none", "winl"),
+    ("none", "winm"), ("none", "winr"), ("none", "grate"), ("none", "panel"),
+    ("bl", None), ("b", None), ("b", "lights"), ("all", "hazard"),
+    ("all", "panel"), ("br", None),
+]
+
+
 def make_tileset():
-    kinds = (["stars_sparse"] * 4 + ["stars_dense"] * 2 + ["nebula"] * 6 +
-             ["planet"] * 6 + ["asteroids"] * 5 + ["flare"] * 3 + ["comet"] * 4)
-    tiles = [make_tile(kinds[i], seed=1000 + i) for i in range(30)]
+    tiles = [metal_plate(outer, detail, seed=2000 + i)
+             for i, (outer, detail) in enumerate(PLATE_ROLES)]
     sheet = Image.new("RGBA", (450, 450), (0, 0, 0, 0))
     for i, t in enumerate(tiles):
         sheet.alpha_composite(t, ((i % 6) * 75, (i // 6) * 75))
