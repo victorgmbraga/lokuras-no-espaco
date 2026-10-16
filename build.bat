@@ -7,6 +7,7 @@ rem      ex.: set "MINGW=C:\caminho\para\o\seu\mingw32\bin"
 rem   2) tools\mingw32\bin (MinGW baixado pelo proprio build.bat)
 rem   3) g++ no PATH
 rem   4) auto-bootstrap via tools\setup-mingw.ps1 (baixa o winlibs i686)
+rem Defina NO_PAUSE=1 para nao aguardar tecla ao final (usado pelo run.bat).
 setlocal EnableExtensions
 cd /d "%~dp0"
 
@@ -31,7 +32,7 @@ echo   https://github.com/brechtsanders/winlibs_mingw/releases/tag/16.2.0posix-1
 echo   (winlibs-i686-posix-dwarf-gcc-16.2.0-mingw-w64msvcrt-14.0.0-r2.zip)
 echo Extraia o zip e coloque a pasta "mingw32" em tools\ (ou defina a variavel de ambiente MINGW).
 echo.
-pause
+if not defined NO_PAUSE pause
 exit /b 1
 
 :compilar
@@ -53,5 +54,5 @@ if %ERRORLEVEL% EQU 0 (
 ) else (
   echo Build FALHOU com erro %ERRORLEVEL%
 )
-pause
+if not defined NO_PAUSE pause
 exit /b 0

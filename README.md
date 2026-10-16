@@ -68,7 +68,7 @@ g++ -std=gnu++11 -O2 -w -Dmain=SDL_main -I"lib\include" -I"lib\include\SDL" -I"s
   -static-libgcc -static-libstdc++
 ```
 
-As DLLs de runtime necessárias estão versionadas em `bin/` (SDL.dll, SDL_image.dll, SDL_ttf.dll, SDL_mixer.dll e dependências como `libpng15-15`, `zlib1`, `libjpeg-8`, `libfreetype-6`, além de `smpeg.dll` — decodificador de MP3 — e das runtimes `libstdc++-6`/`libgcc_s_dw2-1` exigidas por ele), junto do executável. Depois de compilar, execute `run.bat` — ou `bin\game.exe` a partir da raiz do projeto, pois o jogo carrega os assets por caminhos relativos.
+As DLLs de runtime necessárias estão versionadas em `bin/` (SDL.dll, SDL_image.dll, SDL_ttf.dll, SDL_mixer.dll e dependências como `libpng15-15`, `zlib1`, `libjpeg-8`, `libfreetype-6`, além de `smpeg.dll` — decodificador de MP3 — e das runtimes `libstdc++-6`/`libgcc_s_dw2-1` exigidas por ele), junto do executável. Depois de compilar, execute `run.bat` — que compila automaticamente caso `bin\game.exe` ainda não exista — ou `bin\game.exe` diretamente a partir da raiz do projeto, pois o jogo carrega os assets por caminhos relativos.
 
 ---
 
@@ -202,7 +202,7 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 ├── sfx/                     # músicas (mp3) e boom.wav
 ├── ttf/                     # Pirata One e Space Age
 ├── build.bat                # compilação (MinGW + SDL 1.2 de lib/) -> bin/game.exe
-├── run.bat                  # executa o jogo a partir da raiz
+├── run.bat                  # executa o jogo (compila antes, se necessário)
 └── tools/
     ├── setup-mingw.ps1      # auto-bootstrap do MinGW (download com SHA-256)
     └── mingw32/             # toolchain baixado pelo bootstrap (ignorado pelo git)
