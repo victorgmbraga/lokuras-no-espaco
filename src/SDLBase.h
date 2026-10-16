@@ -10,7 +10,7 @@
 
 #define SCREEN_W 800
 #define SCREEN_H 600
-#define GAME_NAME "Trabalho 4 10/0126481"
+#define GAME_NAME "Lokuras no Espaço"
 
 #include <iostream>
 #include <stdlib.h>
