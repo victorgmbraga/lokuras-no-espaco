@@ -1,12 +1,8 @@
-# Lokuras no Espaço — Projeto IDJ
+# Lokuras no Espaço
 
 Jogo 2D em **C++ com SDL 1.2**, desenvolvido para a disciplina **Introdução ao Desenvolvimento de Jogos (IDJ)** da Universidade de Brasília (UnB/CIC, Turma A, 2013 — Profª. Carla Denise Castanho).
 
 Este repositório reconstrói todo o **fluxo de desenvolvimento da disciplina** em um histórico Git linear: cada entrega (trabalho **TR** ou exercício **EX**) virou um commit, partindo do game loop básico (TR01) até a game engine completa com máquina de estados (TR04), que dá origem ao jogo **Lokuras no Espaço**.
-
-> Projeto para Windows (SDL 1.2 / MinGW 32 bits). Cada commit do histórico contém o PDF oficial da entrega correspondente.
-
----
 
 ## O jogo
 
@@ -31,9 +27,9 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 
 ### Estados
 
-`StateMenu` (título, créditos e música) → `StateGame` (jogabilidade) → `StateWinLose` (tela de vitória "PARABÉNS AE MANOLO" ou derrota "VC MORREU, RSRSRSRS", com música própria). Cada estado tem música tema; o estado de jogo tem `stateGame.mp3` e o SFX `boom.wav`.
+`StateMenu` (título, créditos e música) → `StateGame` (jogabilidade) → `StateWinLose` (tela de vitória ou derrota).
 
----
+Cada estado tem música tema; o estado de jogo tem `stateGame.mp3` e o SFX `boom.wav`.
 
 ## Como compilar e executar
 
@@ -51,8 +47,6 @@ Para usar um MinGW já existente, defina a variável de ambiente `MINGW`:
 ```bat
 set MINGW=<caminho>\mingw32\bin
 ```
-
-> O PDF `SDL-Tutorial_Windows.pdf` presente no histórico do repositório cobre a instalação do SDL 1.2 no Windows.
 
 A linha de compilação usada é, resumidamente:
 
@@ -72,24 +66,17 @@ As DLLs de runtime necessárias estão versionadas em `bin/` (SDL.dll, SDL_image
 
 ---
 
-## Histórico de desenvolvimento (versões)
+## Histórico de desenvolvimento
 
-Cada commit do `master` é uma entrega da disciplina, em ordem cronológica:
-
-```
-TR01 (16/04/2013) → EX01 (20/04) → EX02 (13/05) → TR02 (28/05)
-    → EX03 (07/06) → TR03 (09/06) → TR04 (14/06)
-```
-
-| Versão | Data | Entrega (PDF) | Resumo |
+| Versão | Data | Descrição | Resumo |
 | --- | --- | --- | --- |
-| **TR01** | 16/04/2013 | _Trabalho 1.pdf — Game Loop e Sprite | Game loop, SDLBase, Sprite e GameManager exibindo o fundo |
-| **EX01** | 20/04/2013 | _Exercicio1.pdf — Arrays | Classe `Planet`, vetor de planetas, clique com dano e HP |
-| **EX02** | 13/05/2013 | _Exercicio2.pdf — TileMap | `TileSet`/`TileMap` (mapa montado em código) e rolagem com as setas |
-| **TR02** | 28/05/2013 | _Trabalho2.pdf — Movimento, Herança e Input | `InputManager`, `GameObject`/herança, `Earth`/`Moon`, TileMap de arquivo com parallax |
-| **EX03** | 07/06/2013 | _Exercicio3.pdf — Filas de Comandos | `FollowerObject` (UFO) com fila de posições e `drawLine`; rotozoom no `Sprite` |
-| **TR03** | 09/06/2013 | _Trabalho3.pdf — Animação, Movimento Acelerado, Rotação, Zoom e Colisão | Nave Hyperion, animações, colisões, explosão e câmera vinculada |
-| **TR04** | 14/06/2013 | _Trabalho4.pdf — Texto, Áudio, Timer, StateManager e States | Máquina de estados, HUD, texto, áudio e cooldown |
+| **TR01** | 16/04/2013 | Game Loop e Sprite | Game loop, SDLBase, Sprite e GameManager exibindo o fundo |
+| **EX01** | 20/04/2013 | Arrays | Classe `Planet`, vetor de planetas, clique com dano e HP |
+| **EX02** | 13/05/2013 | TileMap | `TileSet`/`TileMap` (mapa montado em código) e rolagem com as setas |
+| **TR02** | 28/05/2013 | Movimento, Herança e Input | `InputManager`, `GameObject`/herança, `Earth`/`Moon`, TileMap de arquivo com parallax |
+| **EX03** | 07/06/2013 | Filas de Comandos | `FollowerObject` (UFO) com fila de posições e `drawLine`; rotozoom no `Sprite` |
+| **TR03** | 09/06/2013 | Animação, Movimento Acelerado, Rotação, Zoom e Colisão | Nave Hyperion, animações, colisões, explosão e câmera vinculada |
+| **TR04** | 14/06/2013 | Texto, Áudio, Timer, StateManager e States | Máquina de estados, HUD, texto, áudio e cooldown |
 
 ### Changelog por versão
 
@@ -141,8 +128,6 @@ TR01 (16/04/2013) → EX01 (20/04) → EX02 (13/05) → TR02 (28/05)
 - `Text` (SDL_ttf: Pirata One e Space Age), `Audio` (SDL_mixer: 4 músicas de estado + `boom.wav`), `Timer` (cooldown de 3 s para criar planetas) e `HUD` (extra: classe própria com barra de vida verde/vermelha e comandos na tela).
 - Ajustes de gameplay: vida 100, dano de 5 por planeta, som de explosão nas colisões e `AccObject` com **atrito** e `MAX_SPEED` (extra de TR3 consolidado aqui).
 - `StateManager` inicializa SDL_ttf/SDL_mixer via `SDLBase::loadSDL`/`unloadSDL`; `main` passa a rodar o `StateManager`.
-
----
 
 ## Arquitetura
 
@@ -208,10 +193,6 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
     └── mingw32/             # toolchain baixado pelo bootstrap (ignorado pelo git)
 ```
 
-As versões anteriores — com os PDFs de cada entrega (`_Trabalho1.pdf`, `_Exercicio2.pdf` etc.) — estão preservadas nos commits do histórico; use `git log --oneline` e `git show <commit>` para navegar entre elas.
-
----
-
 ## Licença
 
 - **Código-fonte** (`src/`, `tools/` e scripts de build): licença **MIT** — texto completo em [`LICENSE`](LICENSE).
@@ -220,12 +201,10 @@ As versões anteriores — com os PDFs de cada entrega (`_Trabalho1.pdf`, `_Exer
 - **Bibliotecas de terceiros** (`lib/` e `bin/`): SDL 1.2 e dependências (LGPL/zlib e afins) — avisos e textos em [`lib/LICENSES/NOTICE.md`](lib/LICENSES/NOTICE.md).
 - `img/PlanetaTerra.png`: foto do acervo da NASA (uso livre, sem royalties).
 
----
-
 ## Créditos
 
 - Desenvolvido por **Victor Braga** (matrícula 10/0126481), 2013.
-- Disciplina **Introdução ao Desenvolvimento de Jogos** — Profª. Carla Denise Castanho, UnB/CIC (Turma A, 2013); especificações (PDFs) de autoria da equipe da disciplina.
+- Disciplina **Introdução ao Desenvolvimento de Jogos** — Profª. Carla Denise Castanho, UnB/CIC (Turma A, 2013).
 - Bibliotecas: [SDL 1.2](https://www.libsdl.org/) e SDL_image/SDL_gfx/SDL_ttf/SDL_mixer — versionadas em `lib/`, com as licenças de terceiros em [`lib/LICENSES/`](lib/LICENSES/NOTICE.md).
 - Assets (arte, música, efeitos e fontes): próprios, CC0 ou livremente redistribuíveis — detalhes e atribuições em [CREDITS.md](CREDITS.md).
 
