@@ -22,7 +22,6 @@ originais foram preservados nos arquivos, sem alteração.
 | SDL_image.dll | zlib |
 | SDL_ttf.dll | zlib |
 | SDL_mixer.dll | zlib |
-| smpeg.dll (SMPEG) | LGPL 2 |
 | libpng15-15.dll | zlib |
 | zlib1.dll | zlib |
 | libjpeg-8.dll | IJG (BSD-like) |
