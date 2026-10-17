@@ -6,33 +6,88 @@
  */
 
 #include "FollowerObject.h"
+#include "Camera.h"
+#include <cmath>
 
-FollowerObject::FollowerObject(Sprite* sprite, float x, float y): GameObject(x, y, sprite->getWidth(), sprite->getHeight())
+FollowerObject::FollowerObject(Sprite* sprite, float x, float y):
+	GameObject(x, y, sprite->getRenderWidth(), sprite->getRenderHeight())
 {
 	this->sprite = sprite;
 	speedX = 0;
 	speedY = 0;
 	deltaX = 0;
 	deltaY = 0;
+	autonomous = false;
+	target = NULL;
+	chaseSpeed = 0;
 	xCoordinatesQueue = new std::queue<float>;
 	yCoordinatesQueue = new std::queue<float>;
 }
 
+FollowerObject::~FollowerObject()
+{
+	delete(xCoordinatesQueue);
+	delete(yCoordinatesQueue);
+}
+
+void FollowerObject::setAutonomous(bool value)
+{
+	autonomous = value;
+}
+
+void FollowerObject::setChaseTarget(GameObject* target)
+{
+	this->target = target;
+}
+
+void FollowerObject::setChaseSpeed(float speed)
+{
+	chaseSpeed = speed;
+}
+
+bool FollowerObject::isAutonomous()
+{
+	return autonomous;
+}
+
 void FollowerObject::update(int dt)
 {
-	// Capura o input do botão direito do mouse. Se sim, coloca
-	// a posição dele na fila de ações.
-	if(inputManager->getInstance().isMouseDown(3))
+	// Modo perseguidor (UFO da partida): avanca sempre na direcao do
+	// centro do alvo, com velocidade controlada pelo StateGame.
+	if(autonomous)
 	{
-		int mousePosX = inputManager->getInstance().mousePosX();
-		int mousePosY = inputManager->getInstance().mousePosY();
-		float cameraX = camera->getInstance().getX();
-		float cameraY = camera->getInstance().getY();
+		if(target)
+		{
+			float tx = target->x + target->w/2 - (x + w/2);
+			float ty = target->y + target->h/2 - (y + h/2);
+			float dist = sqrtf(tx*tx + ty*ty);
 
-		enqueueCommand(mousePosX + cameraX, mousePosY + cameraY);
+			if(dist > 2.0f)
+			{
+				float passo = chaseSpeed * dt;
+				if(passo > dist)
+					passo = dist;
+				x += tx / dist * passo;
+				y += ty / dist * passo;
+			}
+		}
+		return;
 	}
 
-	// Se há um destino na pilha, muda a velocidade do objeto.
+	// Captura o input do botÃ£o direito do mouse. Se sim, coloca
+	// a posiÃ§Ã£o dele na fila de aÃ§Ãµes. O destino guarda o ponto onde o
+	// CENTRO do objeto deve parar (por isso o meio dos tamanhos).
+	if(InputManager::getInstance().isMouseDown(3))
+	{
+		int mousePosX = InputManager::getInstance().mousePosX();
+		int mousePosY = InputManager::getInstance().mousePosY();
+		float cameraX = Camera::getInstance().getX();
+		float cameraY = Camera::getInstance().getY();
+
+		enqueueCommand(mousePosX + cameraX - w/2, mousePosY + cameraY - h/2);
+	}
+
+	// Se hÃ¡ um destino na pilha, muda a velocidade do objeto.
 	if(!(bool)xCoordinatesQueue->empty() || !(bool)yCoordinatesQueue->empty())
 	{
 		if(!deltaX)
@@ -40,8 +95,20 @@ void FollowerObject::update(int dt)
 		if(!deltaY)
 			deltaY = yCoordinatesQueue->front() - y;
 
-		speedX = 0.001 * deltaX * dt;
-		speedY = 0.001 * deltaY * dt;
+		speedX = FOLLOW_SPEED * deltaX * dt;
+		speedY = FOLLOW_SPEED * deltaY * dt;
+
+		// Limita a velocidade: com dt real grande, delta*0.0008*dt pode
+		// dar um passo desproporcional.
+		float cap = FOLLOW_MAX * dt;
+		if(speedX > cap)
+			speedX = cap;
+		if(speedX < -cap)
+			speedX = -cap;
+		if(speedY > cap)
+			speedY = cap;
+		if(speedY < -cap)
+			speedY = -cap;
 
 		if((deltaX >= 0 && x >= xCoordinatesQueue->front()) || (deltaX <= 0 && x <= xCoordinatesQueue->front()) ||
 			(deltaY >= 0 && y >= yCoordinatesQueue->front()) || (deltaY <= 0 && y <= yCoordinatesQueue->front()))
@@ -68,43 +135,38 @@ void FollowerObject::update(int dt)
 
 void FollowerObject::render(float cameraX, float cameraY)
 {
-	// Calcula o centro do objeto (para não renderizar o
-	// canto superior esquerdo).
-	float fixedX = x - sprite->getWidth()/2;
-	float fixedY = y - sprite->getHeight()/2;
-
+	// box e imagem tem o mesmo tamanho (getRenderWidth no construtor):
+	// desenhar de (x, y) deixa a hitbox exatamente sobre o sprite.
 	if(sprite)
-		sprite->render(fixedX - cameraX, fixedY - cameraY);
+		sprite->render(x - cameraX, y - cameraY);
 }
 
 void FollowerObject::renderQueueLines(float cameraX, float cameraY)
 {
-	std::queue<float> *auxXCoordinatesQueue = new std::queue<float>;
-	std::queue<float> *auxYCoordinatesQueue = new std::queue<float>;
-	float x = this->x;
-	float y = this->y;
+	// Copias locais das filas: a original NAO e tocada (antes ela era
+	// esvaziada e recriada a cada frame - vazamento em todo frame ativo).
+	std::queue<float> auxX(*xCoordinatesQueue);
+	std::queue<float> auxY(*yCoordinatesQueue);
+
+	// A cadeia de linhas sai do CENTRO do objeto e passa pelos centros.
+	float x = this->x + w/2;
+	float y = this->y + h/2;
 	float destX;
 	float destY;
 
-	while(!(bool)xCoordinatesQueue->empty())
+	while(!(bool)auxX.empty())
 	{
-		 destX = xCoordinatesQueue->front();
-		 destY = yCoordinatesQueue->front();
+		destX = auxX.front() + w/2;
+		destY = auxY.front() + h/2;
 
-		 SDLBase::drawLine(x - cameraX, y - cameraY, destX - cameraX, destY - cameraY, 0xFFFFFF, 1);
+		SDLBase::drawLine(x - cameraX, y - cameraY, destX - cameraX, destY - cameraY, 0xFFFFFF, 1);
 
-		 x = destX;
-		 y = destY;
+		x = destX;
+		y = destY;
 
-		 xCoordinatesQueue->pop();
-		 yCoordinatesQueue->pop();
-
-		 auxXCoordinatesQueue->push(destX);
-		 auxYCoordinatesQueue->push(destY);
+		auxX.pop();
+		auxY.pop();
 	}
-
-	xCoordinatesQueue = auxXCoordinatesQueue;
-	yCoordinatesQueue = auxYCoordinatesQueue;
 }
 
 void FollowerObject::enqueueCommand(float x, float y)

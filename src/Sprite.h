@@ -29,8 +29,14 @@ class Sprite
 		SDL_Rect* getClip();
 		int getWidth();
 		int getHeight();
+		// Dimensoes como o sprite aparece na tela (rotozoom/escala aplicada).
+		int getRenderWidth();
+		int getRenderHeight();
 		void load(string arquivo);
 		void resizeCover(int width, int height);
+		// Escala fixa "assada" na surface (nave/Terra/UFO/Lua): a hitbox passa a
+		// ser EXATAMENTE a imagem renderizada, sem offsets de centro.
+		void scale(float factor);
 		void clip(int x, int y, int w, int h);
 		virtual void update(int dt) { };
 		void render(int x, int y);

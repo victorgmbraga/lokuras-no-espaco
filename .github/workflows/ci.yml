@@ -1,0 +1,42 @@
+# CI do Lokuras no Espaço: build no Linux + smoke test com drivers dummy.
+#
+# O jogo roda 5 segundos sem display real (SDL_VIDEODRIVER=dummy) e o
+# timeout precisa MATAR o processo (exit 124) - se o jogo travar ou sair
+# antes, o smoke falha.
+
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: SDL 1.2 (dev)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libsdl1.2-dev \
+            libsdl-image1.2-dev \
+            libsdl-ttf2.0-dev \
+            libsdl-mixer1.2-dev \
+            libsdl-gfx1.2-dev
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Smoke test (drivers dummy, 5 s)
+        run: |
+          SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy timeout 5 ./bin/game
+          status=$?
+          # 124 = o timeout matou o jogo no ar: comportamento esperado.
+          if [ "$status" -ne 124 ]; then
+            echo "O jogo saiu/crashou antes do timeout (exit $status)."
+            exit 1
+          fi

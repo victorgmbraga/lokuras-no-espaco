@@ -8,9 +8,10 @@
 #ifndef SDLBASE_H_
 #define SDLBASE_H_
 
-#define SCREEN_W 1280
-#define SCREEN_H 720
-#define GAME_NAME "Lokuras no Espaço"
+// Constantes em constexpr (em vez de #define) para terem tipo e escopo.
+constexpr int SCREEN_W = 1280;
+constexpr int SCREEN_H = 720;
+constexpr const char* GAME_NAME = "Lokuras no Espaço";
 
 #include <iostream>
 #include <stdlib.h>
@@ -39,6 +40,8 @@ class SDLBase
 		static void renderSurface(SDL_Surface* surface, SDL_Rect* clip, SDL_Rect* dst);
 		static void atualizarTela();
 		static void drawLine(int x1, int y1, int x2, int y2, int rgb, int spacing);
+		static void drawCircle(int cx, int cy, int r, int rgb);
+		static void drawOverlay(int alpha);
 		static SDL_Surface* clip(SDL_Surface* original, SDL_Rect* clip);
 		static SDL_Surface* rotoZoom(SDL_Surface* surface, float angle, float scalex = 1.0f, float scaley = 1.0f);
 		static void drawRect(int x, int y, int w, int h, int rgb);

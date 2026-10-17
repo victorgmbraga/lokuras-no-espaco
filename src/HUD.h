@@ -10,6 +10,7 @@
 
 #include "SDLBase.h"
 #include "Text.h"
+#include "PlayStats.h"
 
 class HUD
 {
@@ -18,13 +19,18 @@ class HUD
 		Text *commandsText;
 		Text *commandsText2;
 		Text *commandsText3;
+		Text *destroyedText;
+		Text *timerText;
+		Text *pauseText;
+		Text *pauseHint;
 		int life;
 		void displayLife();
 	public:
 		HUD();
 		virtual ~HUD();
-		void update();
+		void update(int timeMs, int destroyed);
 		void render();
+		void renderPause();
 		void setLife(int life);
 };
 

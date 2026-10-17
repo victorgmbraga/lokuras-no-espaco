@@ -8,10 +8,6 @@
 #ifndef GAMEMANAGER_H_
 #define GAMEMANAGER_H_
 
-#define TILEMAP_SIZE 16
-#define TILE_SIZE 75
-#define N_TEXTURES 30
-
 #include <iostream>
 #include <string>
 #include "Animation.h"
@@ -25,6 +21,8 @@
 #include "TileMap.h"
 #include "InputManager.h"
 #include "FollowerObject.h"
+#include "PowerUp.h"
+#include "PlayStats.h"
 #include <stdlib.h>
 #include <vector>
 #include "State.h"
@@ -38,12 +36,6 @@ using namespace std;
 class StateGame: public State
 {
 	private:
-		// Câmera
-		Camera *camera;
-
-		// Input Manager
-		InputManager *inputManager;
-
 		// Background
 		Sprite *bg;
 
@@ -60,11 +52,11 @@ class StateGame: public State
 		Sprite *earthSprite;
 		Earth *earth;
 
-		// Lua
+		// Lua (perigo em orbita)
 		Sprite *moonSprite;
 		Moon *moon;
 
-		// UFO
+		// UFO (perseguidor autonomo)
 		Sprite *ufoSprite;
 		FollowerObject *ufo;
 
@@ -72,23 +64,43 @@ class StateGame: public State
 		Animation *shipAnimation;
 		AccObject *ship;
 
-		// Música e Sons
+		// MÃºsica e Sons
 		Audio *music;
 		Audio *sfx;
+		Audio *sfxPickup;
+		Audio *sfxEngine;
 
 		// HUD
 		HUD *hud;
 
-		// Explosão
+		// ExplosÃ£o (one-shot)
 		Animation *boom;
 		float boomX, boomY;
+		bool boomActive;
 
-		// Variáveis de retorno
+		// Power-ups
+		std::vector<PowerUp*> powerUpArray;
+		Sprite *powerUpSprites[3];
+		int powerUpCooldown;
+
+		// Estado da partida
+		Timer *gameTimer;
+		int gameTimeMs;
+		int destroyedCount;
+		int invulnTime;     // ms de i-frames restantes
+		float gravX, gravY; // "corrente" gravitacional da Terra (px/ms)
+		int shakeTime;      // ms de tremor de tela restantes
+		bool paused;
+
+		// VariÃ¡veis de retorno
 		int returnState;
 		int returnStack;
 
 		void checkCollision(int dt);
 		void addPlanet();
+		void spawnPowerUp();
+		void endGame(bool win);
+		void renderObjective(float cameraX, float cameraY);
 	public:
 		StateGame() {}
 		virtual ~StateGame() {}

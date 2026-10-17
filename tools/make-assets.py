@@ -4,18 +4,23 @@ make-assets.py - gera os assets originais do jogo (CC0 / dominio publico).
 
 Substitui as artes de terceiros (Blizzard, Kryptid etc.) por versoes proprias,
 mantendo exatamente os nomes, tamanhos e layouts esperados pelo codigo:
-  img/fundo.png           800x600      (fundo do jogo)
-  img/stateMenu.jpg       800x600      (tela de menu)
-  img/stateWin.jpg        800x600      (tela de vitoria)
-  img/stateLose.jpg       800x600      (tela de derrota)
+  img/fundo.png           1280x720     (fundo do jogo)
+  img/stateMenu.jpg       1280x720     (tela de menu)
+  img/stateWin.jpg        1280x720     (tela de vitoria)
+  img/stateLose.jpg       1280x720     (tela de derrota)
   img/ufo.png             32x32        (UFO do FollowerObject)
   img/PlanetaVermelho.png 44x44        (planetas vermelhos)
   img/Lua.png             16x16        (lua que orbita a Terra)
+  img/PowerVida.png       24x24        (cristal: +20 de vida)
+  img/PowerEscudo.png     24x24        (cristal: escudo 6 s)
+  img/PowerTurbo.png      24x24        (cristal: turbo x1.6 por 5 s)
   img/NaveSheet.png       376x100      (4 quadros de 94x100 - nave)
   img/BoomSheet.png       760x100      (8 quadros de 95x100 - explosao)
   img/Tileset.png         450x450      (grid 6x5 de tiles 75x75)
   img/tileset/SpaceTile-XX.png         (tiles individuais, usados no EX02)
   sfx/boom.wav            efeito de explosao sintetizado
+  sfx/pickup.wav          efeito de coleta de cristal
+  sfx/engine.wav          hum gravavel do motor da nave
 
 Uso: python tools/make-assets.py <pasta-de-saida>
 Sem dependencias alem de Pillow. Sem IA generativa: tudo desenhado/sintetizado aqui.
@@ -422,6 +427,101 @@ def make_boom_wav(path, seconds=0.7, rate=22050):
         w.writeframes(frames)
 
 
+def make_pickup_wav(path, rate=22050):
+    """Ding de coleta: dois senos agudos curtos em sequencia."""
+    notes = ((659.26, 0.08, 26.0), (1174.66, 0.14, 20.0))  # E5, D6
+    samples = []
+    for f, dur, decay in notes:
+        n = int(rate * dur)
+        for i in range(n):
+            t = i / rate
+            env = math.exp(-t * decay)
+            tick = math.sin(2 * math.pi * f * t) + 0.35 * math.sin(2 * math.pi * f * 2 * t)
+            samples.append(tick * env * 0.6)
+    peak = max(1e-9, max(abs(s) for s in samples))
+    frames = b"".join(struct.pack("<h", int(s / peak * 0.7 * 32767)) for s in samples)
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(frames)
+
+
+def make_engine_wav(path, seconds=0.8, rate=22050):
+    """Hum do motor: ruido grave filtrado, costurado para tocar em loop."""
+    rnd = random.Random(7)
+    n = int(seconds * rate)
+    raw = [rnd.uniform(-1.0, 1.0) for _ in range(n)]
+
+    # passa-baixa dupla deixa o ruido "grave e rodante"
+    lp1 = lp2 = 0.0
+    proc = []
+    for s in raw:
+        lp1 += 0.06 * (s - lp1)
+        lp2 += 0.06 * (lp1 - lp2)
+        proc.append(lp2)
+
+    # crossfade das pontas: loop sem estalo
+    fade_n = int(0.05 * rate)
+    for i in range(fade_n):
+        t = i / fade_n
+        proc[i] = proc[i] * t + proc[n - fade_n + i] * (1.0 - t)
+    samples = proc[: n - fade_n]
+
+    # rumble periodico de ciclos inteiros (continuidade perfeita no loop)
+    total = len(samples) / rate
+    for j in range(len(samples)):
+        t = j / rate
+        samples[j] += 0.35 * math.sin(2 * math.pi * (9 / total) * t)
+
+    peak = max(1e-9, max(abs(s) for s in samples))
+    frames = b"".join(struct.pack("<h", int(s / peak * 0.55 * 32767)) for s in samples)
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(frames)
+
+
+# -------------------------------------------------------------------- power-ups
+
+# Cristais 24x24 de power-up (losango facetado).
+GEM_SPECS = {
+    "PowerVida":   ((80, 235, 125), (14, 80, 40)),
+    "PowerEscudo": ((85, 165, 255), (18, 45, 105)),
+    "PowerTurbo":  ((255, 165, 65), (110, 55, 12)),
+}
+
+
+def draw_gem(name):
+    base, dark = GEM_SPECS[name]
+    w = 24
+    img = Image.new("RGBA", (w * SS, w * SS), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    def P(pts):
+        return [(x * SS, y * SS) for (x, y) in pts]
+
+    outline = (22, 26, 34, 255)
+    top = (12, 3)
+    left = (3, 11)
+    right = (21, 11)
+    bottom = (12, 21)
+    mid = (12, 11)
+
+    # corpo
+    d.polygon(P([top, right, bottom, left]), fill=base, outline=outline)
+    # facetas
+    d.polygon(P([top, left, mid]), fill=lerp(base, (255, 255, 255), 0.5))
+    d.polygon(P([top, right, mid]), fill=base)
+    d.polygon(P([bottom, left, mid]), fill=dark)
+    d.polygon(P([bottom, right, mid]), fill=lerp(base, dark, 0.55))
+    # brilho
+    d.line(P([(8, 8), (10, 5)]), fill=(255, 255, 255, 230), width=SS)
+    d.point(P([(9, 15)]), fill=(255, 255, 255, 160))
+    return img.resize((w, w), LANCZOS)
+
+
 # ---------------------------------------------------------------------- main
 
 def main():
@@ -434,32 +534,35 @@ def main():
     os.makedirs(tiles_dir, exist_ok=True)
 
     fundo = starfield(
-        800, 600, seed=7, top=(4, 6, 16), bottom=(10, 14, 34),
-        nebulae=[((70, 100, 200), 60, 5, 90, 200), ((120, 90, 190), 45, 3, 70, 160)],
-        star_count=420,
-        planet=(48, 520, 40, 1.0, ((150, 160, 175), (40, 44, 60), (90, 95, 110))))
+        1280, 720, seed=7, top=(4, 6, 16), bottom=(10, 14, 34),
+        nebulae=[((70, 100, 200), 60, 6, 120, 280), ((120, 90, 190), 45, 4, 90, 220)],
+        star_count=800,
+        planet=(56, 610, 56, 1.0, ((150, 160, 175), (40, 44, 60), (90, 95, 110))))
     fundo.convert("RGB").save(os.path.join(img_dir, "fundo.png"))
 
     menu = starfield(
-        800, 600, seed=11, top=(8, 4, 20), bottom=(16, 10, 38),
-        nebulae=[((150, 70, 210), 70, 5, 100, 220), ((80, 80, 230), 45, 3, 80, 170)],
-        star_count=380,
-        planet=(40, 585, 40, 1.4, ((140, 110, 190), (35, 30, 55), (120, 100, 170))))
+        1280, 720, seed=11, top=(8, 4, 20), bottom=(16, 10, 38),
+        nebulae=[((150, 70, 210), 70, 6, 130, 300), ((80, 80, 230), 45, 4, 100, 240)],
+        star_count=720,
+        planet=(48, 685, 48, 1.3, ((140, 110, 190), (35, 30, 55), (120, 100, 170))))
     menu.convert("RGB").save(os.path.join(img_dir, "stateMenu.jpg"), quality=85)
 
     win = starfield(
-        800, 600, seed=23, top=(10, 8, 6), bottom=(38, 22, 10),
-        nebulae=[((220, 150, 60), 70, 5, 100, 230), ((230, 110, 90), 40, 3, 70, 150)],
-        star_count=350,
-        planet=(90, 560, 40, 1.5, ((210, 150, 90), (60, 40, 30), (150, 120, 80))))
+        1280, 720, seed=23, top=(10, 8, 6), bottom=(38, 22, 10),
+        nebulae=[((220, 150, 60), 70, 6, 130, 300), ((230, 110, 90), 40, 4, 90, 200)],
+        star_count=660,
+        planet=(48, 650, 48, 1.4, ((210, 150, 90), (60, 40, 30), (150, 120, 80))))
     win.convert("RGB").save(os.path.join(img_dir, "stateWin.jpg"), quality=85)
 
     lose = starfield(
-        800, 600, seed=31, top=(10, 4, 4), bottom=(30, 8, 8),
-        nebulae=[((190, 50, 50), 65, 5, 100, 220), ((130, 40, 90), 40, 3, 70, 160)],
-        star_count=320,
-        planet=(60, 560, 40, 1.2, ((160, 80, 80), (40, 20, 25), (110, 60, 60))))
+        1280, 720, seed=31, top=(10, 4, 4), bottom=(30, 8, 8),
+        nebulae=[((190, 50, 50), 65, 6, 130, 300), ((130, 40, 90), 40, 4, 90, 220)],
+        star_count=600,
+        planet=(48, 655, 48, 1.2, ((160, 80, 80), (40, 20, 25), (110, 60, 60))))
     lose.convert("RGB").save(os.path.join(img_dir, "stateLose.jpg"), quality=85)
+
+    for name in GEM_SPECS:
+        draw_gem(name).save(os.path.join(img_dir, name + ".png"))
 
     ufo = draw_ufo()
     ufo.save(os.path.join(img_dir, "ufo.png"))
@@ -479,6 +582,8 @@ def main():
         t.save(os.path.join(tiles_dir, "SpaceTile-%02d.png" % (i + 1)))
 
     make_boom_wav(os.path.join(sfx_dir, "boom.wav"))
+    make_pickup_wav(os.path.join(sfx_dir, "pickup.wav"))
+    make_engine_wav(os.path.join(sfx_dir, "engine.wav"))
 
     print("assets gerados em:", os.path.abspath(out))
 

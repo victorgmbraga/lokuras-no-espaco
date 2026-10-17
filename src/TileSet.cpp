@@ -12,19 +12,20 @@ TileSet::TileSet(int tileWidth, int tileHeight, std::string filePath)
 	this->tileWidth = tileWidth;
 	this->tileHeight = tileHeight;
 	tileSet = new Sprite(filePath);
-	lines = (tileSet->getWidth())/tileWidth;
-	columns = (tileSet->getHeight())/tileHeight;
-	destRect = NULL;
+
+	// "columns"= tiles na HORIZONTAL, "lines"= tiles na VERTICAL.
+	columns = (tileSet->getWidth())/tileWidth;
+	lines = (tileSet->getHeight())/tileHeight;
 }
 
 TileSet::TileSet(std::string filePath, int lines, int columns)
 {
+	// Neste construtor: "columns"= divisoes horizontais, "lines"= verticais.
 	this->lines = lines;
 	this->columns = columns;
 	tileSet = new Sprite(filePath);
-	tileWidth = (tileSet->getWidth())/lines;
-	tileHeight = (tileSet->getHeight())/columns;
-	destRect = NULL;
+	tileWidth = (tileSet->getWidth())/columns;
+	tileHeight = (tileSet->getHeight())/lines;
 }
 
 TileSet::TileSet(int tileWidth, int tileHeight)
@@ -34,7 +35,6 @@ TileSet::TileSet(int tileWidth, int tileHeight)
 	this->tileWidth = tileWidth;
 	this->tileHeight = tileHeight;
 	tileSet = NULL;
-	destRect = NULL;
 }
 
 void TileSet::addTile(string filePath)
@@ -50,6 +50,7 @@ void TileSet::render(int index, float posX, float posY)
 {
 	if (usingSingleFile())
 	{
+		// Linha = indice / numero de colunas; coluna = resto.
 		int indexLine = index / columns;
 		int indexColumn = index % columns;
 

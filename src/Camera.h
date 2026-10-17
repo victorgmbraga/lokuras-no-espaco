@@ -8,7 +8,8 @@
 #ifndef CAMERA_H_
 #define CAMERA_H_
 
-#define CAMERA_SPEED 10.0f
+// Velocidade da camara livre em px/ms (tempo real, nao por frame).
+#define CAMERA_SPEED 0.6f
 
 class GameObject;
 
@@ -21,13 +22,15 @@ class Camera
 {
 	private:
 		float x, y;
-		InputManager *inputManager;
-		Camera(float x = 0, float y = 0, GameObject* bindObject = NULL);
 		static Camera *instance;
 		GameObject *bindObject;
+		Camera(float x = 0, float y = 0, GameObject* bindObject = NULL);
+
+		Camera(const Camera&) = delete;
+		Camera& operator=(const Camera&) = delete;
 	public:
 		static Camera& getInstance();
-		void update();
+		void update(int dt);
 		inline float getX() { return x; }
 		inline float getY() { return y; }
 		void bind(GameObject* bindObject);

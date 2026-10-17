@@ -13,7 +13,7 @@
 #include "Sprite.h"
 #include "Text.h"
 #include "Audio.h"
-#include "InputManager.h"
+#include "PlayStats.h"
 
 class StateMenu: public State
 {
@@ -21,9 +21,11 @@ class StateMenu: public State
 		Sprite *bg;
 		Text *pressEnter;
 		Text *title;
+		Text *recordText;  // recorde persistido (NULL se ainda nao existe)
 		Audio *music;
+		int titleX, titleY;
+		float menuTime;    // para o "swing" do titulo
 		int returnState;
-		InputManager *inputManager;
 	public:
 		StateMenu() {}
 		virtual ~StateMenu() {}

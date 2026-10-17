@@ -1,7 +1,11 @@
 *.exe
 bin/game
+bin/game-dbg
 stderr.txt
 stdout.txt
 tools/mingw32/
 tools/sdl12/
 tools/*.zip
+.auto-backup/
+.delta/
+lokuras.rec

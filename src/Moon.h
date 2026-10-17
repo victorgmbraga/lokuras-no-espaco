@@ -8,10 +8,9 @@
 #ifndef MOON_H_
 #define MOON_H_
 
-#define MOON_SPEED 0.001
+#define MOON_SPEED 0.0005 // rad/ms
 
 #include "Planet.h"
-#include "Camera.h"
 #include <math.h> // sin/cos (o Windows aceitava "Math.h", mas o Linux diferencia maiusculas)
 
 class Moon: public Planet

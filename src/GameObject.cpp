@@ -13,8 +13,6 @@ GameObject::GameObject(float x, float y, float w, float h)
 	this->y = y;
 	this->w = w;
 	this->h = h;
-	camera = NULL;
-	inputManager = NULL;
 }
 
 bool GameObject::collidesWith(GameObject* other)
@@ -31,12 +29,12 @@ bool GameObject::collidesWith(GameObject* other)
 	rectB.w = other->w;
 	rectB.h = other->h;
 
-	// Para calcular a colisão entre dois retângulos, faremos uma série de testes
-	// para verificar que eles não interceptam, cobrindo todas as possibilidades. Se todos
-	// estes testes falharem, significa que ocorreu a intercepção.
+	// Para calcular a colisÃ£o entre dois retÃ¢ngulos, faremos uma sÃ©rie de testes
+	// para verificar que eles nÃ£o interceptam, cobrindo todas as possibilidades. Se todos
+	// estes testes falharem, significa que ocorreu a intercepÃ§Ã£o.
 
-	// Sejam dois retângulos A = (XA, YA, dxA, dyA) e B = (XB, YB, dxB, dyB).
-	// diffX= XA – XB e diffY = YA – YB.
+	// Sejam dois retÃ¢ngulos A = (XA, YA, dxA, dyA) e B = (XB, YB, dxB, dyB).
+	// diffX= XA â€“ XB e diffY = YA â€“ YB.
 	float diffX = rectA.x - rectB.x;
 	float diffY = rectA.y - rectB.y;
 
@@ -46,7 +44,7 @@ bool GameObject::collidesWith(GameObject* other)
 	// Se diffY > dyB ou -diffY > dyA, retorna falso.
 	else if(diffY > rectB.h || -diffY > rectA.h)
 		return false;
-	// Se falhar em todos estes testes, então retorna verdadeiro.
+	// Se falhar em todos estes testes, entÃ£o retorna verdadeiro.
 	else
 		return true;
 }

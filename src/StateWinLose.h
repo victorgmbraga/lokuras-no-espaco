@@ -16,17 +16,18 @@
 #include "Sprite.h"
 #include "Text.h"
 #include "Audio.h"
-#include "InputManager.h"
+#include "PlayStats.h"
 
 class StateWinLose: public State
 {
 	private:
 		Sprite *bg;
 		Text *txt;
+		Text *statsText;   // tempo, planetas e pontos da partida
+		Text *recordText;  // "NOVO RECORDE!" quando for o caso (NULL senao)
 		Text *pressEnter;
 		Audio *music;
 		int returnState;
-		InputManager *inputManager;
 	public:
 		StateWinLose() {}
 		virtual ~StateWinLose() {}

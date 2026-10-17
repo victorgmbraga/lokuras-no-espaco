@@ -8,11 +8,8 @@
 #ifndef STATEMANAGER_H_
 #define STATEMANAGER_H_
 
-#define STATE 0
-#define STATE_MENU 1
-#define STATE_GAME 2
-#define STATE_WINLOSE 3
-#define STATE_QUIT -1
+// Os codigos STATE_* agora moram em State.h (estados precisam devolver
+// esses codigos sem conhecer o StateManager).
 
 #include "SDLBase.h"
 #include "Timer.h"
@@ -28,7 +25,6 @@ class StateManager
 		State *currentState;
 		int stack;
 		Timer *timer;
-		InputManager *inputManager;
 		int dt;
 	public:
 		StateManager();

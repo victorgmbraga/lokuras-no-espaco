@@ -1,5 +1,6 @@
 # Lokuras no Espaço
 
+![CI](https://github.com/victorgmbraga/lokuras-no-espaco/actions/workflows/ci.yml/badge.svg)
 ![Gameplay de Lokuras no Espaço](game.jpg)
 
 Jogo 2D em **C++ com SDL 1.2**, desenvolvido para a disciplina **Introdução ao Desenvolvimento de Jogos (IDJ)** da Universidade de Brasília (UnB/CIC, Turma A, 2013 — Profª. Carla Denise Castanho).
@@ -8,13 +9,20 @@ Este repositório reconstrói todo o **fluxo de desenvolvimento da disciplina** 
 
 ## O jogo
 
-Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas. Sua única esperança é voltar para a **Terra** — mas o caminho é cheio de planetas vermelhos e um UFO teimosamente em seu encalço.
+Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas. Sua única esperança é voltar para a **Terra** — mas o caminho é cheio de planetas vermelhos, uma lua indesejável e um UFO teimosamente em seu encalço.
 
-- **Objetivo:** alcançar a Terra sem ser capturado pelo UFO.
-- **Planetas vermelhos** aparecem pela tela (spawn controlado por cooldown); colidir custa **5 de vida** (a nave começa com **100**, mostrada em uma barra no HUD).
-- **UFO:** segue uma **fila de comandos de posição** (com as "queue lines" desenhadas no caminho). Se ele alcançar a nave, é derrota na hora.
-- **Explosão:** ao colidir com planetas ou UFO, uma animação de explosão (BoomSheet) e som de efeito são disparados.
-- **Câmera** centralizada na nave.
+- **Objetivo:** alcançar a Terra sem ser capturado pelo UFO. A seta amarela na borda da tela aponta a direção da Terra quando ela está fora do campo de visão.
+- **UFO:** caça a nave **sozinho** e acelera com o tempo (a partir de ~2 minutos fica mais rápido que a nave pela velocidade base). Capturado = derrota imediata (o escudo dá uma última chance de escapar).
+- **Planetas vermelhos** brotam pela tela durante a partida (clique esquerdo cria um, com cooldown); colidir custa **5 de vida**. A lua orbita a Terra e custa **10**. A nave começa com **100** de vida (barra + contador no HUD).
+- **Invulnerabilidade:** após levar dano a nave fica **0,8 s intocável** (piscando) — e atravessa planetas sem destruí-los nesse intervalo.
+- **Gravidade da Terra:** perto do destino, a nave sente uma "corrente" que a puxa — chegue com cuidado.
+- **Power-ups** surgem a cada 15–25 s (no máximo 2 por vez):
+  - **Verde (vida):** recupera 20 de vida (até o limite de 100);
+  - **Azul (escudo):** 6 s de invulnerabilidade a planetas/lua (anel desenhado em volta da nave);
+  - **Laranja (turbo):** velocidade e aceleração **×1,6** por 5 s.
+- **Tremor de tela** ao levar dano; explosão (BoomSheet) centralizada no ponto do impacto; motor da nave com **hum** que acompanha a aceleração.
+- **Recorde:** a pontuação (`destruídos × 50 + segundos sobrevividos`, + 500 bônus ao vencer) é salva em `lokuras.rec` junto do jogo e aparece no menu ("Recorde: N pontos") e na tela final ("NOVO RECORDE!" quando o caso).
+- **Câmera** centralizada na nave; após o fim da partida ela fica livre (setas).
 
 ### Controles
 
@@ -24,17 +32,20 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 | `W` / `S` | Acelerar / frear a nave (movimento acelerado com atrito) |
 | `A` / `D` | Rotacionar a nave |
 | `Mouse 1` (esquerdo) | Criar um planeta vermelho em posição aleatória |
-| `Mouse 3` (direito) | Enfileirar uma posição para o UFO se mover até lá |
+| `ESC` | Pausar o jogo; no menu encerra; nas telas finais volta ao menu |
+| `Q` (na pausa) | Voltar ao menu |
+| `+` / `=` e `-` / `KP-` | Volume da música acima/abaixo (mostra no título da janela) |
+| `M` | Mudo (a qualquer momento) |
 | `Alt+Enter` | Alternar entre janela e tela cheia (em qualquer estado) |
-| Fechar a janela | Sair do jogo |
+| Gamepad | Analógico esquerdo acelera e rotaciona; fechar a janela sai |
 
 A janela inicia em **1280×720** (16:9). O `Alt+Enter` alterna para tela cheia e volta para a janela sem reiniciar o jogo.
 
 ### Estados
 
-`StateMenu` (título, créditos e música) → `StateGame` (jogabilidade) → `StateWinLose` (tela de vitória ou derrota).
+`StateMenu` (título, recorde e música) → `StateGame` (jogabilidade, pausável com ESC) → `StateWinLose` (tela de vitória ou derrota com estatísticas da partida).
 
-Cada estado tem música tema; o estado de jogo tem `stateGame.ogg` e o SFX `boom.wav`.
+Cada estado tem música tema; o estado de jogo tem `stateGame.ogg` e o SFX `boom.wav`. As trocas de estado usam **fade** (escurece, troca, clareia), e o loop roda com **dt real** limitado a 50 ms por frame, com alvo de ~60 FPS (sem busy-loop).
 
 ## Como compilar e executar
 
@@ -190,16 +201,17 @@ Para criar atalhos, use `task::Spawn` com `task_name` no seu `keymap.json` globa
 
 | Classe | Papel |
 | --- | --- |
-| `SDLBase` | Encapsula a SDL: janela 1280×720, alternância para tela cheia (`Alt+Enter`), carregamento/otimização de imagens, blit, flip, `rotoZoom`, `clip`, `drawLine`, `drawRect` e init/shutdown de TTF e Mixer |
-| `Sprite` | Surface com clipping; suporta rotação/zoom (`rotoZoom`/`restore`) |
-| `Animation` | Sprite sheet animada por `frameTime` (herda de `Sprite`) |
+| `SDLBase` | Encapsula a SDL: janela 1280×720, alternância para tela cheia (`Alt+Enter`), carregamento/otimização de imagens, blit, flip, `rotoZoom`, `clip`, `drawLine`, `drawCircle`, `drawRect`, overlay de fade e init/shutdown de TTF e Mixer |
+| `Sprite` | Surface com clipping; rotação/zoom (`rotoZoom`/`restore`) e escala assada na surface (`scale`) |
+| `Animation` | Sprite sheet animada por tempo real; suporta one-shot (`setOneShot`/`restart`/`isFinished`) |
 | `Text` | Texto renderizado com TTF (fonte, tamanho, estilo e cor configuráveis) |
-| `Audio` | Música (`Mix_Music`) e efeitos (`Mix_Chunk`) |
+| `Audio` | Música (`Mix_Music`) e efeitos (`Mix_Chunk`); controles globais de volume/mudo com legenda no título da janela |
 | `Timer` | Cronômetro com start/pause/resume para cooldowns |
-| `InputManager` | Singleton de entrada: teclado/mouse (down/up/pressed) e `quitGame` |
-| `Camera` | Singleton; segue um `GameObject` via `bind`/`unBind` |
-| `State` / `StateManager` | Máquina de estados com pilha de valores entre telas |
-| `TileSet` / `TileMap` | Mapa em camadas carregado de arquivo, com parallax por camada |
+| `InputManager` | Singleton de entrada: teclado/mouse (down/up/pressed) e `quitGame`, com suporte a joystick (analog sticks) |
+| `Camera` | Singleton; segue um `GameObject` via `bind`/`unBind` (livre com as setas, em tempo real) |
+| `State` / `StateManager` | Máquina de estados com pilha de valores entre telas; loop central com dt real, cap de ~60 FPS, fade entre estados e atalhos globais de volume |
+| `TileSet` / `TileMap` | Mapa em camadas carregado de arquivo, com parallax por camada e culling por tela |
+| `PlayStats` | Estatísticas/recorde de partidas persistidas (`lokuras.rec`) |
 | `Rect` / AABB | Retângulo de colisão do `GameObject` |
 
 ### Hierarquia do jogo
@@ -211,8 +223,9 @@ GameObject (box AABB)
  ├── Planet (abstrata)
  │    ├── PlanetRed   (planetas vermelhos destrutíveis)
  │    ├── Earth        (objetivo da nave)
- │    └── Moon         (orbita a Terra)
- ├── FollowerObject    (UFO: fila de comandos + queue lines)
+ │    ├── Moon         (orbita a Terra)
+ │    └── PowerUp      (cristais de vida/escudo/turbo)
+ ├── FollowerObject    (UFO: perseguidor autônomo na partida)
  └── AccObject         (nave Hyperion: aceleração, rotação, atrito, animação)
 
 State
@@ -234,19 +247,23 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 │   ├── SDLBase.* Sprite.* Animation.* Text.* Audio.* Timer.*
 │   ├── InputManager.* Camera.* State.* StateManager.* StateMenu.* StateGame.* StateWinLose.*
 │   ├── TileSet.* TileMap.* Rect.h Point.*
-│   └── GameObject.* Planet.* PlanetRed.* Earth.* Moon.* FollowerObject.* AccObject.* HUD.*
+│   ├── GameObject.* Planet.* PlanetRed.* Earth.* Moon.* FollowerObject.* AccObject.* HUD.*
+│   ├── PowerUp.h            # cristais de power-up (header-only)
+│   └── PlayStats.h          # recorde/timer de partidas (header-only)
 ├── lib/                     # SDL 1.2: headers (include/), libs de importação (lib/) e licenças (LICENSES/)
 ├── bin/                     # DLLs de runtime do Windows + binários compilados (game.exe/game, ignorados)
-├── img/                     # sprites (nave, planetas, UFO), telas de menu/vitória/derrota e Tileset.png
+├── img/                     # sprites (nave, planetas, UFO, power-ups), telas e Tileset.png
 ├── map/tileMap.txt          # mapa em camadas
-├── sfx/                     # músicas (ogg) e boom.wav
+├── sfx/                     # músicas (ogg) e efeitos (boom/pickup/engine .wav)
 ├── ttf/                     # PirataOne e SpaceAge
 ├── build.bat                # compilação no Windows (MinGW + SDL 1.2 de lib/) -> bin/game.exe
 ├── run.bat                  # executa o jogo no Windows (compila antes, se necessário)
 ├── build.sh                 # compilação no Linux (SDL 1.2 do sistema) -> bin/game
 ├── run.sh                   # executa o jogo no Linux (compila antes, se necessário)
 ├── .zed/                    # tasks do Zed (Compilar/Executar) + wrappers sh/cmd
+├── .github/workflows/       # CI (build + smoke test no Linux)
 └── tools/
+    ├── make-assets.py       # regenera TODOS os assets (img/, sfx/) do zero
     ├── setup-mingw.ps1      # auto-bootstrap do MinGW no Windows (download com SHA-256)
     ├── mingw32/             # toolchain baixado pelo bootstrap (ignorado pelo git)
     ├── setup-sdl12.sh       # SDL 1.2 local no Linux, sem root (extrai .deb em sdl12/)

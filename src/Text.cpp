@@ -9,19 +9,26 @@
 
 Text::Text(string fontFile, string text, int ptsize, int style, SDL_Color color, int x, int y)
 {
+	// O redraw() abaixo libera surfaces: zera os ponteiros ANTES.
+	font = NULL;
+	textSurface = NULL;
+
 	this->fontFile = fontFile;
-	this->text = text;
 	this->ptsize = ptsize;
-	this->style = style;
 	this->color = color;
+	this->style = style;
 
 	font = TTF_OpenFont(fontFile.c_str(), ptsize);
-	textSurface = TTF_RenderUTF8_Blended(font, text.c_str(), color);
+	if (font == NULL)
+	{
+		cerr << "Text: fonte '" << fontFile << "' nao encontrada: " << TTF_GetError() << endl;
+		SDLBase::unloadSDL();
+		exit(1);
+	}
+	TTF_SetFontStyle(font, style);
 
-	srcRect.x = 0;
-	srcRect.y = 0;
-	srcRect.w = textSurface->w;
-	srcRect.h = textSurface->h;
+	this->text = text;
+	redraw();
 
 	dstRect.x = x;
 	dstRect.y = y;
@@ -31,8 +38,32 @@ Text::Text(string fontFile, string text, int ptsize, int style, SDL_Color color,
 
 Text::~Text()
 {
-	TTF_CloseFont(font);
-	SDL_FreeSurface(textSurface);
+	if (textSurface != NULL)
+		SDL_FreeSurface(textSurface);
+	if (font != NULL)
+		TTF_CloseFont(font);
+}
+
+// (Re)renderiza a surface do texto com os atributos atuais. Chamada pelo
+// construtor e por todos os setters - antes eles mudavam os atributos sem
+// refletir nada na tela.
+void Text::redraw()
+{
+	if (textSurface != NULL)
+		SDL_FreeSurface(textSurface);
+	textSurface = NULL;
+
+	textSurface = TTF_RenderUTF8_Blended(font, text.c_str(), color);
+
+	srcRect.x = 0;
+	srcRect.y = 0;
+	if (textSurface != NULL)
+	{
+		srcRect.w = textSurface->w;
+		srcRect.h = textSurface->h;
+	}
+	else
+		srcRect.w = srcRect.h = 0;
 }
 
 void Text::render(int cameraX, int cameraY)
@@ -49,65 +80,62 @@ void Text::setPos(int x, int y)
 
 void Text::setText (string text)
 {
+	// Texto identico: evita re-renderizar em todo frame.
+	if (this->text == text)
+		return;
+
 	this->text = text;
+	redraw();
 }
 
 void Text::setText (int number)
 {
-	string text = to_string(number);
-	this->text = text;
+	setText(std::to_string(number));
 }
 
 void Text::setColor(SDL_Color color)
 {
 	this->color = color;
+	redraw();
 }
 
 void Text::setStyle(int style)
 {
 	this->style = style;
+	if (font != NULL)
+		TTF_SetFontStyle(font, style);
+	redraw();
 }
 
 void Text::setSize(int ptsize)
 {
+	if (ptsize <= 0 || ptsize == this->ptsize)
+		return;
+
 	this->ptsize = ptsize;
+
+	// A fonte fixa o tamanho na abertura: reabre com o novo tamanho.
+	if (font != NULL)
+	{
+		TTF_CloseFont(font);
+		font = TTF_OpenFont(fontFile.c_str(), ptsize);
+		if (font == NULL)
+		{
+			cerr << "Text: falha ao reabrir a fonte '" << fontFile << "': " << TTF_GetError() << endl;
+			SDLBase::unloadSDL();
+			exit(1);
+		}
+		TTF_SetFontStyle(font, style);
+	}
+	redraw();
 }
 
 float Text::getWidth()
 {
-	return textSurface->w;
+	return textSurface ? textSurface->w : 0;
 }
 
 float Text::getHeight()
 {
-	return textSurface->h;
-}
-
-string Text::to_string(int number)
-{
-    string number_string = "";
-    char ones_char;
-    int ones = 0;
-    while(true){
-        ones = number % 10;
-        switch(ones){
-            case 0: ones_char = '0'; break;
-            case 1: ones_char = '1'; break;
-            case 2: ones_char = '2'; break;
-            case 3: ones_char = '3'; break;
-            case 4: ones_char = '4'; break;
-            case 5: ones_char = '5'; break;
-            case 6: ones_char = '6'; break;
-            case 7: ones_char = '7'; break;
-            case 8: ones_char = '8'; break;
-            case 9: ones_char = '9'; break;
-        }
-        number -= ones;
-        number_string = ones_char + number_string;
-        if(number == 0){
-            break;
-        }
-        number = number/10;
-    }
-    return number_string;
+	return textSurface ? textSurface->h : 0;
 }

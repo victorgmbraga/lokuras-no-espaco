@@ -15,10 +15,10 @@ class TileSet
 {
 	private:
 		int tileWidth, tileHeight;
-		int lines, columns;
+		int columns; // tiles na horizontal
+		int lines;   // tiles na vertical
 		Sprite* tileSet;
 		std::vector<Sprite*> vTiles;
-		SDL_Rect* destRect;
 	public:
 		TileSet(int tileWidth, int tileHeight, std::string filePath);
 		TileSet(std::string filePath, int lines, int columns);

@@ -11,8 +11,9 @@ domínio público:
 
 - `img/fundo.png`, `img/stateMenu.jpg`, `img/stateWin.jpg`, `img/stateLose.jpg`
 - `img/ufo.png`, `img/PlanetaVermelho.png`, `img/Lua.png`
+- `img/PowerVida.png`, `img/PowerEscudo.png`, `img/PowerTurbo.png`
 - `img/NaveSheet.png`, `img/BoomSheet.png`, `img/Tileset.png`, `img/tileset/*`
-- `sfx/boom.wav`
+- `sfx/boom.wav`, `sfx/pickup.wav`, `sfx/engine.wav`
 
 ## Músicas (CC0)
 

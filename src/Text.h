@@ -22,7 +22,7 @@ class Text
 		SDL_Color color;
 		SDL_Rect srcRect;
 		SDL_Rect dstRect;
-		string to_string(int number);
+		void redraw();
 	public:
 		Text(string fontFile, string text, int ptsize = 10, int style = 0, SDL_Color color = {0, 0, 0}, int x = 0, int y = 0);
 		virtual ~Text();

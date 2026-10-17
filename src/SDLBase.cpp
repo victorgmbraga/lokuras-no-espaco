@@ -13,6 +13,11 @@ bool SDLBase::fullscreen = false;
 void SDLBase::loadSDL()
 {
 	SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER);
+
+	// Joystick/gamepad: opcional, nao impede o jogo de rodar se faltar.
+	if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
+		cerr << "SDL: joystick indisponivel: " << SDL_GetError() << endl;
+
 	fullscreen = false;
 	screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 32, SDL_SWSURFACE);
 	if (!screen)
@@ -81,13 +86,22 @@ SDL_Surface* SDLBase::loadImage(string arquivo)
 	// Carrega a imagem
 	surface = IMG_Load(arquivo.c_str());
 
-	// Verifica se há transparência na imagem e otimiza ela p/ o tamanho da tela
+	// Asset ausente/corrompido e fatal: reporta com clareza em vez de
+	// estourar segfault mais adiante.
+	if (surface == NULL)
+	{
+		cerr << "SDLBase::loadImage: nao foi possivel carregar '" << arquivo
+		     << "': " << IMG_GetError() << endl;
+		return NULL;
+	}
+
+	// Verifica se hÃ¡ transparÃªncia na imagem e otimiza ela p/ o tamanho da tela
 	if (surface->format->Amask != 0)
 		surface_aux = SDL_DisplayFormatAlpha(surface);
 	else
 		surface_aux = SDL_DisplayFormat(surface);
 
-	// Limpa a surface não otimizada
+	// Limpa a surface nÃ£o otimizada
 	SDL_FreeSurface(surface);
 
 	// Retorna a surface otimizada
@@ -98,10 +112,10 @@ SDL_Surface* SDLBase::loadImage(string arquivo)
 
 void SDLBase::renderSurface(SDL_Surface* surface, SDL_Rect* clip = NULL, SDL_Rect* dst = NULL)
 {
-	// surface – a superfície que será colada
-	// clip – o retângulo da superfície a ser colado
-	// screen – a superfície destino
-	// dst – retângulo onde a superfície será colada
+	// surface ï¿½ a superfï¿½cie que serï¿½ colada
+	// clip ï¿½ o retï¿½ngulo da superfï¿½cie a ser colado
+	// screen ï¿½ a superfï¿½cie destino
+	// dst ï¿½ retï¿½ngulo onde a superfï¿½cie serï¿½ colada
 
 	// "Cola" a surface na tela (screen)
 	SDL_BlitSurface(surface, clip, screen, dst);
@@ -109,7 +123,7 @@ void SDLBase::renderSurface(SDL_Surface* surface, SDL_Rect* clip = NULL, SDL_Rec
 
 void SDLBase::atualizarTela()
 {
-	// Atualiza a tela com as alterações
+	// Atualiza a tela com as alteraï¿½ï¿½es
 	SDL_Flip(screen);
 }
 
@@ -196,7 +210,9 @@ void SDLBase::drawLine(int x1, int y1, int x2, int y2, int rgb, int spacing)
 
 SDL_Surface* SDLBase::clip(SDL_Surface* original, SDL_Rect* clip)
 {
-	static SDL_Surface *new_surface = NULL;
+	// Surface nova por chamada (antes era um static, que era sobrescrito a
+	// cada clip - fragil se duas superficies usassem o clip na mesma frame).
+	SDL_Surface *new_surface = NULL;
 
 	float width = clip->w;
 	float height = clip->h;
@@ -213,6 +229,71 @@ SDL_Surface* SDLBase::rotoZoom(SDL_Surface* surface, float angle, float scalex, 
 	if(surface != NULL && scalex > 0 && scaley > 0)
 		return rotozoomSurfaceXY(surface, angle, scalex, scaley, 1);
 	return NULL;
+}
+
+// Circulo por Bresenham (8 octantes), pixel a pixel sobre a tela.
+void SDLBase::drawCircle(int cx, int cy, int r, int rgb)
+{
+	if (r <= 0)
+		return;
+
+	int x = r;
+	int y = 0;
+	int err = 1 - r;
+
+	while (x >= y)
+	{
+		SDL_Rect pixel = {cx + x, cy + y, 1, 1};
+		SDL_FillRect(screen, &pixel, rgb);
+		pixel.x = cx + y; pixel.y = cy + x;
+		SDL_FillRect(screen, &pixel, rgb);
+		pixel.x = cx - y; pixel.y = cy + x;
+		SDL_FillRect(screen, &pixel, rgb);
+		pixel.x = cx - x; pixel.y = cy + y;
+		SDL_FillRect(screen, &pixel, rgb);
+		pixel.x = cx - x; pixel.y = cy - y;
+		SDL_FillRect(screen, &pixel, rgb);
+		pixel.x = cx - y; pixel.y = cy - x;
+		SDL_FillRect(screen, &pixel, rgb);
+		pixel.x = cx + y; pixel.y = cy - x;
+		SDL_FillRect(screen, &pixel, rgb);
+		pixel.x = cx + x; pixel.y = cy - y;
+		SDL_FillRect(screen, &pixel, rgb);
+
+		y++;
+		if (err < 0)
+			err += 2 * y + 1;
+		else
+		{
+			x--;
+			err += 2 * (y - x) + 1;
+		}
+	}
+}
+
+// Retangulo preto semitransparente cobrindo a tela toda (fade de transicao e
+// pausa). O overlay e criado uma unica vez e a opacidade e ajustada a cada uso.
+void SDLBase::drawOverlay(int alpha)
+{
+	if (alpha <= 0)
+		return;
+
+	static SDL_Surface *overlay = NULL;
+
+	if (overlay == NULL)
+	{
+		overlay = SDL_CreateRGBSurface(SDL_SWSURFACE | SDL_SRCALPHA,
+			SCREEN_W, SCREEN_H, 32, 0, 0, 0, 0);
+		if (overlay == NULL)
+			return;
+		SDL_FillRect(overlay, NULL, SDL_MapRGBA(overlay->format, 0, 0, 0, SDL_ALPHA_OPAQUE));
+	}
+
+	if (alpha > 255)
+		alpha = 255;
+
+	SDL_SetAlpha(overlay, SDL_SRCALPHA | SDL_RLEACCEL, alpha);
+	SDL_BlitSurface(overlay, NULL, screen, NULL);
 }
 
 void SDLBase::drawRect(int x, int y, int w, int h, int rgb)

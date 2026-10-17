@@ -21,15 +21,15 @@ void Moon::update(int dt)
 	float dx = sin(angle) * radius;
 	float dy = cos(angle) * radius;
 
-	float centerX = center->x + center->sprite->getWidth()/2;
-	float centerY = center->y + center->sprite->getHeight()/2;
+	// A Lua orbita o CENTRO da Terra — e com a escala assada na surface a
+	// hitbox tem o tamanho renderizado, entao o centro e x + w/2.
+	float centerX = center->x + center->w/2;
+	float centerY = center->y + center->h/2;
 
-	float moonW = sprite->getWidth();
-	float moonH = sprite->getHeight();
+	float moonW = sprite->getRenderWidth();
+	float moonH = sprite->getRenderHeight();
 
-	x = centerX + dx - moonW;
-	y = centerY + dy - moonH;
+	// Alinha o centro da Lua ao ponto de orbita.
+	x = centerX + dx - moonW/2;
+	y = centerY + dy - moonH/2;
 }
-
-
-

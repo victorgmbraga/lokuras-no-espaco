@@ -11,17 +11,8 @@
 #include "InputManager.h"
 #include "Rect.h"
 
-class Camera;
-
-#include "Camera.h"
-
-
 class GameObject
 {
-	protected:
-		Camera *camera;
-		InputManager *inputManager;
-		Rect box;
 	public:
 		float x, y, w, h;
 		GameObject(float x, float y, float w, float h);

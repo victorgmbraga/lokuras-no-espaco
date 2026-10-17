@@ -7,22 +7,37 @@
 
 #include "PlanetRed.h"
 
-PlanetRed::PlanetRed(Sprite* sprite, float x, float y, int hp): Planet(sprite, x, y, hp){}
+PlanetRed::PlanetRed(Sprite* sprite, float x, float y, int hp): Planet(sprite, x, y, hp)
+{
+	// Deriva lenta e aleatoria. srand() precisa ter sido semeado.
+	vx = ((rand() % 200) - 100) * 0.0002f;    // ate +-0.02 px/ms
+	vy = ((rand() % 200) - 100) * 0.0002f;
+}
 
 void PlanetRed::update(int dt)
 {
-	float cameraX = camera->getInstance().getX();
-	float cameraY = camera->getInstance().getY();
-	SDL_Rect rect;
+	x += vx * dt;
+	y += vy * dt;
 
-	rect.x = x - cameraX;
-	rect.y = y - cameraY;
-	rect.w = sprite->getWidth();
-	rect.h = sprite->getHeight();
-
-
-	/*if(inputManager->getInstance().isMouseDown(1))
-		if(inputManager->getInstance().isMouseInside(&rect))
-			hp -= (rand() % 10 + 10);*/
+	// Quica nas bordas do mundo (mapa de TILEMAP_SIZE x TILEMAP_SIZE tiles).
+	if(x < 0)
+	{
+		x = 0;
+		vx = -vx;
+	}
+	if(y < 0)
+	{
+		y = 0;
+		vy = -vy;
+	}
+	if(x + w > WORLD_W)
+	{
+		x = WORLD_W - w;
+		vx = -vx;
+	}
+	if(y + h > WORLD_H)
+	{
+		y = WORLD_H - h;
+		vy = -vy;
+	}
 }
-

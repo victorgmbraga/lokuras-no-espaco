@@ -21,18 +21,32 @@ Sprite::~Sprite()
 {
 	if (surface != NULL)
 		SDL_FreeSurface(surface);
+
+	// A surface rotacionada, se houver, tambem pertence ao Sprite: sem
+	// liberar aqui ela vaza em cada objeto que usou rotoZoom.
+	if (surfaceRotoZoom != NULL)
+		SDL_FreeSurface(surfaceRotoZoom);
+	surfaceRotoZoom = NULL;
 }
 
 void Sprite::load(string arquivo)
 {
-	// Limpa a surface se n„o vazia
+	// Limpa a surface se n√£o vazia
 	if (surface != NULL)
 		SDL_FreeSurface(surface);
 
 	// Carrega a imagem na surface
 	surface = SDLBase::loadImage(arquivo);
 
-	// Define o ret‚ngulo de clipping (mostrando a imagem toda)
+	// Asset ausente e fatal: encerra com mensagem clara.
+	if (surface == NULL)
+	{
+		cerr << "Sprite::load: asset essencial ausente ou corrompido: '" << arquivo << "'" << endl;
+		SDLBase::unloadSDL();
+		exit(1);
+	}
+
+	// Define o ret√¢ngulo de clipping (mostrando a imagem toda)
 	clipRect.x = 0;
 	clipRect.y = 0;
 	clipRect.w = surface->w;
@@ -41,18 +55,19 @@ void Sprite::load(string arquivo)
 
 void Sprite::clip(int x, int y, int w, int h)
 {
-	// Define o ret‚ngulo de clipping
+	// Se o clip nao mudou, nada a fazer (evita recalcular a surfaceRotoZoom
+	// desnecessariamente em todo frame - a animacao chama clip() sempre).
+	bool mudou = (clipRect.x != x || clipRect.y != y || clipRect.w != w || clipRect.h != h);
+
 	clipRect.x = x;
 	clipRect.y = y;
 	clipRect.w = w;
 	clipRect.h = h;
 
-	// Caso o clip seja	alterado e a
-	// surfaceRotoZoom n„o seja nula, devemos
-	// recalcular as transformaÁıes. Para isso, basta
-	// chamar o mÈtodo rotoZoom com os par‚metros
-	// atuais e a vari·vel force == true.
-	if(surfaceRotoZoom)
+	// Caso o clip seja alterado e a surfaceRotoZoom n√£o seja nula, devemos
+	// recalcular as transforma√ß√µes. Para isso, basta chamar o m√©todo rotoZoom
+	// com os par√¢metros atuais e a vari√°vel force == true.
+	if (mudou && surfaceRotoZoom)
 		rotoZoom(angle, scaleX, scaleY, true);
 }
 
@@ -68,16 +83,16 @@ void Sprite::render(int x, int y)
 	// Temos 2 surfaces diferentes em
 	// cada Sprite, temos que decidir qual mostrar na tela.
 	// Para isso, basta checar	se a surfaceRotoZoom existe.
-	// Se existir, mostramos ela, sen„o mostramos a normal.
+	// Se existir, mostramos ela, sen√£o mostramos a normal.
 	if(surfaceRotoZoom)
 	{
 		// Ao mostrar na tela a surfaceRotoZoom
-		// ser· necess·rio fazer um ajuste de posiÁ„o,
-		// pois a rotaÁ„o da imagem n„o È feita ìpelo
-		// centroî. Para isso basta calcular a diferenÁa
+		// ser√° necess√°rio fazer um ajuste de posi√ß√£o,
+		// pois a rota√ß√£o da imagem n√£o √© feita ÔøΩpelo
+		// centroÔøΩ. Para isso basta calcular a diferen√ßa
 		// entre o ponto central do cliprect e o ponto
 		// central da surfaceRotoZoom e adicionar esse
-		// valor ‡ posiÁ„o na hora de mostrar na tela.
+		// valor √† posi√ß√£o na hora de mostrar na tela.
 		Sint16 xOffset = clipRect.w/2 - surfaceRotoZoom->w/2;
 		Sint16 yOffset = clipRect.h/2 - surfaceRotoZoom->h/2;
 
@@ -109,10 +124,68 @@ int Sprite::getHeight()
 	return surface->h;
 }
 
+int Sprite::getRenderWidth()
+{
+	return surfaceRotoZoom ? surfaceRotoZoom->w : surface->w;
+}
+
+int Sprite::getRenderHeight()
+{
+	return surfaceRotoZoom ? surfaceRotoZoom->h : surface->h;
+}
+
+void Sprite::scale(float factor)
+{
+	if (surface == NULL || factor <= 0.0f || factor == 1.0f)
+		return;
+
+	// Mesma estrategia do resizeCover: rotozoom e otimizacao da surface.
+	SDL_Surface *scaled = SDLBase::rotoZoom(surface, 0, factor, factor);
+	if (scaled == NULL)
+		return;
+
+	SDL_Surface *optimized = scaled->format->Amask != 0
+		? SDL_DisplayFormatAlpha(scaled)
+		: SDL_DisplayFormat(scaled);
+	if (optimized)
+	{
+		SDL_FreeSurface(scaled);
+		scaled = optimized;
+	}
+
+	// A escala vai para a surface em si; nao existe mais versao rotacionada.
+	if (surfaceRotoZoom)
+	{
+		SDL_FreeSurface(surfaceRotoZoom);
+		surfaceRotoZoom = NULL;
+	}
+	angle = 0;
+	scaleX = 1;
+	scaleY = 1;
+
+	SDL_FreeSurface(surface);
+	surface = scaled;
+
+	clipRect.x = 0;
+	clipRect.y = 0;
+	clipRect.w = surface->w;
+	clipRect.h = surface->h;
+}
+
 void Sprite::resizeCover(int width, int height)
 {
 	if (surface == NULL || width <= 0 || height <= 0)
 		return;
+
+	// Ja esta exatamente no tamanho pedido: nada a fazer.
+	if (surface->w == width && surface->h == height)
+	{
+		clipRect.x = 0;
+		clipRect.y = 0;
+		clipRect.w = width;
+		clipRect.h = height;
+		return;
+	}
 
 	// Escala uniformemente para cobrir toda a area, mantendo a proporcao
 	// original. O excedente e cortado, ancorado no topo para preservar os
@@ -151,35 +224,39 @@ void Sprite::resizeCover(int width, int height)
 
 void Sprite::restore()
 {
-	// Deleta a surfaceRotoZoom.
+	// Deleta a surfaceRotoZoom e encerra o uso de rotacao/zoom no sprite.
 	if (surfaceRotoZoom != NULL)
 		SDL_FreeSurface(surfaceRotoZoom);
+	surfaceRotoZoom = NULL;
+	angle = 0;
+	scaleX = 1;
+	scaleY = 1;
 }
 
 void Sprite::rotoZoom(float angle, float scaleX, float scaleY, bool force)
 {
-	// Checa se È necess·rio fazer alguma alteraÁ„o na imagem, ou seja, se angle,
-	// scalex ou scaley s„o diferentes dos atuais. Caso sejam, È necess·rio
-	// rotacionar. Se force == true, a rotaÁ„o tambÈm deve ser feita, independente
-	// dos par‚metros passados.
+	// Checa se √© necess√°rio fazer alguma altera√ß√£o na imagem, ou seja, se angle,
+	// scalex ou scaley s√£o diferentes dos atuais. Caso sejam, √© necess√°rio
+	// rotacionar. Se force == true, a rota√ß√£o tamb√©m deve ser feita, independente
+	// dos par√¢metros passados.
 	if(this->angle != angle || this->scaleX != scaleX || this->scaleY != scaleY || force)
 	{
 		// Libera a surfaceRotoZoom anterior, caso houver.
 		if(surfaceRotoZoom)
 			SDL_FreeSurface(surfaceRotoZoom);
 
-		// Atribui os par‚metros angulo, scalex e scaley.
+		// Atribui os par√¢metros angulo, scalex e scaley.
 		this->angle = angle;
 		this->scaleX = scaleX;
 		this->scaleY = scaleY;
 
-		// O mÈtodo blit torna indefinidos os valores de w e h do Rect. Para
-		// resolver isso, basta fazer uma cÛpia do rect e passar essa copia para o
-		// mÈtodo clip.
+		// O m√©todo blit torna indefinidos os valores de w e h do Rect. Para
+		// resolver isso, basta fazer uma c√≥pia do rect e passar essa copia para o
+		// m√©todo clip.
 		SDL_Rect newClipRect = clipRect;
 
 		// Confere se qualquer um dos valores do cliprect foi alterado, ou seja, se a
-		// surface usa clip. Caso use, È necess·rio ìcliparî a surface antes de alter·-la.
+		// surface usa clip. Caso use, √© necess√°rio ÔøΩcliparÔøΩ a surface antes de alterÔøΩ-la.
 		if(clipRect.x != 0 || clipRect.y != 0 || clipRect.w != surface->w || clipRect.h != surface->h)
 		{
 			SDL_Surface *tempSurface = SDLBase::clip(surface, &newClipRect);
