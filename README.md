@@ -35,12 +35,16 @@ Cada estado tem música tema; o estado de jogo tem `stateGame.mp3` e o SFX `boom
 
 ## Como compilar e executar
 
+O mesmo `src/` compila para Windows (`build.bat`/`run.bat`) e para Linux (`build.sh`/`run.sh`), a partir da raiz do projeto.
+
+### Windows
+
 **Requisitos**
 
 - Windows 10+;
 - MinGW-w64 **i686** (msvcrt, posix) com `g++` — ou deixe o `build.bat` baixar automaticamente (veja abaixo).
 
-As bibliotecas **SDL 1.2 + SDL_image + SDL_gfx + SDL_ttf + SDL_mixer** (headers e libs de importação) já estão versionadas no próprio repositório, em `lib/` — não é preciso instalar o SDL para compilar.
+As bibliotecas **SDL 1.2 + SDL_image + SDL_gfx + SDL_ttf + SDL_mixer** (headers e libs de importação do MinGW) já estão versionadas no próprio repositório, em `lib/` — não é preciso instalar o SDL para compilar no Windows.
 
 O script `build.bat` gera `bin\game.exe` e resolve o compilador em cascata: variável de ambiente `MINGW` → `tools\mingw32` → `PATH`. Se o `g++` não for encontrado, ele chama `tools/setup-mingw.ps1`, que **oferece baixar o toolchain winlibs i686** (GCC 16.2.0, msvcrt, ~270 MB): download com retomada, verificação de **SHA-256** e extração em `tools\mingw32` — tudo dentro da pasta do projeto (apagar o projeto remove também o toolchain baixado).
 
@@ -65,6 +69,34 @@ g++ -std=gnu++11 -O2 -w -Dmain=SDL_main -I"lib\include" -I"lib\include\SDL" -I"s
 ```
 
 As DLLs de runtime necessárias estão versionadas em `bin/` (SDL.dll, SDL_image.dll, SDL_ttf.dll, SDL_mixer.dll e dependências como `libpng15-15`, `zlib1`, `libjpeg-8`, `libfreetype-6`, além de `smpeg.dll` — decodificador de MP3 — e das runtimes `libstdc++-6`/`libgcc_s_dw2-1` exigidas por ele), junto do executável. Depois de compilar, execute `run.bat` — que compila automaticamente caso `bin\game.exe` ainda não exista — ou `bin\game.exe` diretamente a partir da raiz do projeto, pois o jogo carrega os assets por caminhos relativos.
+
+### Linux
+
+**Requisitos**
+
+- `g++` (ou `clang++`);
+- **SDL 1.2** (SDL, SDL_image, SDL_gfx, SDL_ttf e SDL_mixer) — do sistema ou de um prefixo local, veja abaixo.
+
+As libs de `lib/` são import libs do MinGW e valem apenas para o build Windows. No Linux o SDL 1.2 pode vir do sistema ou de um prefixo dentro do projeto, criado pelo `tools/setup-sdl12.sh`: ele baixa os pacotes `.deb` do SDL 1.2 (~13 MB de download, ~65 MB extraídos, mais as dependências que faltarem no sistema) e extrai em `tools/sdl12/` usando só `apt-get --print-uris`, `curl`/`wget` e `dpkg-deb` — nada é instalado no sistema e não é preciso `sudo`. Vale para Debian, Ubuntu, Mint e derivados; para desfazer, `rm -rf tools/sdl12`.
+
+```sh
+./tools/setup-sdl12.sh   # opcional: SDL 1.2 local, sem root (Debian/Ubuntu/Mint)
+./build.sh               # compila para bin/game (usa tools/sdl12 se existir)
+./run.sh                 # roda o jogo (compila antes, se necessário)
+```
+
+Se preferir o SDL do sistema, é o mesmo conjunto de pacotes que o script baixa (o `libsdl1.2-dev` atual do Debian/Ubuntu é o *sdl12-compat*, que implementa a API 1.2 sobre o SDL 2):
+
+```sh
+sudo apt install libsdl1.2-dev libsdl-image1.2-dev libsdl-ttf2.0-dev libsdl-mixer1.2-dev libsdl-gfx1.2-dev
+```
+
+O `build.sh` resolve o compilador em cascata (`CXX` → `g++` → `clang++`), prefere o prefixo local `tools/sdl12` quando ele existe (`SDL12_PREFIX` aponta para outro) e, se não achar o SDL 1.2 em lugar nenhum, explica as duas opções acima e pergunta antes de baixar ou instalar. A linha de compilação é a mesma do Windows sem o que é específico de lá (`-Dmain=SDL_main`, `-mwindows`, `-lmingw32`/`-lSDLmain` e `-static-libgcc`/`-static-libstdc++`); com o prefixo local entram também `-Itools/sdl12/usr/include`, `-Ltools/sdl12/usr/lib/<arch>` e um `-Wl,-rpath` para o executável achar essas libs sozinho (por isso o binário fica ligado ao prefixo: apagar `tools/sdl12` pede um `./build.sh` de novo):
+
+```sh
+g++ -std=gnu++11 -O2 -w -Isrc src/*.cpp -o bin/game \
+  -lSDL_image -lSDL_gfx -lSDL_ttf -lSDL_mixer -lSDL -lm
+```
 
 ---
 
@@ -183,16 +215,20 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 │   ├── TileSet.* TileMap.* Rect.h Point.*
 │   └── GameObject.* Planet.* PlanetRed.* Earth.* Moon.* FollowerObject.* AccObject.* HUD.*
 ├── lib/                     # SDL 1.2: headers (include/), libs de importação (lib/) e licenças (LICENSES/)
-├── bin/                     # DLLs de runtime versionadas + game.exe (compilado, ignorado)
+├── bin/                     # DLLs de runtime do Windows + binários compilados (game.exe/game, ignorados)
 ├── img/                     # sprites (nave, planetas, UFO), telas de menu/vitória/derrota e Tileset.png
 ├── map/tileMap.txt          # mapa em camadas
 ├── sfx/                     # músicas (mp3) e boom.wav
 ├── ttf/                     # PirataOne e SpaceAge
-├── build.bat                # compilação (MinGW + SDL 1.2 de lib/) -> bin/game.exe
-├── run.bat                  # executa o jogo (compila antes, se necessário)
+├── build.bat                # compilação no Windows (MinGW + SDL 1.2 de lib/) -> bin/game.exe
+├── run.bat                  # executa o jogo no Windows (compila antes, se necessário)
+├── build.sh                 # compilação no Linux (SDL 1.2 do sistema) -> bin/game
+├── run.sh                   # executa o jogo no Linux (compila antes, se necessário)
 └── tools/
-    ├── setup-mingw.ps1      # auto-bootstrap do MinGW (download com SHA-256)
-    └── mingw32/             # toolchain baixado pelo bootstrap (ignorado pelo git)
+    ├── setup-mingw.ps1      # auto-bootstrap do MinGW no Windows (download com SHA-256)
+    ├── mingw32/             # toolchain baixado pelo bootstrap (ignorado pelo git)
+    ├── setup-sdl12.sh       # SDL 1.2 local no Linux, sem root (extrai .deb em sdl12/)
+    └── sdl12/               # SDL 1.2 baixado pelo script acima (ignorado pelo git)
 ```
 
 ## Licença

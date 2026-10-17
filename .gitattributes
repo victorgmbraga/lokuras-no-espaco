@@ -3,3 +3,6 @@
 
 # Scripts do Windows sempre com CRLF no checkout (segurança de GOTO/labels no cmd)
 *.bat text eol=crlf
+
+# Scripts do Linux com LF
+*.sh text eol=lf

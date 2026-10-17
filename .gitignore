@@ -1,5 +1,7 @@
 *.exe
+bin/game
 stderr.txt
 stdout.txt
 tools/mingw32/
+tools/sdl12/
 tools/*.zip
