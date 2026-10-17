@@ -101,6 +101,24 @@ g++ -std=gnu++11 -O2 -w -Isrc src/*.cpp -o bin/game \
   -lSDL_image -lSDL_gfx -lSDL_ttf -lSDL_mixer -lSDL -lm
 ```
 
+### Zed
+
+O repositório tem **tasks prontas do Zed** em `.zed/tasks.json` (use `task: spawn` na paleta de comandos — `Ctrl+Shift+P`):
+
+| Task | O que faz |
+| --- | --- |
+| **Compilar** | Compila o jogo (`build.sh` no Linux/macOS, `build.bat` no Windows) |
+| **Executar** | Executa o jogo (compila antes, se `bin/game` ainda não existir) |
+| **Compilar e executar** | Compila e executa em sequência |
+
+A detecção do sistema operacional fica nos wrappers `.zed/*.cmd`: são arquivos "poliglotas" que rodam como script `sh` no Linux/macOS e como `.cmd` no Windows, então a mesma task funciona nos dois sistemas. (O `tasks.json` do Zed ainda não tem uma variável de sistema operacional nem condicionais por plataforma como o `windows`/`linux` do VS Code.)
+
+Para criar atalhos, use `task::Spawn` com `task_name` no seu `keymap.json` global, por exemplo:
+
+```json
+{ "context": "Workspace", "bindings": { "alt-b": ["task::Spawn", { "task_name": "Compilar" }] } }
+```
+
 ---
 
 ## Histórico de desenvolvimento
@@ -227,6 +245,7 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 ├── run.bat                  # executa o jogo no Windows (compila antes, se necessário)
 ├── build.sh                 # compilação no Linux (SDL 1.2 do sistema) -> bin/game
 ├── run.sh                   # executa o jogo no Linux (compila antes, se necessário)
+├── .zed/                    # tasks do Zed (Compilar/Executar) + wrappers sh/cmd
 └── tools/
     ├── setup-mingw.ps1      # auto-bootstrap do MinGW no Windows (download com SHA-256)
     ├── mingw32/             # toolchain baixado pelo bootstrap (ignorado pelo git)

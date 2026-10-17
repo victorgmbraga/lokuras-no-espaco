@@ -1,0 +1,30 @@
+// Tasks do Zed para o projeto (workspace).
+// Os wrappers .zed/*.cmd sao "poliglotas": no Linux/macOS rodam via sh
+// (build.sh/run.sh) e no Windows via cmd/PowerShell (build.bat/run.bat),
+// entao a mesma acao funciona nos dois sistemas sem configuracao extra.
+[
+  {
+    "label": "Compilar",
+    "command": "./.zed/build.cmd",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "save": "all",
+    "reveal": "always",
+    "hide": "on_success"
+  },
+  {
+    "label": "Executar",
+    "command": "./.zed/run.cmd",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "save": "all",
+    "reveal": "always",
+    "allow_concurrent_runs": true
+  },
+  {
+    "label": "Compilar e executar",
+    "command": "./.zed/build-run.cmd",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "save": "all",
+    "reveal": "always",
+    "allow_concurrent_runs": true
+  }
+]

@@ -4,5 +4,9 @@
 # Scripts do Windows sempre com CRLF no checkout (segurança de GOTO/labels no cmd)
 *.bat text eol=crlf
 
+# Wrappers das tasks do Zed: são poliglotas sh/cmd (o cmd ignora a linha 1,
+# que é o ramo sh; para o sh o CRLF fica dentro de um comentário "#")
+.zed/*.cmd text eol=crlf
+
 # Scripts do Linux com LF
 *.sh text eol=lf
