@@ -45,6 +45,10 @@ void StateManager::run()
 		// Atualização da InputManager – deve ser chamado somente aqui
 		inputManager->getInstance().update();
 
+		// Alt+Enter alterna entre janela e tela cheia.
+		if(inputManager->getInstance().consumeFullscreenToggle())
+			SDLBase::toggleFullscreen();
+
 		// STATE MANAGER
 		switch(currentState->update(dt))
 		{

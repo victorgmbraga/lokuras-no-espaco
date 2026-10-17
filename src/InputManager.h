@@ -21,6 +21,8 @@ class InputManager
 		Uint8 mouse, *keyboard;
 		Uint8 keyDown[N_KEYS], keyUp[N_KEYS];
 		bool quit;
+		bool fullscreenToggle;
+		bool altEnterDown;
 		Uint8 mouseDown[N_MOUSE_BUTTONS], mouseUp[N_MOUSE_BUTTONS];
 		int mouseX, mouseY;
 		static InputManager *instance;
@@ -39,6 +41,7 @@ class InputManager
 		int mousePosY();
 		bool isMouseInside(SDL_Rect *rect);
 		bool quitGame();
+		bool consumeFullscreenToggle();
 };
 
 

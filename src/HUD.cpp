@@ -11,17 +11,17 @@ HUD::HUD()
 {
 	life = 100;
 
-	lifeCounter = new Text("ttf/PirataOne-Regular.ttf", "Vida: 20", 24, 0, {255, 100, 100}, 0, 0);
+	lifeCounter = new Text("ttf/PirataOne-Regular.ttf", "Vida: 20", 28, 0, {255, 100, 100}, 0, 0);
 
-	commandsText = new Text("ttf/PirataOne-Regular.ttf", "W, A, S, D: Move a nave", 20, 0, {255, 255, 255}, 0, 0);
+	commandsText = new Text("ttf/PirataOne-Regular.ttf", "W, A, S, D: Move a nave", 24, 0, {255, 255, 255}, 0, 0);
 	int textPosY = SCREEN_H - commandsText->getHeight();
 	commandsText->setPos(0, textPosY);
 
-	commandsText2 = new Text("ttf/PirataOne-Regular.ttf", "Mouse1: Adiciona Planeta", 20, 0, {255, 255, 255}, 0, 0);
+	commandsText2 = new Text("ttf/PirataOne-Regular.ttf", "Mouse1: Adiciona Planeta", 24, 0, {255, 255, 255}, 0, 0);
 	textPosY = SCREEN_H - commandsText->getHeight() * 3;
 	commandsText2->setPos(0, textPosY);
 
-	commandsText3 = new Text("ttf/PirataOne-Regular.ttf", "Mouse2: Comanda UFO", 20, 0, {255, 255, 255}, 0, 0);
+	commandsText3 = new Text("ttf/PirataOne-Regular.ttf", "Mouse2: Comanda UFO", 24, 0, {255, 255, 255}, 0, 0);
 	textPosY = SCREEN_H - commandsText->getHeight() * 2;
 	commandsText3->setPos(0, textPosY);
 }
@@ -49,18 +49,17 @@ void HUD::render()
 
 void HUD::displayLife()
 {
-	if(life >= 100)
-		SDLBase::drawRect(10, 10, 240, 20, 0x00EA00);
-	else if(life > 80)
-		SDLBase::drawRect(10, 10, 200, 20, 0x00EA00);
-	else if(life > 60)
-		SDLBase::drawRect(10, 10, 160, 20, 0x00EA00);
-	else if(life > 40)
-		SDLBase::drawRect(10, 10, 120, 20, 0x00EA00);
-	else if(life > 20)
-		SDLBase::drawRect(10, 10, 80, 20, 0xEA0000);
-	else if(life > 0)
-		SDLBase::drawRect(10, 10, 40, 20, 0xEA0000);
+	int maxWidth = SCREEN_W * 3 / 10;
+	int barHeight = SCREEN_H / 30;
+	int barWidth = maxWidth * life / 100;
+
+	if(barWidth < 0)
+		barWidth = 0;
+	if(barWidth > maxWidth)
+		barWidth = maxWidth;
+
+	int color = (life > 20) ? 0x00EA00 : 0xEA0000;
+	SDLBase::drawRect(SCREEN_W / 80, SCREEN_H / 60, barWidth, barHeight, color);
 }
 
 void HUD::setLife(int life)

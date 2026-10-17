@@ -12,13 +12,15 @@ void StateWinLose::load(int stack)
 	if(stack == LOSE)
 	{
 		bg = new Sprite("img/stateLose.jpg");
-		txt = new Text("ttf/PirataOne-Regular.ttf", "VC MORREU, RSRSRSRS", 28, 0, {255, 255, 255}, 0, 0);
+		bg->resizeCover(SCREEN_W, SCREEN_H);
+		txt = new Text("ttf/PirataOne-Regular.ttf", "VC MORREU, RSRSRSRS", 34, 0, {255, 255, 255}, 0, 0);
 		music = new Audio("sfx/stateLose.ogg", AUDIOTYPE_MUSIC);
 	}
 	else if(stack == WIN)
 	{
 		bg = new Sprite("img/stateWin.jpg");
-		txt = new Text("ttf/PirataOne-Regular.ttf", "PARABÉNS AE MANOLO", 28, 0, {255, 255, 255}, 0, 0);
+		bg->resizeCover(SCREEN_W, SCREEN_H);
+		txt = new Text("ttf/PirataOne-Regular.ttf", "PARABÉNS AE MANOLO", 34, 0, {255, 255, 255}, 0, 0);
 		music = new Audio("sfx/stateWin.mp3", AUDIOTYPE_MUSIC);
 	}
 
@@ -29,7 +31,7 @@ void StateWinLose::load(int stack)
 	int textPosY = (SCREEN_H/4) * 1;
 	txt->setPos(textPosX, textPosY);
 
-	pressEnter = new Text("ttf/PirataOne-Regular.ttf", "Pressione ENTER para jogar de novo", 24, 0, {255, 255, 255}, 0, 0);
+	pressEnter = new Text("ttf/PirataOne-Regular.ttf", "Pressione ENTER para jogar de novo", 30, 0, {255, 255, 255}, 0, 0);
 	textPosX = SCREEN_W/2 - pressEnter->getWidth()/2;
 	textPosY = (SCREEN_H/4) * 3;
 	pressEnter->setPos(textPosX, textPosY);

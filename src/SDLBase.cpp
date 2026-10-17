@@ -8,11 +8,19 @@
 #include "SDLBase.h"
 
 SDL_Surface* SDLBase::screen = NULL;
+bool SDLBase::fullscreen = false;
 
 void SDLBase::loadSDL()
 {
 	SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER);
+	fullscreen = false;
 	screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 32, SDL_SWSURFACE);
+	if (!screen)
+	{
+		cerr << "Nao foi possivel criar a janela " << SCREEN_W << "x" << SCREEN_H
+		     << ": " << SDL_GetError() << endl;
+		exit(1);
+	}
 	TTF_Init();
 	Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024);
 	SDL_WM_SetCaption(GAME_NAME, GAME_NAME);
@@ -20,12 +28,49 @@ void SDLBase::loadSDL()
 
 void SDLBase::unloadSDL()
 {
+	Mix_CloseAudio();
 	TTF_Quit();
+	SDL_Quit();
 }
 
 SDL_Surface* SDLBase::getScreen()
 {
 	return screen;
+}
+
+bool SDLBase::toggleFullscreen()
+{
+	if (!screen)
+		return false;
+
+	// O caminho normal (SDL 1.2 e sdl12-compat) troca o modo da janela sem
+	// recriar a surface da tela, preservando as imagens ja carregadas.
+	if (SDL_WM_ToggleFullScreen(screen))
+	{
+		fullscreen = !fullscreen;
+		return true;
+	}
+
+	// Fallback para drivers que nao implementam WM_ToggleFullScreen.
+	bool target = !fullscreen;
+	Uint32 flags = SDL_SWSURFACE | (target ? SDL_FULLSCREEN : 0);
+	SDL_Surface *newScreen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 32, flags);
+	if (!newScreen)
+	{
+		cerr << "Nao foi possivel alternar para "
+		     << (target ? "tela cheia" : "janela") << ": " << SDL_GetError() << endl;
+		return false;
+	}
+
+	screen = newScreen;
+	fullscreen = target;
+	SDL_WM_SetCaption(GAME_NAME, GAME_NAME);
+	return true;
+}
+
+bool SDLBase::isFullscreen()
+{
+	return fullscreen;
 }
 
 SDL_Surface* SDLBase::loadImage(string arquivo)

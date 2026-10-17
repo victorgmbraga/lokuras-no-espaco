@@ -38,6 +38,7 @@ void StateGame::load(int stack)
 
 	// Background
 	bg = new Sprite("img/fundo.png");
+	bg->resizeCover(SCREEN_W, SCREEN_H);
 
 	// TileSet e TileMap
 	tileSet = new TileSet(75, 75, "img/Tileset.png");
@@ -171,8 +172,8 @@ void StateGame::addPlanet()
 		redPlanetCoolDown->start();
 
 		// Pega o tamanho da tela
-		int screenWidth = bg->getWidth();
-		int screenHeight = bg->getHeight();
+		int screenWidth = SCREEN_W;
+		int screenHeight = SCREEN_H;
 
 		// Cria uma posição aleatória dentro da tela
 		int planetX = camera->getInstance().getX() + (rand() % screenWidth);

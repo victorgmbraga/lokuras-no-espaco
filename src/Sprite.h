@@ -30,6 +30,7 @@ class Sprite
 		int getWidth();
 		int getHeight();
 		void load(string arquivo);
+		void resizeCover(int width, int height);
 		void clip(int x, int y, int w, int h);
 		virtual void update(int dt) { };
 		void render(int x, int y);

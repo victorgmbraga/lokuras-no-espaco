@@ -10,8 +10,9 @@
 void StateMenu::load(int stack)
 {
 	bg = new Sprite("img/stateMenu.jpg");
-	pressEnter = new Text("ttf/PirataOne-Regular.ttf", "Pressione ENTER para jogar", 24, 0, {255, 255, 255}, 0, 0);
-	title =  new Text("ttf/SpaceAge.ttf", "LOKURAS NO ESPAÇO", 48, 0, {255, 255, 255}, 0, 0);
+	bg->resizeCover(SCREEN_W, SCREEN_H);
+	pressEnter = new Text("ttf/PirataOne-Regular.ttf", "Pressione ENTER para jogar", 30, 0, {255, 255, 255}, 0, 0);
+	title =  new Text("ttf/SpaceAge.ttf", "LOKURAS NO ESPAÇO", 60, 0, {255, 255, 255}, 0, 0);
 	music = new Audio("sfx/stateMenu.ogg", AUDIOTYPE_MUSIC);
 	music->play(-1);
 	returnState = 0;

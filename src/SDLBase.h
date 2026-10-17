@@ -8,8 +8,8 @@
 #ifndef SDLBASE_H_
 #define SDLBASE_H_
 
-#define SCREEN_W 800
-#define SCREEN_H 600
+#define SCREEN_W 1280
+#define SCREEN_H 720
 #define GAME_NAME "Lokuras no Espaço"
 
 #include <iostream>
@@ -28,10 +28,13 @@ class SDLBase
 {
 	private:
 		static SDL_Surface *screen;
+		static bool fullscreen;
 	public:
 		static void loadSDL();
 		static void unloadSDL();
 		static SDL_Surface* getScreen();
+		static bool toggleFullscreen();
+		static bool isFullscreen();
 		static SDL_Surface* loadImage(string arquivo);
 		static void renderSurface(SDL_Surface* surface, SDL_Rect* clip, SDL_Rect* dst);
 		static void atualizarTela();

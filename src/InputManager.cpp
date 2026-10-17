@@ -16,6 +16,8 @@ InputManager::InputManager()
 	mouseX = 0;
 	mouseY = 0;
 	quit = false;
+	fullscreenToggle = false;
+	altEnterDown = false;
 	//update();
 }
 
@@ -51,10 +53,23 @@ void InputManager::update()
 		switch (event.type)
 		{
 			case SDL_KEYDOWN:
-				keyDown[event.key.keysym.sym] = true;
+				// Alt+Enter alterna a tela cheia. O evento nao vira um ENTER
+				// normal para nao iniciar o jogo sem querer no menu.
+				if ((event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_KP_ENTER)
+					&& (event.key.keysym.mod & KMOD_ALT))
+				{
+					if (!altEnterDown)
+						fullscreenToggle = true;
+					altEnterDown = true;
+				}
+				else if (event.key.keysym.sym < N_KEYS)
+					keyDown[event.key.keysym.sym] = true;
 				break;
 			case SDL_KEYUP:
-				keyUp[event.key.keysym.sym] = true;
+				if (event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_KP_ENTER)
+					altEnterDown = false;
+				if (event.key.keysym.sym < N_KEYS)
+					keyUp[event.key.keysym.sym] = true;
 				break;
 			case SDL_MOUSEMOTION:
 				mouseX = event.motion.x;
@@ -137,5 +152,12 @@ bool InputManager::isMouseInside(SDL_Rect *rect)
 bool InputManager::quitGame()
 {
 	return quit;
+}
+
+bool InputManager::consumeFullscreenToggle()
+{
+	bool requested = fullscreenToggle;
+	fullscreenToggle = false;
+	return requested;
 }
 

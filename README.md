@@ -25,7 +25,10 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 | `A` / `D` | Rotacionar a nave |
 | `Mouse 1` (esquerdo) | Criar um planeta vermelho em posição aleatória |
 | `Mouse 3` (direito) | Enfileirar uma posição para o UFO se mover até lá |
+| `Alt+Enter` | Alternar entre janela e tela cheia (em qualquer estado) |
 | Fechar a janela | Sair do jogo |
+
+A janela inicia em **1280×720** (16:9). O `Alt+Enter` alterna para tela cheia e volta para a janela sem reiniciar o jogo.
 
 ### Estados
 
@@ -169,7 +172,7 @@ g++ -std=gnu++11 -O2 -w -Isrc src/*.cpp -o bin/game \
 
 | Classe | Papel |
 | --- | --- |
-| `SDLBase` | Encapsula a SDL: tela 800×600, carregamento/otimização de imagens, blit, flip, `rotoZoom`, `clip`, `drawLine`, `drawRect` e init/shutdown de TTF e Mixer |
+| `SDLBase` | Encapsula a SDL: janela 1280×720, alternância para tela cheia (`Alt+Enter`), carregamento/otimização de imagens, blit, flip, `rotoZoom`, `clip`, `drawLine`, `drawRect` e init/shutdown de TTF e Mixer |
 | `Sprite` | Surface com clipping; suporta rotação/zoom (`rotoZoom`/`restore`) |
 | `Animation` | Sprite sheet animada por `frameTime` (herda de `Sprite`) |
 | `Text` | Texto renderizado com TTF (fonte, tamanho, estilo e cor configuráveis) |

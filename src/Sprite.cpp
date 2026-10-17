@@ -109,6 +109,46 @@ int Sprite::getHeight()
 	return surface->h;
 }
 
+void Sprite::resizeCover(int width, int height)
+{
+	if (surface == NULL || width <= 0 || height <= 0)
+		return;
+
+	// Escala uniformemente para cobrir toda a area, mantendo a proporcao
+	// original. O excedente e cortado, ancorado no topo para preservar os
+	// planetas desenhados na parte de cima das telas de fundo.
+	float scaleX = (float)width / surface->w;
+	float scaleY = (float)height / surface->h;
+	float scale = scaleX > scaleY ? scaleX : scaleY;
+
+	SDL_Surface *scaled = SDLBase::rotoZoom(surface, 0, scale, scale);
+	if (!scaled)
+		return;
+
+	SDL_Surface *optimized = scaled->format->Amask != 0
+		? SDL_DisplayFormatAlpha(scaled)
+		: SDL_DisplayFormat(scaled);
+	if (optimized)
+	{
+		SDL_FreeSurface(scaled);
+		scaled = optimized;
+	}
+
+	if (surfaceRotoZoom)
+	{
+		SDL_FreeSurface(surfaceRotoZoom);
+		surfaceRotoZoom = NULL;
+	}
+
+	SDL_FreeSurface(surface);
+	surface = scaled;
+
+	clipRect.x = (surface->w - width) / 2;
+	clipRect.y = 0;
+	clipRect.w = width;
+	clipRect.h = height;
+}
+
 void Sprite::restore()
 {
 	// Deleta a surfaceRotoZoom.
