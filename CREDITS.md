@@ -20,7 +20,7 @@ domínio público:
 | --- | --- | --- | --- |
 | `sfx/stateGame.ogg` | "Space Music: Out There" | yd | opengameart.org/content/space-music-out-there |
 | `sfx/stateMenu.ogg` | "Space Echo" | Centurion_of_war | opengameart.org/content/space-echo |
-| `sfx/stateWin.mp3` | "Victory" | celestialghost8 | opengameart.org/content/victory |
+| `sfx/stateWin.ogg` | "Victory" | celestialghost8 | opengameart.org/content/victory (reencodado de MP3 para OGG) |
 | `sfx/stateLose.ogg` | "Lose Game Short Music Clip" | Robin Lamb | opengameart.org/content/lose-game-short-music-clip |
 
 ## Fontes

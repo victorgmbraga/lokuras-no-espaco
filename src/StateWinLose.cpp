@@ -21,7 +21,7 @@ void StateWinLose::load(int stack)
 		bg = new Sprite("img/stateWin.jpg");
 		bg->resizeCover(SCREEN_W, SCREEN_H);
 		txt = new Text("ttf/PirataOne-Regular.ttf", "PARABÉNS AE MANOLO", 34, 0, {255, 255, 255}, 0, 0);
-		music = new Audio("sfx/stateWin.mp3", AUDIOTYPE_MUSIC);
+		music = new Audio("sfx/stateWin.ogg", AUDIOTYPE_MUSIC); // OGG: o MP3 antigo corrompia o heap no decoder do SDL_mixer 1.2
 	}
 
 	music->play(-1);

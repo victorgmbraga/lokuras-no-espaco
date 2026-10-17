@@ -82,6 +82,8 @@ int StateGame::unload()
 	delete(shipAnimation);
 	delete(boom);
 	delete(hud);
+	delete(music);
+	delete(sfx);
 	return returnStack;
 }
 

@@ -34,7 +34,7 @@ A janela inicia em **1280×720** (16:9). O `Alt+Enter` alterna para tela cheia e
 
 `StateMenu` (título, créditos e música) → `StateGame` (jogabilidade) → `StateWinLose` (tela de vitória ou derrota).
 
-Cada estado tem música tema; o estado de jogo tem `stateGame.mp3` e o SFX `boom.wav`.
+Cada estado tem música tema; o estado de jogo tem `stateGame.ogg` e o SFX `boom.wav`.
 
 ## Como compilar e executar
 
@@ -71,7 +71,7 @@ g++ -std=gnu++11 -O2 -w -Dmain=SDL_main -I"lib\include" -I"lib\include\SDL" -I"s
   -static-libgcc -static-libstdc++
 ```
 
-As DLLs de runtime necessárias estão versionadas em `bin/` (SDL.dll, SDL_image.dll, SDL_ttf.dll, SDL_mixer.dll e dependências como `libpng15-15`, `zlib1`, `libjpeg-8`, `libfreetype-6`, além de `smpeg.dll` — decodificador de MP3 — e das runtimes `libstdc++-6`/`libgcc_s_dw2-1` exigidas por ele), junto do executável. Depois de compilar, execute `run.bat` — que compila automaticamente caso `bin\game.exe` ainda não exista — ou `bin\game.exe` diretamente a partir da raiz do projeto, pois o jogo carrega os assets por caminhos relativos.
+As DLLs de runtime necessárias estão versionadas em `bin/` (SDL.dll, SDL_image.dll, SDL_ttf.dll, SDL_mixer.dll e dependências como `libpng15-15`, `zlib1`, `libjpeg-8`, `libfreetype-6` e `smpeg.dll` — decodificador de MP3 do SDL_mixer, hoje não usado pelas músicas, todas em OGG — mais as runtimes `libstdc++-6`/`libgcc_s_dw2-1` exigidas por ele), junto do executável. Depois de compilar, execute `run.bat` — que compila automaticamente caso `bin\game.exe` ainda não exista — ou `bin\game.exe` diretamente a partir da raiz do projeto, pois o jogo carrega os assets por caminhos relativos.
 
 ### Linux
 
@@ -239,7 +239,7 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 ├── bin/                     # DLLs de runtime do Windows + binários compilados (game.exe/game, ignorados)
 ├── img/                     # sprites (nave, planetas, UFO), telas de menu/vitória/derrota e Tileset.png
 ├── map/tileMap.txt          # mapa em camadas
-├── sfx/                     # músicas (mp3) e boom.wav
+├── sfx/                     # músicas (ogg) e boom.wav
 ├── ttf/                     # PirataOne e SpaceAge
 ├── build.bat                # compilação no Windows (MinGW + SDL 1.2 de lib/) -> bin/game.exe
 ├── run.bat                  # executa o jogo no Windows (compila antes, se necessário)
