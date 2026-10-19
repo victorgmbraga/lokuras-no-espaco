@@ -118,6 +118,11 @@ jobs:
           if not exist "%MINGW%\g++.exe" exit /b 1
           "%MINGW%\g++.exe" --version
           "%MINGW%\g++.exe" -dumpmachine
+          echo int main(){return 0;} > teste-ci.cpp
+          "%MINGW%\g++.exe" -v teste-ci.cpp -o teste-ci.exe
+          echo simples_exit=%ERRORLEVEL%
+          "%MINGW%\g++.exe" -v -std=gnu++11 -O2 -w -Dmain=SDL_main -I"lib\include" -I"lib\include\SDL" -I"src" -c src\main.cpp -o teste-main.o
+          echo main_exit=%ERRORLEVEL%
 
       - name: Build
         shell: cmd
