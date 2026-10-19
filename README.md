@@ -114,6 +114,17 @@ g++ -std=gnu++11 -O2 -w -Isrc src/*.cpp -o bin/game \
   -lSDL_image -lSDL_gfx -lSDL_ttf -lSDL_mixer -lSDL -lm
 ```
 
+### Builds automáticos (GitHub Actions)
+
+O workflow [`ci.yml`](.github/workflows/ci.yml) compila o jogo para **Linux** e **Windows** em todo push e pull request (e também pelo botão **Run workflow**, na aba Actions). Os pacotes ficam nos **Artifacts** do run:
+
+| Artefato | Conteúdo |
+| --- | --- |
+| `lokuras-linux-x86_64` | `.tar.gz` com `game`, `jogar.sh`, assets e `LEIA-ME.txt` (binário dinâmico; requer o runtime do SDL 1.2) |
+| `lokuras-windows-x86` | `.zip` com `game.exe`, DLLs, assets, `jogar.bat` e `LEIA-ME.txt` (não precisa instalar nada) |
+
+Os dois jobs rodam um smoke test de 5 s com os drivers dummy da SDL antes de publicar o pacote — se o jogo sair ou crashar, o job falha e o artefato não é gerado. O `build-windows` usa o MSYS2 com o MinGW i686, a mesma ABI (msvcrt) das import libs da SDL versionadas em `lib/`. O `build-linux` também roda o smoke test do desktop; o `build-web` compila o WebAssembly e, em `master`, publica o GitHub Pages.
+
 ### Navegador (WebAssembly)
 
 O jogo também roda no navegador: o `src/` é compilado para **WebAssembly** com [Emscripten](https://emscripten.org/) e hospedado em uma página com canvas 1280×720. Não é preciso instalar nada para jogar — a pasta `bin/web/` é autossuficiente (HTML + JS + WASM + assets embutidos) e o recorde fica no **IndexedDB** do navegador. A versão publicada está em **<https://victorgmbraga.github.io/lokuras-no-espaco/>**.
@@ -309,7 +320,7 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 │   ├── pre.js               # monta/sincroniza /save (IDBFS) no runtime
 │   └── shell.html           # página do jogo (canvas, áudio, autoteste)
 ├── .zed/                    # tasks do Zed (Compilar/Executar, desktop e web) + wrappers sh/cmd
-├── .github/workflows/       # CI (build + smoke tests Linux/web) + deploy no GitHub Pages
+├── .github/workflows/       # CI: builds Linux/Windows (+ artefatos) e web (+ GitHub Pages)
 └── tools/
     ├── make-assets.py       # regenera TODOS os assets (img/, sfx/) do zero
     ├── setup-mingw.ps1      # auto-bootstrap do MinGW no Windows (download com SHA-256)

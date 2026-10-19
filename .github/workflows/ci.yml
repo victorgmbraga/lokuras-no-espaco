@@ -1,7 +1,9 @@
 # CI do Lokuras no Espaço:
 #   - build-linux: build no Linux + smoke test com drivers dummy (o jogo roda
 #     5 segundos sem display real e o timeout precisa MATAR o processo, exit
-#     124 - se o jogo travar ou sair antes, o smoke falha);
+#     124 - se o jogo travar ou sair antes, o smoke falha) + pacote .tar.gz;
+#   - build-windows: build com MinGW i686 (MSYS2) + o mesmo smoke test com
+#     drivers dummy + pacote .zip com o game.exe, as DLLs e os assets;
 #   - build-web: build WebAssembly com o Emscripten + smoke test em um
 #     navegador headless (tools/smoke-web.mjs), que confere se o jogo desenha
 #     quadros, se o teclado responde e se o /save (IndexedDB) montou;
@@ -52,6 +54,121 @@ jobs:
             echo "O jogo saiu/crashou antes do timeout (exit $status)."
             exit 1
           fi
+
+      # Pacote pronto para rodar: binario + assets (o jogo carrega img/, sfx/,
+      # map/ e ttf/ por caminhos relativos) + um LEIA-ME com os requisitos.
+      # O tar.gz preserva o bit de execucao (o zip de artefato nao preserva).
+      - name: Empacotar (Linux x86_64)
+        run: |
+          mkdir -p dist/lokuras-linux
+          cp bin/game dist/lokuras-linux/
+          cp -r img sfx map ttf dist/lokuras-linux/
+          cp LICENSE CREDITS.md dist/lokuras-linux/
+          cp -r lib/LICENSES dist/lokuras-linux/licencas
+          cat > dist/lokuras-linux/LEIA-ME.txt <<'EOF'
+          Lokuras no Espaco - Linux x86_64
+          =================================
+
+          Execute nesta pasta:
+            ./jogar.sh    (ou ./game)
+
+          Requisitos: runtime do SDL 1.2 (SDL, SDL_image, SDL_ttf, SDL_mixer
+          e SDL_gfx). Em distros modernas, o sdl12-compat fornece a API 1.2.
+          Os assets (img/, sfx/, map/, ttf/) precisam ficar ao lado do jogo.
+          EOF
+          cat > dist/lokuras-linux/jogar.sh <<'EOF'
+          #!/bin/sh
+          cd "$(dirname "$0")" || exit 1
+          exec ./game "$@"
+          EOF
+          chmod +x dist/lokuras-linux/jogar.sh dist/lokuras-linux/game
+          tar -C dist/lokuras-linux -czf dist/lokuras-linux-x86_64.tar.gz .
+
+      - name: Publicar artefato (Linux)
+        uses: actions/upload-artifact@v7
+        with:
+          name: lokuras-linux-x86_64
+          path: dist/lokuras-linux-x86_64.tar.gz
+          if-no-files-found: error
+
+  # O jogo usa as import libs i686 da SDL versionadas em lib/, entao o
+  # compilador precisa ser o MinGW i686. O MSYS2 instala o toolchain pronto
+  # (mesma ABI msvcrt), sem o download interativo do tools/setup-mingw.ps1.
+  build-windows:
+    name: Windows (MinGW i686)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: MinGW i686 (MSYS2)
+        id: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW32
+          update: false
+          install: mingw-w64-i686-gcc
+
+      - name: Build
+        shell: cmd
+        env:
+          MINGW: ${{ steps.msys2.outputs['msys2-location'] }}\mingw32\bin
+          NO_PAUSE: "1"
+        run: build.bat
+
+      - name: Smoke test (drivers dummy, 5 s)
+        shell: pwsh
+        run: |
+          $env:SDL_VIDEODRIVER = 'dummy'
+          $env:SDL_AUDIODRIVER = 'dummy'
+          $p = Start-Process -FilePath '.\bin\game.exe' -PassThru -WindowStyle Hidden
+          Start-Sleep -Seconds 5
+          if ($p.HasExited) {
+            Write-Error "O jogo saiu/crashou antes do timeout (codigo $($p.ExitCode))."
+            exit 1
+          }
+          Stop-Process -Id $p.Id -Force
+          Write-Host "OK: o jogo continuou rodando por 5 s."
+
+      - name: Empacotar (Windows x86)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist\lokuras-windows | Out-Null
+          Copy-Item bin\game.exe dist\lokuras-windows\
+          Copy-Item bin\*.dll dist\lokuras-windows\
+          Copy-Item img,sfx,map,ttf dist\lokuras-windows\ -Recurse
+          Copy-Item LICENSE,CREDITS.md dist\lokuras-windows\
+          Copy-Item lib\LICENSES dist\lokuras-windows\licencas -Recurse
+
+          $leiame = @(
+            'Lokuras no Espaco - Windows x86',
+            '',
+            'Extraia esta pasta e execute game.exe (ou jogar.bat).',
+            'As DLLs e os assets (img\, sfx\, map\, ttf\) precisam ficar juntos.',
+            '',
+            'Controles: ENTER comeca; W/S acelera/freia; A/D gira;',
+            'clique esquerdo cria um planeta; ESC pausa; M muda o som.'
+          )
+          Set-Content -Path dist\lokuras-windows\LEIA-ME.txt -Value $leiame -Encoding utf8
+
+          $jogar = @(
+            '@echo off',
+            'cd /d "%~dp0"',
+            'start "" game.exe'
+          )
+          Set-Content -Path dist\lokuras-windows\jogar.bat -Value $jogar -Encoding ascii
+
+          # tar.exe (bsdtar) cria o zip sem depender do modulo
+          # Microsoft.PowerShell.Archive, que pode faltar no runner.
+          tar.exe -a -c -f dist\lokuras-windows-x86.zip -C dist\lokuras-windows .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Publicar artefato (Windows)
+        uses: actions/upload-artifact@v7
+        with:
+          name: lokuras-windows-x86
+          path: dist/lokuras-windows-x86.zip
+          if-no-files-found: error
 
   build-web:
     runs-on: ubuntu-latest

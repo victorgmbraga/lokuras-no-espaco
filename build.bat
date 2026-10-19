@@ -8,6 +8,7 @@ rem   2) tools\mingw32\bin (MinGW baixado pelo proprio build.bat)
 rem   3) g++ no PATH
 rem   4) auto-bootstrap via tools\setup-mingw.ps1 (baixa o winlibs i686)
 rem Defina NO_PAUSE=1 para nao aguardar tecla ao final (usado pelo run.bat).
+rem Saida: exit 0 = build ok | exit 1 = falha.
 setlocal EnableExtensions
 cd /d "%~dp0"
 
@@ -49,10 +50,11 @@ if not exist bin mkdir bin
   -mwindows -L"lib\lib" -lmingw32 -lSDLmain -lSDL_gfx -lSDL_image -lSDL_ttf -lSDL_mixer -lSDL ^
   -static-libgcc -static-libstdc++
 
-if %ERRORLEVEL% EQU 0 (
+set "STATUS=%ERRORLEVEL%"
+if %STATUS% EQU 0 (
   echo Build OK: bin\game.exe
 ) else (
-  echo Build FALHOU com erro %ERRORLEVEL%
+  echo Build FALHOU com erro %STATUS%
 )
 if not defined NO_PAUSE pause
-exit /b 0
+exit /b %STATUS%

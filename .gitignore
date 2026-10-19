@@ -2,6 +2,7 @@
 bin/game
 bin/game-dbg
 bin/web/
+dist/
 stderr.txt
 stdout.txt
 tools/mingw32/
