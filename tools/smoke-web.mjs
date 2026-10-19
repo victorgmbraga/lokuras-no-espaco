@@ -154,7 +154,8 @@ const processo = spawn(navegador, argumentos, { stdio: ["ignore", "ignore", "pip
 
 let saidaErro = "";
 const portas = new Promise((resolver, rejeitar) => {
-  const prazo = setTimeout(() => rejeitar(new Error("o navegador nao abriu o CDP")), 20000);
+  // O Chrome do runner pode demorar para subir em maquinas carregadas.
+  const prazo = setTimeout(() => rejeitar(new Error("o navegador nao abriu o CDP")), 45000);
   processo.stderr.on("data", (pedaco) => {
     saidaErro += pedaco;
     const encontrado = /DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)\//.exec(saidaErro);
