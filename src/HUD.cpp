@@ -27,12 +27,8 @@ HUD::HUD()
 	int textPosY = SCREEN_H - commandsText->getHeight();
 	commandsText->setPos(14, textPosY);
 
-	commandsText2 = new Text("ttf/PirataOne-Regular.ttf", "Planetas surgem sozinhos: o ritmo aumenta", 24, 0, {255, 255, 255}, 0, 0);
-	textPosY = SCREEN_H - commandsText->getHeight() * 2;
-	commandsText2->setPos(14, textPosY);
-
 	commandsText3 = new Text("ttf/PirataOne-Regular.ttf", "ESC: Pausa   |   +/-: Volume   |   M: Mudo", 24, 0, {255, 255, 255}, 0, 0);
-	textPosY = SCREEN_H - commandsText->getHeight() * 3;
+	textPosY = SCREEN_H - commandsText->getHeight() * 2;
 	commandsText3->setPos(14, textPosY);
 
 	// Overlay de pausa.
@@ -53,7 +49,6 @@ HUD::~HUD()
 	delete(destroyedText);
 	delete(timerText);
 	delete(commandsText);
-	delete(commandsText2);
 	delete(commandsText3);
 	delete(pauseText);
 	delete(pauseHint);
@@ -76,7 +71,6 @@ void HUD::render()
 	destroyedText->render();
 	timerText->render();
 	commandsText->render();
-	commandsText2->render();
 	commandsText3->render();
 }
 

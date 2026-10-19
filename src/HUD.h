@@ -17,7 +17,6 @@ class HUD
 	private:
 		Text *lifeCounter;
 		Text *commandsText;
-		Text *commandsText2;
 		Text *commandsText3;
 		Text *destroyedText;
 		Text *timerText;
