@@ -3,6 +3,8 @@
 ![CI](https://github.com/victorgmbraga/lokuras-no-espaco/actions/workflows/ci.yml/badge.svg)
 ![Gameplay de Lokuras no Espaço](game.jpg)
 
+**Jogue no navegador:** <https://victorgmbraga.github.io/lokuras-no-espaco/>
+
 Jogo 2D em **C++ com SDL 1.2**, desenvolvido para a disciplina **Introdução ao Desenvolvimento de Jogos (IDJ)** da Universidade de Brasília (UnB/CIC, Turma A, 2013 — Profª. Carla Denise Castanho). O mesmo código compila para **Windows**, **Linux** e **navegador (WebAssembly)**.
 
 Este repositório reconstrói todo o **fluxo de desenvolvimento da disciplina** em um histórico Git linear: cada entrega (trabalho **TR** ou exercício **EX**) virou um commit, partindo do game loop básico (TR01) até a game engine completa com máquina de estados (TR04), que dá origem ao jogo **Lokuras no Espaço**.
@@ -114,7 +116,7 @@ g++ -std=gnu++11 -O2 -w -Isrc src/*.cpp -o bin/game \
 
 ### Navegador (WebAssembly)
 
-O jogo também roda no navegador: o `src/` é compilado para **WebAssembly** com [Emscripten](https://emscripten.org/) e hospedado em uma página com canvas 1280×720. Não é preciso instalar nada para jogar — a pasta `bin/web/` é autossuficiente (HTML + JS + WASM + assets embutidos) e o recorde fica no **IndexedDB** do navegador.
+O jogo também roda no navegador: o `src/` é compilado para **WebAssembly** com [Emscripten](https://emscripten.org/) e hospedado em uma página com canvas 1280×720. Não é preciso instalar nada para jogar — a pasta `bin/web/` é autossuficiente (HTML + JS + WASM + assets embutidos) e o recorde fica no **IndexedDB** do navegador. A versão publicada está em **<https://victorgmbraga.github.io/lokuras-no-espaco/>**.
 
 **Requisitos**
 
@@ -141,6 +143,12 @@ O build web precisa ser servido por **http** (o navegador bloqueia o fetch do `.
 - `StateManager` usa `emscripten_set_main_loop` (requestAnimationFrame) no navegador, no lugar do `while` + `SDL_Delay` do desktop — um loop bloqueante travaria a thread do navegador. O `dt`/`MAX_DT` e a lógica de estados são os mesmos.
 - Imagens, sons, fontes e o mapa entram no `index.data` via `--preload-file`; não há dependência de arquivos externos.
 - Para diagnosticar, `index.html?selftest=1` publica no título da página `LOKURAS_SELFTEST_PASS frames=N` depois de ~30 frames desenhados. Esse é o gancho usado pelo smoke test `tools/smoke-web.mjs` (também rodado pelo CI): com o `bin/web` servido por http, ele abre a página em um navegador headless (Edge/Chrome) via DevTools, espera o selftest, aperta ENTER, confere que o jogo continua desenhando quadros e que o `/save` (IDBFS) montou — ex.: `SMOKE_SCREENSHOT=bin/web-smoke.png node tools/smoke-web.mjs`.
+
+#### Publicação no GitHub Pages
+
+O job `deploy-web` do CI publica o `bin/web` no **GitHub Pages** a cada push em `master`, mas só depois que o build e o smoke test passam — o artefato publicado é exatamente o que foi testado, e um jogo que não desenha quadros não vai para o ar. O endereço é **<https://victorgmbraga.github.io/lokuras-no-espaco/>**.
+
+Na primeira vez, habilite o Pages em **Settings → Pages → Build and deployment → Source: GitHub Actions** (o `GITHUB_TOKEN` do workflow não tem permissão para habilitar o Pages sozinho, então esse passo é manual e único). Depois disso, cada push em `master` atualiza o site; para republicar sem mudar código, use **Run workflow** na aba Actions. Como o HTML, o JS, o WASM e o `.data` usam caminhos relativos, o mesmo build funciona tanto em `http://localhost:8000/` quanto na subpasta `/lokuras-no-espaco/` do Pages.
 
 ### Zed
 
@@ -301,7 +309,7 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 │   ├── pre.js               # monta/sincroniza /save (IDBFS) no runtime
 │   └── shell.html           # página do jogo (canvas, áudio, autoteste)
 ├── .zed/                    # tasks do Zed (Compilar/Executar, desktop e web) + wrappers sh/cmd
-├── .github/workflows/       # CI (build + smoke tests no Linux e no navegador)
+├── .github/workflows/       # CI (build + smoke tests Linux/web) + deploy no GitHub Pages
 └── tools/
     ├── make-assets.py       # regenera TODOS os assets (img/, sfx/) do zero
     ├── setup-mingw.ps1      # auto-bootstrap do MinGW no Windows (download com SHA-256)

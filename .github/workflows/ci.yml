@@ -4,7 +4,11 @@
 #     124 - se o jogo travar ou sair antes, o smoke falha);
 #   - build-web: build WebAssembly com o Emscripten + smoke test em um
 #     navegador headless (tools/smoke-web.mjs), que confere se o jogo desenha
-#     quadros, se o teclado responde e se o /save (IndexedDB) montou.
+#     quadros, se o teclado responde e se o /save (IndexedDB) montou;
+#   - deploy-web: em push para master, publica o MESMO bin/web testado no
+#     GitHub Pages (https://victorgmbraga.github.io/lokuras-no-espaco/).
+#     O Pages precisa estar habilitado em Settings -> Pages -> Source:
+#     "GitHub Actions" (o GITHUB_TOKEN nao consegue habilitar sozinho).
 
 name: CI
 
@@ -12,6 +16,10 @@ on:
   push:
     branches: [master]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build-linux:
@@ -71,3 +79,34 @@ jobs:
           name: web-smoke
           path: bin/web-smoke*.png
           if-no-files-found: ignore
+
+      # O site e estatico e usa so caminhos relativos, entao o mesmo bin/web
+      # funciona tanto em http://localhost:8000/ quanto na subpasta do Pages
+      # (/lokuras-no-espaco/). So publica o que passou no smoke test acima.
+      - name: Empacotar o site (GitHub Pages)
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: bin/web
+
+  deploy-web:
+    name: Publicar no GitHub Pages
+    needs: build-web
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # Um deploy por vez; se chegar outro push durante a publicacao, espera em
+    # vez de cancelar (o site nunca fica pela metade).
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v5
