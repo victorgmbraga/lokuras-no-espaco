@@ -114,6 +114,7 @@ jobs:
         env:
           MINGW: ${{ steps.msys2.outputs['msys2-location'] }}\mingw32\bin
         run: |
+          set "PATH=%MINGW%;%PATH%"
           echo MINGW=%MINGW%
           if not exist "%MINGW%\g++.exe" exit /b 1
           "%MINGW%\g++.exe" --version
@@ -129,7 +130,11 @@ jobs:
         env:
           MINGW: ${{ steps.msys2.outputs['msys2-location'] }}\mingw32\bin
           NO_PAUSE: "1"
-        run: build.bat
+        run: |
+          rem O cc1plus.exe fica em lib/gcc/... e precisa achar as DLLs do
+          rem MinGW pelo PATH (nao basta chamar o g++.exe pelo caminho).
+          set "PATH=%MINGW%;%PATH%"
+          build.bat
 
       - name: Diagnóstico da falha
         if: failure()
@@ -138,6 +143,7 @@ jobs:
           MINGW: ${{ steps.msys2.outputs['msys2-location'] }}\mingw32\bin
           NO_PAUSE: "1"
         run: |
+          set "PATH=%MINGW%;%PATH%"
           powershell -NoProfile -Command "(Get-Content build.bat) -replace '@echo off','@echo on' | Set-Content build-echo.bat"
           call build-echo.bat
 
