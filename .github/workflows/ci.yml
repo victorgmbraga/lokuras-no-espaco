@@ -109,12 +109,32 @@ jobs:
           update: false
           install: mingw-w64-i686-gcc
 
+      - name: Toolchain (diagnóstico)
+        shell: cmd
+        env:
+          MINGW: ${{ steps.msys2.outputs['msys2-location'] }}\mingw32\bin
+        run: |
+          echo MINGW=%MINGW%
+          if not exist "%MINGW%\g++.exe" exit /b 1
+          "%MINGW%\g++.exe" --version
+          "%MINGW%\g++.exe" -dumpmachine
+
       - name: Build
         shell: cmd
         env:
           MINGW: ${{ steps.msys2.outputs['msys2-location'] }}\mingw32\bin
           NO_PAUSE: "1"
         run: build.bat
+
+      - name: Diagnóstico da falha
+        if: failure()
+        shell: cmd
+        env:
+          MINGW: ${{ steps.msys2.outputs['msys2-location'] }}\mingw32\bin
+          NO_PAUSE: "1"
+        run: |
+          powershell -NoProfile -Command "(Get-Content build.bat) -replace '@echo off','@echo on' | Set-Content build-echo.bat"
+          call build-echo.bat
 
       - name: Smoke test (drivers dummy, 5 s)
         shell: pwsh
