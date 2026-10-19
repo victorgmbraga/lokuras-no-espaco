@@ -50,10 +50,10 @@ void StateGame::load(int stack)
 	tileSet = new TileSet(75, 75, "img/Tileset.png");
 	tileMap = new TileMap("map/tileMap.txt", tileSet);
 
-	// Planetas Vermelhos (adicionados com Mouse1)
+	// Planetas Vermelhos: surgem sozinhos. O primeiro nasce entre 2,5 e 4 s;
+	// depois o intervalo cai conforme o tempo de partida aumenta.
 	redPlanetSprite = new Sprite("img/PlanetaVermelho.png");
-	redPlanetCoolDown = new Timer();
-	redPlanetCoolDown->start();
+	redPlanetCooldown = 2500 + (rand() % 1500);
 
 	// Power-ups (vida, escudo e turbo)
 	powerUpSprites[0] = new Sprite("img/PowerVida.png");
@@ -130,7 +130,6 @@ int StateGame::unload()
 	delete(sfxEngine);
 	delete(music);
 	delete(sfx);
-	delete(redPlanetCoolDown);
 
 	// A camera e singleton (vive fora deste estado); desvincula do objeto morto.
 	Camera::getInstance().unBind();
@@ -242,15 +241,8 @@ void StateGame::checkCollision(int dt)
 
 void StateGame::addPlanet()
 {
-	// Periodo de recarga entre planetas.
-	if(redPlanetCoolDown->getTime() < 3000)
+	if(ship == NULL)
 		return;
-
-	// Nao enche a tela de planetas.
-	if(planetArray.size() >= 12)
-		return;
-
-	redPlanetCoolDown->start();
 
 	float sx = ship->x + ship->w/2;
 	float sy = ship->y + ship->h/2;
@@ -271,6 +263,19 @@ void StateGame::addPlanet()
 
 	PlanetRed *planetRed = new PlanetRed(redPlanetSprite, planetX, planetY, 20);
 	planetArray.push_back(planetRed);
+}
+
+int StateGame::nextPlanetInterval()
+{
+	// O intervalo base cai 20 ms por segundo de partida: ~4,2 s no inicio,
+	// ~3,0 s em 1 min, ~1,8 s em 2 min e no minimo 1,3 s (por volta de
+	// 2 min 25 s). A variacao de +-20% evita um ritmo metronomico.
+	int base = 4200 - 20 * (gameTimeMs / 1000);
+	if(base < 1300)
+		base = 1300;
+
+	int variacao = base / 5;
+	return base - variacao + (rand() % (2 * variacao + 1));
 }
 
 void StateGame::spawnPowerUp()
@@ -445,9 +450,21 @@ int StateGame::update(int dt)
 	if(shakeTime > 0)
 		shakeTime -= dt;
 
-	// Adiciona os planetas vermelhos com o mouse (e power-ups no cronometro).
-	if(im.isMouseDown(1) && ship != NULL)
-		addPlanet();
+	// Planetas vermelhos: surgem sozinhos. Quando a tela esta cheia, tenta de
+	// novo em breve; senao agenda o proximo com o ritmo atual da partida.
+	if(redPlanetCooldown > 0)
+		redPlanetCooldown -= dt;
+
+	if(redPlanetCooldown <= 0)
+	{
+		if(planetArray.size() < 12)
+		{
+			addPlanet();
+			redPlanetCooldown = nextPlanetInterval();
+		}
+		else
+			redPlanetCooldown = 500;
+	}
 
 	if(powerUpCooldown > 0)
 		powerUpCooldown -= dt;

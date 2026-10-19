@@ -43,10 +43,10 @@ class StateGame: public State
 		TileSet *tileSet;
 		TileMap *tileMap;
 
-		// Planetas Vermelhos
+		// Planetas Vermelhos (surgem sozinhos; o ritmo aumenta com o tempo)
 		Sprite *redPlanetSprite;
 		std::vector<Planet*> planetArray;
-		Timer *redPlanetCoolDown;
+		int redPlanetCooldown;
 
 		// Terra
 		Sprite *earthSprite;
@@ -98,6 +98,7 @@ class StateGame: public State
 
 		void checkCollision(int dt);
 		void addPlanet();
+		int nextPlanetInterval();
 		void spawnPowerUp();
 		void endGame(bool win);
 		void renderObjective(float cameraX, float cameraY);

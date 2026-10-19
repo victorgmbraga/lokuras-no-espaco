@@ -27,7 +27,7 @@ HUD::HUD()
 	int textPosY = SCREEN_H - commandsText->getHeight();
 	commandsText->setPos(14, textPosY);
 
-	commandsText2 = new Text("ttf/PirataOne-Regular.ttf", "Mouse1: Adiciona Planeta", 24, 0, {255, 255, 255}, 0, 0);
+	commandsText2 = new Text("ttf/PirataOne-Regular.ttf", "Planetas surgem sozinhos: o ritmo aumenta", 24, 0, {255, 255, 255}, 0, 0);
 	textPosY = SCREEN_H - commandsText->getHeight() * 2;
 	commandsText2->setPos(14, textPosY);
 

@@ -160,7 +160,7 @@ jobs:
             'As DLLs e os assets (img\, sfx\, map\, ttf\) precisam ficar juntos.',
             '',
             'Controles: ENTER comeca; W/S acelera/freia; A/D gira;',
-            'clique esquerdo cria um planeta; ESC pausa; M muda o som.'
+            'planetas surgem sozinhos; ESC pausa; M muda o som.'
           )
           Set-Content -Path dist\lokuras-windows\LEIA-ME.txt -Value $leiame -Encoding utf8
 
