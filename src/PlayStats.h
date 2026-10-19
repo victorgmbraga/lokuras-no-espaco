@@ -14,7 +14,19 @@
 
 #include <cstdio>
 #include <string>
+
+// No build WebAssembly o recorde vai para /save (IDBFS, montado e sincronizado
+// com o IndexedDB pela pagina web/shell.html); no desktop continua sendo um
+// arquivo ao lado do jogo.
+#ifdef __EMSCRIPTEN__
+#define PLAYSTATS_FILE "/save/lokuras.rec"
+
+// Definida em web/compat/sdl12_web.cpp: pede a gravacao imediata do /save no
+// IndexedDB depois que o recorde muda no disco virtual.
+extern "C" void lokurasWebSincronizarSave(void);
+#else
 #define PLAYSTATS_FILE "lokuras.rec"
+#endif
 
 class PlayStats
 {
@@ -49,6 +61,10 @@ class PlayStats
 			{
 				fprintf(f, "%d\n", bestScore());
 				fclose(f);
+
+				#ifdef __EMSCRIPTEN__
+				lokurasWebSincronizarSave();
+				#endif
 			}
 		}
 

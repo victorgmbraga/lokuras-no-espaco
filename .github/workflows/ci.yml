@@ -1,8 +1,10 @@
-# CI do Lokuras no Espaço: build no Linux + smoke test com drivers dummy.
-#
-# O jogo roda 5 segundos sem display real (SDL_VIDEODRIVER=dummy) e o
-# timeout precisa MATAR o processo (exit 124) - se o jogo travar ou sair
-# antes, o smoke falha.
+# CI do Lokuras no Espaço:
+#   - build-linux: build no Linux + smoke test com drivers dummy (o jogo roda
+#     5 segundos sem display real e o timeout precisa MATAR o processo, exit
+#     124 - se o jogo travar ou sair antes, o smoke falha);
+#   - build-web: build WebAssembly com o Emscripten + smoke test em um
+#     navegador headless (tools/smoke-web.mjs), que confere se o jogo desenha
+#     quadros, se o teclado responde e se o /save (IndexedDB) montou.
 
 name: CI
 
@@ -40,3 +42,32 @@ jobs:
             echo "O jogo saiu/crashou antes do timeout (exit $status)."
             exit 1
           fi
+
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Mesma versao usada no desenvolvimento (tools/setup-emsdk.*).
+      - name: Emscripten (emsdk 6.0.12)
+        uses: emscripten-core/setup-emsdk@v15
+        with:
+          version: 6.0.12
+
+      - name: Build web (WebAssembly + ports da SDL 2)
+        run: ./build-web.sh
+
+      - name: Smoke test no navegador (headless, Chrome do runner)
+        run: |
+          python3 -m http.server 8000 --directory bin/web &
+          sleep 1
+          SMOKE_SCREENSHOT=bin/web-smoke.png node tools/smoke-web.mjs
+
+      - name: Artefato do smoke (screenshots)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-smoke
+          path: bin/web-smoke*.png
+          if-no-files-found: ignore

@@ -26,5 +26,21 @@
     "save": "all",
     "reveal": "always",
     "allow_concurrent_runs": true
+  },
+  {
+    "label": "Compilar (web)",
+    "command": "./.zed/build-web.cmd",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "save": "all",
+    "reveal": "always",
+    "hide": "on_success"
+  },
+  {
+    "label": "Executar (web)",
+    "command": "./.zed/run-web.cmd",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "save": "all",
+    "reveal": "always",
+    "allow_concurrent_runs": true
   }
 ]

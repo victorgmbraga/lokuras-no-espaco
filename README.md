@@ -3,7 +3,7 @@
 ![CI](https://github.com/victorgmbraga/lokuras-no-espaco/actions/workflows/ci.yml/badge.svg)
 ![Gameplay de Lokuras no Espaço](game.jpg)
 
-Jogo 2D em **C++ com SDL 1.2**, desenvolvido para a disciplina **Introdução ao Desenvolvimento de Jogos (IDJ)** da Universidade de Brasília (UnB/CIC, Turma A, 2013 — Profª. Carla Denise Castanho).
+Jogo 2D em **C++ com SDL 1.2**, desenvolvido para a disciplina **Introdução ao Desenvolvimento de Jogos (IDJ)** da Universidade de Brasília (UnB/CIC, Turma A, 2013 — Profª. Carla Denise Castanho). O mesmo código compila para **Windows**, **Linux** e **navegador (WebAssembly)**.
 
 Este repositório reconstrói todo o **fluxo de desenvolvimento da disciplina** em um histórico Git linear: cada entrega (trabalho **TR** ou exercício **EX**) virou um commit, partindo do game loop básico (TR01) até a game engine completa com máquina de estados (TR04), que dá origem ao jogo **Lokuras no Espaço**.
 
@@ -49,7 +49,7 @@ Cada estado tem música tema; o estado de jogo tem `stateGame.ogg` e o SFX `boom
 
 ## Como compilar e executar
 
-O mesmo `src/` compila para Windows (`build.bat`/`run.bat`) e para Linux (`build.sh`/`run.sh`), a partir da raiz do projeto.
+O mesmo `src/` compila para Windows (`build.bat`/`run.bat`), para Linux (`build.sh`/`run.sh`) e para o navegador (`build-web.bat`/`run-web.bat` e `build-web.sh`/`run-web.sh`), a partir da raiz do projeto.
 
 ### Windows
 
@@ -112,6 +112,36 @@ g++ -std=gnu++11 -O2 -w -Isrc src/*.cpp -o bin/game \
   -lSDL_image -lSDL_gfx -lSDL_ttf -lSDL_mixer -lSDL -lm
 ```
 
+### Navegador (WebAssembly)
+
+O jogo também roda no navegador: o `src/` é compilado para **WebAssembly** com [Emscripten](https://emscripten.org/) e hospedado em uma página com canvas 1280×720. Não é preciso instalar nada para jogar — a pasta `bin/web/` é autossuficiente (HTML + JS + WASM + assets embutidos) e o recorde fica no **IndexedDB** do navegador.
+
+**Requisitos**
+
+- Emscripten (`emsdk`). O `build-web.bat`/`build-web.sh` baixam o emsdk para `tools/emsdk` automaticamente se o `em++` não for encontrado (~1,3 GB de download, ~2,5 GB extraído), do mesmo jeito que o `build.bat` faz com o MinGW. Também dá para instalar o emsdk no sistema e deixar o `em++` no `PATH`.
+
+```sh
+./tools/setup-emsdk.sh   # opcional: baixa/instala o emsdk em tools/emsdk (sem root)
+./build-web.sh           # compila -> bin/web/index.html (+ .js/.wasm/.data)
+./run-web.sh             # serve bin/web em http://127.0.0.1:8000/ e abre o navegador
+```
+
+```bat
+tools\setup-emsdk.ps1    rem opcional: baixa/instala o emsdk em tools\emsdk
+build-web.bat            rem compila -> bin\web\index.html (+ .js/.wasm/.data)
+run-web.bat              rem serve bin\web em http://127.0.0.1:8000\ e abre o navegador
+```
+
+O build web precisa ser servido por **http** (o navegador bloqueia o fetch do `.wasm`/`.data` em `file://`): o `run-web.*` sobe um `python -m http.server` em `bin/web` — qualquer outro servidor estático também serve. A resolução do Emscripten é `EMXX` (variável de ambiente) → `tools/emsdk` → `PATH`; o link usa o `em++` (e não o `emcc`) para puxar a libc++ do C++.
+
+**Como funciona**
+
+- O Emscripten não oferece mais o port da **SDL 1.2**, então `web/compat/` reimplementa a parte da API 1.2 usada pelo jogo sobre a **SDL 2** dos ports `sdl2`, `sdl2_image`, `sdl2_ttf`, `sdl2_mixer` e `sdl2_gfx` — o `src/` continua exatamente o mesmo do desktop. A "tela" continua sendo uma surface de software; o `SDL_Flip` envia a surface para uma textura e desenha no canvas.
+- `web/shell.html` é a página do jogo (canvas que se adapta à janela, tela de "Começar" que libera o áudio e controles) e `web/pre.js` monta o `/save` (**IDBFS**) onde o `lokuras.rec` é persistido.
+- `StateManager` usa `emscripten_set_main_loop` (requestAnimationFrame) no navegador, no lugar do `while` + `SDL_Delay` do desktop — um loop bloqueante travaria a thread do navegador. O `dt`/`MAX_DT` e a lógica de estados são os mesmos.
+- Imagens, sons, fontes e o mapa entram no `index.data` via `--preload-file`; não há dependência de arquivos externos.
+- Para diagnosticar, `index.html?selftest=1` publica no título da página `LOKURAS_SELFTEST_PASS frames=N` depois de ~30 frames desenhados. Esse é o gancho usado pelo smoke test `tools/smoke-web.mjs` (também rodado pelo CI): com o `bin/web` servido por http, ele abre a página em um navegador headless (Edge/Chrome) via DevTools, espera o selftest, aperta ENTER, confere que o jogo continua desenhando quadros e que o `/save` (IDBFS) montou — ex.: `SMOKE_SCREENSHOT=bin/web-smoke.png node tools/smoke-web.mjs`.
+
 ### Zed
 
 O repositório tem **tasks prontas do Zed** em `.zed/tasks.json` (use `task: spawn` na paleta de comandos — `Ctrl+Shift+P`):
@@ -121,6 +151,8 @@ O repositório tem **tasks prontas do Zed** em `.zed/tasks.json` (use `task: spa
 | **Compilar** | Compila o jogo (`build.sh` no Linux/macOS, `build.bat` no Windows) |
 | **Executar** | Executa o jogo (compila antes, se `bin/game` ainda não existir) |
 | **Compilar e executar** | Compila e executa em sequência |
+| **Compilar (web)** | Compila para o navegador (`build-web.sh`/`build-web.bat`, Emscripten) |
+| **Executar (web)** | Serve `bin/web` por http e abre o navegador |
 
 A detecção do sistema operacional fica nos wrappers `.zed/*.cmd`: são arquivos "poliglotas" que rodam como script `sh` no Linux/macOS e como `.cmd` no Windows, então a mesma task funciona nos dois sistemas. (O `tasks.json` do Zed ainda não tem uma variável de sistema operacional nem condicionais por plataforma como o `windows`/`linux` do VS Code.)
 
@@ -209,7 +241,7 @@ Para criar atalhos, use `task::Spawn` com `task_name` no seu `keymap.json` globa
 | `Timer` | Cronômetro com start/pause/resume para cooldowns |
 | `InputManager` | Singleton de entrada: teclado/mouse (down/up/pressed) e `quitGame`, com suporte a joystick (analog sticks) |
 | `Camera` | Singleton; segue um `GameObject` via `bind`/`unBind` (livre com as setas, em tempo real) |
-| `State` / `StateManager` | Máquina de estados com pilha de valores entre telas; loop central com dt real, cap de ~60 FPS, fade entre estados e atalhos globais de volume |
+| `State` / `StateManager` | Máquina de estados com pilha de valores entre telas; loop central com dt real, cap de ~60 FPS, fade entre estados e atalhos globais de volume (no navegador o loop vira um callback do `requestAnimationFrame`) |
 | `TileSet` / `TileMap` | Mapa em camadas carregado de arquivo, com parallax por camada e culling por tela |
 | `PlayStats` | Estatísticas/recorde de partidas persistidas (`lokuras.rec`) |
 | `Rect` / AABB | Retângulo de colisão do `GameObject` |
@@ -260,14 +292,26 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 ├── run.bat                  # executa o jogo no Windows (compila antes, se necessário)
 ├── build.sh                 # compilação no Linux (SDL 1.2 do sistema) -> bin/game
 ├── run.sh                   # executa o jogo no Linux (compila antes, se necessário)
-├── .zed/                    # tasks do Zed (Compilar/Executar) + wrappers sh/cmd
-├── .github/workflows/       # CI (build + smoke test no Linux)
+├── build-web.bat            # compilação para o navegador (Emscripten) -> bin/web/
+├── run-web.bat              # serve bin/web por http e abre o navegador (Windows)
+├── build-web.sh             # compilação para o navegador (Emscripten) -> bin/web/
+├── run-web.sh               # serve bin/web por http e abre o navegador (Linux/macOS)
+├── web/
+│   ├── compat/              # API SDL 1.2 sobre a SDL 2 dos ports do Emscripten
+│   ├── pre.js               # monta/sincroniza /save (IDBFS) no runtime
+│   └── shell.html           # página do jogo (canvas, áudio, autoteste)
+├── .zed/                    # tasks do Zed (Compilar/Executar, desktop e web) + wrappers sh/cmd
+├── .github/workflows/       # CI (build + smoke tests no Linux e no navegador)
 └── tools/
     ├── make-assets.py       # regenera TODOS os assets (img/, sfx/) do zero
     ├── setup-mingw.ps1      # auto-bootstrap do MinGW no Windows (download com SHA-256)
     ├── mingw32/             # toolchain baixado pelo bootstrap (ignorado pelo git)
     ├── setup-sdl12.sh       # SDL 1.2 local no Linux, sem root (extrai .deb em sdl12/)
-    └── sdl12/               # SDL 1.2 baixado pelo script acima (ignorado pelo git)
+    ├── sdl12/               # SDL 1.2 baixado pelo script acima (ignorado pelo git)
+    ├── setup-emsdk.ps1      # auto-bootstrap do Emscripten no Windows
+    ├── setup-emsdk.sh       # auto-bootstrap do Emscripten no Linux/macOS
+    ├── smoke-web.mjs        # smoke test do build web (navegador headless via DevTools)
+    └── emsdk/               # Emscripten baixado pelos scripts acima (ignorado pelo git)
 ```
 
 ## Licença

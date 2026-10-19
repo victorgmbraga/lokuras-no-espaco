@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lokuras no Espaço</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #05060a;
+    color: #dfe2ee;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    overflow: hidden;
+  }
+  #stage {
+    position: relative;
+    width: min(100%, calc((100vh - 84px) * 16 / 9));
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px #232838, 0 24px 70px rgba(0, 0, 0, .65);
+  }
+  #canvas { display: block; width: 100%; height: 100%; background: #000; outline: none; }
+  #sobreposicao {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    text-align: center;
+    padding: 24px;
+    background: radial-gradient(circle at 50% 40%, rgba(16, 20, 38, .86), rgba(3, 4, 8, .94));
+    transition: opacity .35s ease;
+  }
+  #sobreposicao.escondida { opacity: 0; pointer-events: none; }
+  h1 {
+    margin: 0;
+    font-size: clamp(22px, 3.4vw, 40px);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #ffd86b;
+    text-shadow: 0 2px 18px rgba(255, 216, 107, .25);
+  }
+  #estado { margin: 0; color: #c8cee4; }
+  #progresso { width: min(420px, 72%); height: 6px; border-radius: 3px; background: #1b2030; overflow: hidden; }
+  #barra { height: 100%; width: 0; background: linear-gradient(90deg, #4d6bff, #7de1ff); transition: width .25s ease; }
+  .controles {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 4px;
+    font-size: clamp(11px, 1.15vw, 14px);
+    color: #9aa2bd;
+    max-width: 62ch;
+    line-height: 1.5;
+  }
+  .controles b { color: #e8ecff; font-weight: 600; }
+  #comecar {
+    font: inherit;
+    font-weight: 700;
+    padding: 10px 28px;
+    border: 1px solid #6c7bd4;
+    border-radius: 999px;
+    background: linear-gradient(#2b3b8f, #1b2559);
+    color: #fff;
+    cursor: pointer;
+  }
+  #comecar:hover { filter: brightness(1.15); }
+  #ajuda-fora { font-size: 12px; color: #6f7692; text-align: center; }
+  noscript { color: #ff9c9c; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+    <div id="sobreposicao">
+      <h1>Lokuras no Espaço</h1>
+      <p id="estado">Carregando…</p>
+      <div id="progresso"><div id="barra"></div></div>
+      <ul class="controles">
+        <li><b>ENTER</b> começar · <b>W</b>/<b>S</b> acelerar/frear · <b>A</b>/<b>D</b> girar a nave</li>
+        <li><b>clique esquerdo</b> cria um planeta vermelho · <b>ESC</b> pausa · <b>Q</b> (na pausa) volta ao menu</li>
+        <li><b>M</b> mudo · <b>+</b>/<b>-</b> volume · <b>Alt+Enter</b> tela cheia · gamepad funciona</li>
+      </ul>
+      <button id="comecar" type="button">Começar</button>
+    </div>
+  </div>
+  <p id="ajuda-fora">Lokuras no Espaço — C++/SDL compilado para WebAssembly com Emscripten.</p>
+  <noscript>Este jogo precisa de JavaScript habilitado para rodar.</noscript>
+
+  <script>
+    // Configuracao do Module do Emscripten (a pagina e o shell do build web).
+    // O canvas e o mesmo elemento em todos os estados; os assets (img/, sfx/,
+    // map/, ttf/) vem embutidos no .data e o recorde fica em /save (IDBFS),
+    // persistido no IndexedDB do navegador.
+    var Module = {
+      canvas: document.getElementById('canvas'),
+
+      setStatus: function (text) {
+        if (!text) return;
+        document.getElementById('estado').textContent = text;
+        var m = /\((\d+)\/(\d+)\)/.exec(text);
+        if (m) {
+          document.getElementById('barra').style.width = Math.round(100 * m[1] / m[2]) + '%';
+        } else if (/Downloading/i.test(text)) {
+          document.getElementById('barra').style.width = '20%';
+        }
+      },
+
+      preRun: [
+        function () {
+          // Monta /save (IDBFS) e carrega o recorde salvo - a implementacao
+          // fica em web/pre.js, no escopo do runtime do Emscripten.
+          if (Module.lokurasPrepararSave) Module.lokurasPrepararSave();
+        }
+      ],
+
+      onRuntimeInitialized: function () {
+        document.getElementById('barra').style.width = '100%';
+        document.getElementById('estado').textContent = 'Pronto! Clique em "Começar" para jogar.';
+
+        // De tempos em tempos grava no IndexedDB o que o jogo escreveu em
+        // /save (o recorde so muda no fim de uma partida).
+        setInterval(function () {
+          if (Module.lokurasSincronizarSave) Module.lokurasSincronizarSave();
+        }, 8000);
+
+        // Ultima tentativa ao sair da pagina (o navegador pode nao esperar o
+        // IndexedDB, mas na pratica o flush periodico ja aconteceu).
+        window.addEventListener('pagehide', function () {
+          if (Module.lokurasSincronizarSave) Module.lokurasSincronizarSave();
+        });
+      }
+    };
+
+    // A "janela" do jogo comeca com a sobreposicao por cima: o primeiro
+    // clique/tecla libera a caixinha de som do navegador (autoplay) e da
+    // foco ao canvas.
+    (function () {
+      var sobreposicao = document.getElementById('sobreposicao');
+      var canvas = document.getElementById('canvas');
+      var comecar = document.getElementById('comecar');
+
+      function jogar() {
+        sobreposicao.classList.add('escondida');
+        canvas.focus();
+        comecar.blur();
+      }
+
+      comecar.addEventListener('click', jogar);
+      window.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') jogar();
+      });
+      window.addEventListener('mousedown', jogar);
+    })();
+
+    // Auto-teste usado no smoke test do CI (e para diagnostico local):
+    // ?selftest=1 publica o resultado no titulo da pagina.
+    (function () {
+      if (!/[?&]selftest=1/.test(location.search)) return;
+
+      function publicar(ok, frames) {
+        document.title = (ok ? 'LOKURAS_SELFTEST_PASS' : 'LOKURAS_SELFTEST_FAIL') + ' frames=' + frames;
+        document.body.setAttribute('data-selftest', document.title);
+        console.log(document.title);
+      }
+
+      var inicio = Date.now();
+      var t = setInterval(function () {
+        var frames = window.__lokuras_frames | 0;
+        if (frames > 30) { clearInterval(t); publicar(true, frames); }
+        else if (Date.now() - inicio > 20000) { clearInterval(t); publicar(frames > 0, frames); }
+      }, 250);
+    })();
+  </script>
+  {{{ SCRIPT }}}
+</body>
+</html>
