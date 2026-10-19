@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: SDL 1.2 (dev)
         run: |
@@ -43,8 +43,10 @@ jobs:
 
       - name: Smoke test (drivers dummy, 5 s)
         run: |
-          SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy timeout 5 ./bin/game
-          status=$?
+          # O bash do Actions roda com -e: sem o "|| status=$?" o proprio
+          # timeout (124) derrubaria o step antes da checagem.
+          status=0
+          SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy timeout 5 ./bin/game || status=$?
           # 124 = o timeout matou o jogo no ar: comportamento esperado.
           if [ "$status" -ne 124 ]; then
             echo "O jogo saiu/crashou antes do timeout (exit $status)."
@@ -55,11 +57,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Mesma versao usada no desenvolvimento (tools/setup-emsdk.*).
       - name: Emscripten (emsdk 6.0.12)
-        uses: emscripten-core/setup-emsdk@v15
+        uses: emscripten-core/setup-emsdk@v16
         with:
           version: 6.0.12
 
@@ -74,7 +76,7 @@ jobs:
 
       - name: Artefato do smoke (screenshots)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: web-smoke
           path: bin/web-smoke*.png
