@@ -554,11 +554,13 @@ int StateGame::update(int dt)
 		ship->y += gravY * dt;
 	}
 
-	// Tiro: ESPACO dispara continuamente (cadencia de 220 ms) na direcao do
-	// bico da nave.
+	// Tiro: ESPACO ou botao 1 do mouse disparam continuamente (cadencia de
+	// 220 ms) na direcao do bico da nave.
 	if(shootCooldown > 0)
 		shootCooldown -= dt;
-	if(ship && im.isKeyPressed(SDLK_SPACE) && shootCooldown <= 0)
+
+	bool atirando = im.isKeyPressed(SDLK_SPACE) || im.isMouseHeld(1) || im.isMouseDown(1);
+	if(ship && atirando && shootCooldown <= 0)
 	{
 		shoot();
 		shootCooldown = 220;

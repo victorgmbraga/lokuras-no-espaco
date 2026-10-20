@@ -28,7 +28,7 @@ HUD::HUD()
 	bossMax = 0;
 
 	// Dicas de controle (rodape).
-	commandsText = new Text("ttf/PirataOne-Regular.ttf", "W, A, S, D: Move a nave   |   ESPACO: Atira", 24, 0, {255, 255, 255}, 0, 0);
+	commandsText = new Text("ttf/PirataOne-Regular.ttf", "W, A, S, D: Move a nave   |   ESPACO/MOUSE1: Atira", 24, 0, {255, 255, 255}, 0, 0);
 	int textPosY = SCREEN_H - commandsText->getHeight();
 	commandsText->setPos(14, textPosY);
 

@@ -15,7 +15,7 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 
 - **Objetivo:** alcançar a Terra — ou destruir o UFO — sem perder toda a vida. A seta amarela na borda da tela aponta a direção da Terra quando ela está fora do campo de visão.
 - **UFO (chefe):** caça a nave **sozinho** e acelera com o tempo (a partir de ~2 minutos fica mais rápido que a nave pela velocidade base). Tem uma **barra de vida própria** no HUD e precisa de **20 tiros** para ser destruído; encostar tira **30 de vida** (30% do máximo), com **0,8 s de invulnerabilidade** depois — o escudo evita esse dano enquanto durar.
-- **Tiro:** `ESPAÇO` dispara na direção do bico da nave (cadência de ~4,5 tiros/s). Cada planeta vermelho cai com **2 tiros**.
+- **Tiro:** `ESPAÇO` ou **Mouse 1** disparam na direção do bico da nave (cadência de ~4,5 tiros/s). Cada planeta vermelho cai com **2 tiros**.
 - **Planetas vermelhos** surgem sozinhos em posições aleatórias, e o ritmo aumenta com o tempo: o intervalo começa em ~4 s e cai para ~1,3 s por volta de 2 min de partida. Colidir custa **5 de vida**. A lua orbita a Terra e custa **10**. A nave começa com **100** de vida (barra + contador no HUD).
 - **Invulnerabilidade:** após levar dano a nave fica **0,8 s intocável** (piscando) — vale para planetas, lua e UFO; nesse intervalo ela atravessa planetas sem destruí-los.
 - **Gravidade da Terra:** perto do destino, a nave sente uma "corrente" que a puxa — chegue com cuidado.
@@ -34,7 +34,7 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 | `ENTER` | Iniciar o jogo (menu) / jogar de novo (vitória ou derrota) |
 | `W` / `S` | Acelerar / frear a nave (movimento acelerado com atrito) |
 | `A` / `D` | Rotacionar a nave |
-| `ESPAÇO` | Atirar na direção do bico da nave |
+| `ESPAÇO` ou `Mouse 1` | Atirar na direção do bico da nave |
 | `ESC` | Pausar o jogo; no menu encerra; nas telas finais volta ao menu |
 | `Q` (na pausa) | Voltar ao menu |
 | `+` / `=` e `-` / `KP-` | Volume da música acima/abaixo (mostra no título da janela) |

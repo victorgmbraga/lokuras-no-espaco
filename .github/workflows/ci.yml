@@ -159,7 +159,7 @@ jobs:
             'Extraia esta pasta e execute game.exe (ou jogar.bat).',
             'As DLLs e os assets (img\, sfx\, map\, ttf\) precisam ficar juntos.',
             '',
-            'Controles: ENTER comeca; W/S acelera/freia; A/D gira; ESPACO atira;',
+            'Controles: ENTER comeca; W/S acelera/freia; A/D gira; ESPACO/MOUSE1 atira;',
             'ESC pausa; M muda o som.'
           )
           Set-Content -Path dist\lokuras-windows\LEIA-ME.txt -Value $leiame -Encoding utf8

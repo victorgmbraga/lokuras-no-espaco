@@ -277,14 +277,44 @@ try {
     });
     await dormir(200);
 
+    // Botao 1 do mouse tambem atira: usa o centro do canvas.
+    const centro = await devtools.enviar("Runtime.evaluate", {
+      expression: `(() => {
+        const r = document.getElementById('canvas').getBoundingClientRect();
+        return JSON.stringify({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
+      })()`,
+      returnByValue: true,
+    });
+    const ponto = JSON.parse(centro.result.value);
+    await devtools.enviar("Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      x: ponto.x,
+      y: ponto.y,
+      button: "left",
+      buttons: 1,
+      clickCount: 1,
+    });
+    await dormir(400);
+    await devtools.enviar("Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      x: ponto.x,
+      y: ponto.y,
+      button: "left",
+      buttons: 0,
+      clickCount: 1,
+    });
+    await dormir(200);
+
     ultimo = await lerPagina(devtools);
     if (ultimo.quadros < antes + 30) {
       codigo = 1;
       console.error(
-        `FALHOU: o jogo parou depois do ENTER/A/ESPACO (frames ${antes} -> ${ultimo.quadros})`,
+        `FALHOU: o jogo parou depois do ENTER/A/ESPACO/MOUSE1 (frames ${antes} -> ${ultimo.quadros})`,
       );
     } else {
-      console.log(`OK: jogo rodando apos ENTER/A/ESPACO (frames ${antes} -> ${ultimo.quadros})`);
+      console.log(
+        `OK: jogo rodando apos ENTER/A/ESPACO/MOUSE1 (frames ${antes} -> ${ultimo.quadros})`,
+      );
     }
 
     // O /save (IDBFS/IndexedDB) guarda o recorde: se a montagem falhou, o
