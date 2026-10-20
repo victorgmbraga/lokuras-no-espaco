@@ -16,7 +16,10 @@
 
 #include <cstdio>
 #include <cstring>
+#include <ctime>
+#include <map>
 #include <string>
+#include <vector>
 #include "GameSettings.h"
 
 // No build WebAssembly o recorde vai para /save (IDBFS, montado e sincronizado
@@ -33,22 +36,33 @@ extern "C" void lokurasWebSincronizarSave(void);
 #endif
 
 // Conquistas persistidas (indices de achFlags()).
-#define ACH_EARTH  0 // alcancar a Terra
+#define ACH_EARTH  0 // alcancar a Terra (modo travessia)
 #define ACH_HUNT   1 // destruir um UFO
 #define ACH_50     2 // 50 planetas destruidos (somando todas as partidas)
-#define ACH_NODMG  3 // alcancar a Terra sem levar dano
+#define ACH_NODMG  3 // vencer sem levar dano
 #define ACH_5MIN   4 // sobreviver 5 minutos em uma partida
 #define ACH_COMBO  5 // emendar combo x3 numa partida
-#define ACH_COUNT  6
+#define ACH_SURV   6 // sobreviver 3 min no modo pontos
+#define ACH_COUNT  7
 
 class PlayStats
 {
 	public:
-		// -1 = nenhum recorde ainda naquela dificuldade.
+		// -1 = nenhum recorde ainda naquele modo e dificuldade.
+		static int& bestScoreM(int mode, int diff)
+		{
+			static int v[2][3] = { {-1, -1, -1}, {-1, -1, -1} };
+			if(mode < 0 || mode > 1)
+				mode = MODE_TRAV;
+			if(diff < 0 || diff > 2)
+				diff = DIF_NORMAL;
+			return v[mode][diff];
+		}
+
+		// Compat: recorde da travessia (formato antigo do save).
 		static int& bestScore(int diff)
 		{
-			static int v[3] = { -1, -1, -1 };
-			return v[diff >= 0 && diff < 3 ? diff : DIF_NORMAL];
+			return bestScoreM(MODE_TRAV, diff);
 		}
 
 		static int& lastScore()     { static int v = 0; return v; }
@@ -84,6 +98,7 @@ class PlayStats
 				case ACH_NODMG: return "INTACTO";
 				case ACH_5MIN:  return "SOBREVIVENTE (5 MIN)";
 				case ACH_COMBO: return "EM CHAMA (COMBO X3)";
+				case ACH_SURV:  return "RESISTENCIA (3 MIN)";
 				default:        return "";
 			}
 		}
@@ -136,6 +151,16 @@ class PlayStats
 					bestScore(DIF_NORMAL) = v;
 				else if (!strcmp(key, "best2"))
 					bestScore(DIF_DIFICIL) = v;
+				else if (!strncmp(key, "best", 4) && strlen(key) == 7 && key[5] == '_')
+				{
+					// Recorde por modo e dificuldade: "best<m>_<d>".
+					int m = key[4] - '0';
+					int d = key[6] - '0';
+					if(m >= 0 && m <= 1 && d >= 0 && d <= 2)
+						bestScoreM(m, d) = v;
+				}
+				else if (!strncmp(key, "daily:", 6) && strlen(key) == 14)
+					dailyMap()[std::string(key + 6)] = v;
 				else if (!strcmp(key, "planets"))
 					totalPlanets() = v;
 				else if (!strcmp(key, "ufos"))
@@ -158,8 +183,9 @@ class PlayStats
 				bestScore(DIF_NORMAL) = legacy;
 		}
 
-		// Fecha uma partida: acumula contadores, atualiza o recorde da
-		// dificuldade atual e persiste tudo. Define beatRecord().
+		// Fecha uma partida: acumula contadores, atualiza o recorde do
+		// modo e dificuldade atuais e persiste tudo. Define beatRecord().
+		// No desafio diario (?daily=1) tambem guarda a melhor do dia.
 		static void saveRun(int score, int destroyedThisRun, int ufosKilledThisRun)
 		{
 			totalPlanets() += destroyedThisRun;
@@ -168,10 +194,21 @@ class PlayStats
 			if (totalPlanets() >= 50)
 				achFlags()[ACH_50] = true;
 
+			int mode = GameSettings::gameMode();
 			int diff = GameSettings::difficulty();
-			beatRecord() = (bestScore(diff) < 0 || score > bestScore(diff));
+			beatRecord() = (bestScoreM(mode, diff) < 0 || score > bestScoreM(mode, diff));
 			if (beatRecord())
-				bestScore(diff) = score;
+				bestScoreM(mode, diff) = score;
+
+			if(GameSettings::daily())
+			{
+				std::string hoje = todayKey();
+				std::map<std::string, int>& dias = dailyMap();
+				if(dias.find(hoje) == dias.end() || score > dias[hoje])
+					dias[hoje] = score;
+				while(dias.size() > 7)
+					dias.erase(dias.begin()); // so a ultima semana
+			}
 
 			writeFile();
 		}
@@ -189,20 +226,69 @@ class PlayStats
 		}
 
 	private:
+		// Melhores do desafio diario: data AAAAMMDD -> pontos.
+		static std::map<std::string, int>& dailyMap()
+		{
+			static std::map<std::string, int> v;
+			return v;
+		}
+
+	public:
+		// Dia local atual no formato AAAAMMDD (mesma base do --daily).
+		static std::string todayKey()
+		{
+			time_t agora = time(NULL);
+			struct tm *lt = localtime(&agora);
+			char buf[16];
+			snprintf(buf, sizeof(buf), "%04d%02d%02d",
+				lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday);
+			return std::string(buf);
+		}
+
+		// AAAAMMDD -> DD/MM para exibir no menu.
+		static std::string dateLabel(const std::string& aaaammdd)
+		{
+			if(aaaammdd.size() != 8)
+				return aaaammdd;
+			return aaaammdd.substr(6, 2) + "/" + aaaammdd.substr(4, 2);
+		}
+
+		static int dailyBestToday()
+		{
+			std::map<std::string, int>& dias = dailyMap();
+			std::map<std::string, int>::iterator it = dias.find(todayKey());
+			return it == dias.end() ? -1 : it->second;
+		}
+
+		// Datas com recorde (ordenadas), para a linha do desafio no menu.
+		static void recentDaily(std::vector<std::string>& datas, std::vector<int>& pontos)
+		{
+			datas.clear();
+			pontos.clear();
+			for(std::map<std::string, int>::iterator it = dailyMap().begin(); it != dailyMap().end(); ++it)
+			{
+				datas.push_back(it->first);
+				pontos.push_back(it->second);
+			}
+		}
+
+	private:
 		static void writeFile()
 		{
 			FILE *f = fopen(PLAYSTATS_FILE, "w");
 			if (!f)
 				return;
 
-			fprintf(f, "best0=%d\n", bestScore(DIF_FACIL));
-			fprintf(f, "best1=%d\n", bestScore(DIF_NORMAL));
-			fprintf(f, "best2=%d\n", bestScore(DIF_DIFICIL));
+			for(int m = 0; m < 2; ++m)
+				for(int d = 0; d < 3; ++d)
+					fprintf(f, "best%d_%d=%d\n", m, d, bestScoreM(m, d));
 			fprintf(f, "planets=%d\n", totalPlanets());
 			fprintf(f, "ufos=%d\n", totalUfos());
 			fprintf(f, "ach=");
 			for (int i = 0; i < ACH_COUNT; ++i)
 				fprintf(f, "%d%s", achFlags()[i] ? 1 : 0, i + 1 < ACH_COUNT ? "," : "\n");
+			for(std::map<std::string, int>::iterator it = dailyMap().begin(); it != dailyMap().end(); ++it)
+				fprintf(f, "daily:%s=%d\n", it->first.c_str(), it->second);
 			fclose(f);
 
 			#ifdef __EMSCRIPTEN__

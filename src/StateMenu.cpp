@@ -37,6 +37,16 @@ void StateMenu::load(int stack)
 	difficultyText = new Text("ttf/PirataOne-Regular.ttf", "Dificuldade", 30, 0, {255, 255, 255}, 0, 0);
 	difficultyText->setPos(0, (SCREEN_H/4) * 3 - 95);
 
+	// Modo de jogo (4/5): travessia ou pontos.
+	modeText = new Text("ttf/PirataOne-Regular.ttf", "Modo", 30, 0, {255, 255, 255}, 0, 0);
+	modeText->setPos(0, (SCREEN_H/4) * 3 - 170);
+
+	modeDescText = new Text("ttf/PirataOne-Regular.ttf", "", 22, 0, {180, 210, 180}, 0, 0);
+
+	// Desafio diario: melhor de hoje (com ?daily=1 ou --daily).
+	dailyText = new Text("ttf/PirataOne-Regular.ttf", "", 22, 0, {255, 230, 130}, 0, 0);
+	dailyText->setPos(0, 640);
+
 	// O que muda em cada dificuldade (atualizado no refreshTexts).
 	diffDesc = new Text("ttf/PirataOne-Regular.ttf", "", 22, 0, {180, 210, 180}, 0, 0);
 
@@ -71,13 +81,26 @@ void StateMenu::load(int stack)
 	}
 
 	shownDifficulty = -1; // força o primeiro refresh
+	shownMode = -1;
 	refreshTexts();
 }
 
 void StateMenu::refreshTexts()
 {
 	int diff = GameSettings::difficulty();
+	int mode = GameSettings::gameMode();
 	shownDifficulty = diff;
+	shownMode = mode;
+
+	modeText->setText(std::string("Modo: ") + GameSettings::modeName(mode) + "   (4 = travessia, 5 = pontos)");
+	modeText->setPos(SCREEN_W/2 - modeText->getWidth()/2, (SCREEN_H/4) * 3 - 170);
+
+	// Objetivo de cada modo (travessia: Terra; pontos: 3 min vivo).
+	if(mode == MODE_PTS)
+		modeDescText->setText("Pontos: sem Terra; sobreviva 3:00 e some o maximo que der");
+	else
+		modeDescText->setText("Travessia: alcance a Terra desviando do UFO");
+	modeDescText->setPos(SCREEN_W/2 - modeDescText->getWidth()/2, (SCREEN_H/4) * 3 - 138);
 
 	difficultyText->setText(std::string("Dificuldade: ") + GameSettings::difficultyName(diff) + "   (1 = facil, 2 = normal, 3 = dificil)");
 	difficultyText->setPos(SCREEN_W/2 - difficultyText->getWidth()/2, (SCREEN_H/4) * 3 - 95);
@@ -91,10 +114,20 @@ void StateMenu::refreshTexts()
 		diffDesc->setText("Normal: desafio equilibrado, 4 torres, tiro e combustivel padrao");
 	diffDesc->setPos(SCREEN_W/2 - diffDesc->getWidth()/2, (SCREEN_H/4) * 3 - 55);
 
-	int best = PlayStats::bestScore(diff);
-	recordText->setText(best >= 0 ? "Recorde nessa dificuldade: " + std::to_string(best) + " pontos"
-	                              : "Sem recorde nessa dificuldade ainda");
+	int best = PlayStats::bestScoreM(mode, diff);
+	recordText->setText(best >= 0 ? "Recorde nesse modo e dificuldade: " + std::to_string(best) + " pontos"
+	                              : "Sem recorde nesse modo e dificuldade ainda");
 	recordText->setPos(SCREEN_W/2 - recordText->getWidth()/2, (SCREEN_H/4) * 3 + pressEnter->getHeight() + 14);
+
+	// Desafio diario: melhor de hoje (vale com ?daily=1 ou --daily).
+	int hoje = PlayStats::dailyBestToday();
+	if(hoje >= 0)
+		dailyText->setText("Desafio de hoje (" + PlayStats::dateLabel(PlayStats::todayKey()) +
+			"): sua melhor: " + std::to_string(hoje) + " pts");
+	else
+		dailyText->setText("Desafio de hoje (" + PlayStats::dateLabel(PlayStats::todayKey()) +
+			"): jogue com ?daily=1");
+	dailyText->setPos(SCREEN_W/2 - dailyText->getWidth()/2, 640);
 
 	for(int i = 0; i < MENU_ACH_LINHAS; ++i)
 	{
@@ -121,6 +154,9 @@ int StateMenu::unload()
 	delete(title);
 	delete(difficultyText);
 	delete(diffDesc);
+	delete(modeText);
+	delete(modeDescText);
+	delete(dailyText);
 	delete(recordText);
 	delete(hintText);
 
@@ -152,7 +188,14 @@ int StateMenu::update(int dt)
 	if(im.isKeyDown(SDLK_3) && GameSettings::difficulty() != DIF_DIFICIL)
 		GameSettings::difficulty() = DIF_DIFICIL;
 
-	if(GameSettings::difficulty() != shownDifficulty)
+	// 4/5 escolhem o modo; os textos refletem a mudanca na hora.
+	if(im.isKeyDown(SDLK_4) && GameSettings::gameMode() != MODE_TRAV)
+		GameSettings::gameMode() = MODE_TRAV;
+	if(im.isKeyDown(SDLK_5) && GameSettings::gameMode() != MODE_PTS)
+		GameSettings::gameMode() = MODE_PTS;
+
+	if(GameSettings::difficulty() != shownDifficulty ||
+	   GameSettings::gameMode() != shownMode)
 		refreshTexts();
 
 	if(im.isKeyDown(SDLK_RETURN))
@@ -176,9 +219,12 @@ void StateMenu::render()
 	title->render();
 
 	pressEnter->render();
+	modeText->render();
+	modeDescText->render();
 	difficultyText->render();
 	diffDesc->render();
 	recordText->render();
+	dailyText->render();
 	hintText->render();
 
 	for(int i = 0; i < MENU_ACH_LINHAS; ++i)

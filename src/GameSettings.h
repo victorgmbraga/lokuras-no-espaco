@@ -17,11 +17,24 @@
 #define DIF_DIFICIL 2
 #define DIF_QTD     3
 
+#define MODE_TRAV 0 // travessia: alcance a Terra (modo classico)
+#define MODE_PTS  1 // pontos: sobreviva 3:00 sem Terra (score attack)
+
 class GameSettings
 {
 	public:
 		// 0 = facil, 1 = normal, 2 = dificil (mudado com 1/2/3 no menu).
 		static int& difficulty()   { static int v = DIF_NORMAL; return v; }
+
+		// 0 = travessia, 1 = pontos (mudado com 4/5 no menu).
+		static int& gameMode()   { static int v = MODE_TRAV; return v; }
+
+		static const char* modeName(int m)
+		{
+			if(m == MODE_PTS)
+				return "PONTOS";
+			return "TRAVESSIA";
+		}
 
 		// Seed informada por --seed (0 = nenhuma). --daily usa o dia atual.
 		static unsigned int& seed()  { static unsigned int v = 0; return v; }

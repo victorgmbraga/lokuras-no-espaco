@@ -15,7 +15,7 @@
 #include "Audio.h"
 #include "PlayStats.h"
 
-#define MENU_ACH_LINHAS 6
+#define MENU_ACH_LINHAS 7
 #define MENU_LEG_LINHAS 4
 
 class StateMenu: public State
@@ -24,9 +24,12 @@ class StateMenu: public State
 		Sprite *bg;
 		Text *pressEnter;
 		Text *title;
-		Text *recordText;  // recorde da dificuldade escolhida (NULL se ainda nao existe)
+		Text *recordText;  // recorde do modo e dificuldade (NULL se ainda nao existe)
 		Text *difficultyText;
 		Text *diffDesc;      // o que muda em cada dificuldade
+		Text *modeText;      // travessia (4) ou pontos (5)
+		Text *modeDescText;  // objetivo de cada modo
+		Text *dailyText;     // desafio diario: melhor de hoje
 		Text *hintText;    // semente/desafio do dia
 		Text *achTexts[MENU_ACH_LINHAS]; // lista de conquistas (lado esquerdo)
 		Text *legendTexts[MENU_LEG_LINHAS]; // legenda dos power-ups (lado direito)
@@ -35,6 +38,7 @@ class StateMenu: public State
 		float menuTime;    // para o "swing" do titulo
 		int returnState;
 		int shownDifficulty; // última dificuldade refletida nos textos
+		int shownMode;       // ultimo modo refletido nos textos
 		void refreshTexts();
 	public:
 		StateMenu() {}

@@ -10,6 +10,8 @@ mantendo exatamente os nomes, tamanhos e layouts esperados pelo codigo:
   img/stateLose.jpg       1280x720     (tela de derrota)
   img/ufo.png             32x32        (UFO do FollowerObject)
   img/PlanetaVermelho.png 44x44        (planetas vermelhos)
+  img/PlanetaRoxo.png     52x52        (planeta roxo: 4 tiros, lento, valioso)
+  img/Mina.png            48x48        (mina de proximidade: explode em area)
   img/Lua.png             16x16        (lua que orbita a Terra)
   img/PowerVida.png       24x24        (cristal: +20 de vida)
   img/PowerEscudo.png     24x24        (cristal: escudo 6 s)
@@ -525,6 +527,47 @@ def draw_gem(name):
 
 # --------------------------------------------------------------------- torreta
 
+def draw_mine():
+    """Mina de proximidade 48x48: esfera escura com espinhos e nucleo vermelho."""
+    w = 48
+    img = Image.new("RGBA", (w * SS, w * SS), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    def P(pts):
+        return [(x * SS, y * SS) for (x, y) in pts]
+
+    metal = (70, 76, 90, 255)
+    metal_dark = (30, 34, 44, 255)
+    outline = (12, 14, 20, 255)
+    cx, cy, r = w / 2, w / 2, 13
+
+    # espinhos (8 direcoes)
+    for k in range(8):
+        ang = math.pi / 4 * k
+        x0 = cx + math.cos(ang) * (r - 2)
+        y0 = cy + math.sin(ang) * (r - 2)
+        x1 = cx + math.cos(ang) * (r + 8)
+        y1 = cy + math.sin(ang) * (r + 8)
+        dx, dy = -(y1 - y0), (x1 - x0)
+        n = math.hypot(dx, dy) or 1.0
+        bw = 2.6
+        d.polygon(P([(x0 + dx / n * bw, y0 + dy / n * bw),
+                    (x0 - dx / n * bw, y0 - dy / n * bw),
+                    (x1, y1)]), fill=metal_dark, outline=outline)
+
+    # corpo
+    d.ellipse(P([(cx - r, cy - r), (cx + r, cy + r)]), fill=metal_dark, outline=outline)
+    d.ellipse(P([(cx - r + 3, cy - r + 3), (cx + r - 3, cy + r - 3)]), fill=metal)
+    d.arc(P([(cx - r + 5, cy - r + 5), (cx + r - 5, cy + r - 5)]), 200, 340,
+          fill=(170, 180, 200, 255), width=SS)
+
+    # nucleo vermelho (pisca no jogo quando armada)
+    d.ellipse(P([(cx - 5, cy - 5), (cx + 5, cy + 5)]), fill=(255, 60, 50, 255), outline=outline)
+    d.ellipse(P([(cx - 2, cy - 2), (cx + 2, cy + 2)]), fill=(255, 200, 180, 255))
+
+    return img.resize((w, w), LANCZOS)
+
+
 def draw_turret():
     """Torreta fixa 32x32: cupula metalica com cano apontando para cima."""
     w = 32
@@ -605,6 +648,8 @@ def main():
     purple.save(os.path.join(img_dir, "PlanetaRoxo.png"))
 
     draw_turret().save(os.path.join(img_dir, "Torreta.png"))
+
+    draw_mine().save(os.path.join(img_dir, "Mina.png"))
 
     moon = sphere(16, (170, 170, 175), (50, 50, 58), (70, 70, 75), seed=9, craters=5)
     moon.save(os.path.join(img_dir, "Lua.png"))

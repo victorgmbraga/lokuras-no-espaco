@@ -78,10 +78,12 @@ void StateGame::load(int stack)
 	shipPrevX = ship->x;
 	shipPrevY = ship->y;
 
-	// Terra (escala assada na surface: hitbox == imagem renderizada)
+	// Terra (escala assada na surface: hitbox == imagem renderizada).
+	// No modo pontos nao ha Terra: sobreviver e a vitoria.
+	bool pontos = (GameSettings::gameMode() == MODE_PTS);
 	earthSprite = new Sprite("img/PlanetaTerra.png");
 	earthSprite->scale(3);
-	earth = new Earth(earthSprite, 0, 0, 100);
+	earth = pontos ? NULL : new Earth(earthSprite, 0, 0, 100);
 
 	// UFO perseguidor autonomo (chefe da onda 1)
 	ufoSprite = new Sprite("img/ufo.png");
@@ -99,10 +101,11 @@ void StateGame::load(int stack)
 	// Terra e UFO surgem longe da nave e um do outro.
 	placeEarthAndUfo();
 
-	// Lua (orbita a Terra ja posicionada e machuca a nave)
+	// Lua (orbita a Terra ja posicionada e machuca a nave; fora no
+	// modo pontos, junto com a Terra).
 	moonSprite = new Sprite("img/Lua.png");
 	moonSprite->scale(3);
-	moon = new Moon(moonSprite, 1, earth);
+	moon = (pontos || !earth) ? NULL : new Moon(moonSprite, 1, earth);
 
 	// Torres: ancoradas nos paineis solidos, longe dos objetos principais.
 	wave = 1;
@@ -121,6 +124,7 @@ void StateGame::load(int stack)
 	// (4 tiros, mais lentos, dropam mais) se alternam nos spawns.
 	redPlanetSprite = new Sprite("img/PlanetaVermelho.png");
 	purplePlanetSprite = new Sprite("img/PlanetaRoxo.png");
+	mineSprite = new Sprite("img/Mina.png");
 	spawnInitialPlanets();
 	redPlanetCooldown = (int)((2500 + (rand() % 1500)) * GameSettings::planetSpawnMult());
 
@@ -172,6 +176,7 @@ void StateGame::load(int stack)
 	fuelAnnounced = false;
 	fuelLowAnnounced = false;
 	tookDamage = false;
+	survWarnShown = false;
 	tutThrustDone = tutTurnDone = tutShotDone = false;
 	tutThrustShown = tutTurnShown = tutShotShown = tutEarthShown = false;
 	enemyShotsFired = 0;
@@ -212,10 +217,13 @@ void StateGame::load(int stack)
 	paused = false;
 
 	// Protecao de saida: 3 s de escudo (com anel visivel) para a partida
-	// nao acabar nos primeiros segundos, e dica do objetivo.
+	// nao acabar nos primeiros segundos, e dica do objetivo de cada modo.
 	if(ship)
 		ship->setShield(3000);
-	toast("CHEGUE A TERRA!");
+	if(GameSettings::gameMode() == MODE_PTS)
+		toast("SOBREVIVA 3:00!");
+	else
+		toast("CHEGUE A TERRA!");
 
 	// Variáveis de retorno
 	returnState = 0;
@@ -315,7 +323,7 @@ void StateGame::buildRandomMap()
 
 void StateGame::placeEarthAndUfo()
 {
-	if(!ship || !earth || !ufo)
+	if(!ship || !ufo)
 		return;
 
 	float shipCX = ship->x + ship->w/2;
@@ -323,10 +331,21 @@ void StateGame::placeEarthAndUfo()
 
 	// Distancias proporcionais ao tamanho do mundo: os dois objetos ficam
 	// longe da nave e um do outro em qualquer um dos tamanhos sorteados.
+	// Sem Terra (modo pontos), o UFO so precisa ficar longe da nave.
 	float diagonal = sqrtf((float)(worldWidth * worldWidth + worldHeight * worldHeight));
 	float minPlayerDist = diagonal * 0.50f;
 	float minEarthUfoDist = diagonal * 0.42f;
 
+	float earthCX = -1e9f;
+	float earthCY = -1e9f;
+
+	// Grade de posicoes validas (usada pela Terra e pelo UFO).
+	struct Ponto { float x, y; };
+	float bestDist = -1.0f;
+	const float passo = 20.0f;
+
+	if(earth)
+	{
 	// Terra: margem extra para a orbita da Lua (raio 200 + metade da Lua)
 	// caber dentro do mapa.
 	float earthHalfW = earth->w / 2;
@@ -337,15 +356,13 @@ void StateGame::placeEarthAndUfo()
 	if(earthMargin > worldHeight / 2)
 		earthMargin = worldHeight / 2;
 
-	// Grade de posicoes validas para a Terra (longe da nave), sorteada no
-	// final. A margem tambem mantem a orbita da Lua dentro do mapa.
-	struct Ponto { float x, y; };
+	// Candidatas da Terra (longe da nave), sorteadas no final. A margem
+	// tambem mantem a orbita da Lua dentro do mapa.
 	std::vector<Ponto> candidatosTerra;
 
 	float earthX = worldWidth / 2.0f;
 	float earthY = worldHeight / 2.0f;
-	float bestDist = -1.0f;
-	const float passo = 20.0f;
+	bestDist = -1.0f;
 	for(float cx = earthMargin; cx <= worldWidth - earthMargin; cx += passo)
 		for(float cy = earthMargin; cy <= worldHeight - earthMargin; cy += passo)
 		{
@@ -377,8 +394,9 @@ void StateGame::placeEarthAndUfo()
 	earth->x = earthX - earthHalfW;
 	earth->y = earthY - earthHalfH;
 
-	float earthCX = earth->x + earthHalfW;
-	float earthCY = earth->y + earthHalfH;
+	earthCX = earth->x + earthHalfW;
+	earthCY = earth->y + earthHalfH;
+	} // fim do posicionamento da Terra (modo travessia)
 
 	// UFO: tambem longe da nave e, alem disso, longe da Terra.
 	float ufoHalf = ufoSprite->getRenderWidth() / 2.0f;
@@ -435,7 +453,7 @@ void StateGame::placeEarthAndUfo()
 
 void StateGame::buildTurrets()
 {
-	if(!tileMap || !ship || !earth || !ufo)
+	if(!tileMap || !ship || !ufo)
 		return;
 
 	int maxTorres = GameSettings::turretCount();
@@ -443,7 +461,8 @@ void StateGame::buildTurrets()
 		return;
 
 	// Candidatas: centro dos paineis solidos (camada 1), longe da nave,
-	// da Terra e do UFO. A distancia minima entre torres e checada na escolha.
+	// da Terra (quando existe) e do UFO. A distancia minima entre torres
+	// e checada na escolha.
 	struct Ponto { float x, y; };
 	std::vector<Ponto> candidatas;
 
@@ -458,7 +477,7 @@ void StateGame::buildTurrets()
 
 			if(distanceBetween(cx, cy, ship->x + ship->w/2, ship->y + ship->h/2) < 480.0f)
 				continue;
-			if(distanceBetween(cx, cy, earth->x + earth->w/2, earth->y + earth->h/2) < 260.0f)
+			if(earth && distanceBetween(cx, cy, earth->x + earth->w/2, earth->y + earth->h/2) < 260.0f)
 				continue;
 			if(distanceBetween(cx, cy, ufo->x + ufo->w/2, ufo->y + ufo->h/2) < 260.0f)
 				continue;
@@ -502,13 +521,13 @@ void StateGame::buildTurrets()
 
 void StateGame::spawnInitialPlanets()
 {
-	if((!redPlanetSprite && !purplePlanetSprite) || !ship || !earth || !ufo)
+	if((!redPlanetSprite && !purplePlanetSprite) || !ship || !ufo)
 		return;
 
 	float shipCX = ship->x + ship->w/2;
 	float shipCY = ship->y + ship->h/2;
-	float earthCX = earth->x + earth->w/2;
-	float earthCY = earth->y + earth->h/2;
+	float earthCX = earth ? earth->x + earth->w/2 : -1e9f;
+	float earthCY = earth ? earth->y + earth->h/2 : -1e9f;
 	float ufoCX = ufo->x + ufo->w/2;
 	float ufoCY = ufo->y + ufo->h/2;
 
@@ -1051,7 +1070,10 @@ void StateGame::updateTutorial()
 	if(!tutEarthShown && gameTimeMs > 21000)
 	{
 		tutEarthShown = true;
-		toast("Siga a seta amarela ate a Terra");
+		if(GameSettings::gameMode() == MODE_PTS)
+			toast("Sobreviva ate o fim!");
+		else
+			toast("Siga a seta amarela ate a Terra");
 	}
 }
 
@@ -1124,6 +1146,7 @@ int StateGame::unload()
 	delete(tileSet);
 	delete(redPlanetSprite);
 	delete(purplePlanetSprite);
+	delete(mineSprite);
 	delete(earth);
 	delete(earthSprite);
 	delete(moon);
@@ -1132,6 +1155,10 @@ int StateGame::unload()
 	for(std::vector<Planet*>::iterator it = planetArray.begin(); it != planetArray.end(); ++it)
 		delete(*it);
 	planetArray.clear();
+
+	for(std::vector<Mine*>::iterator it = mineArray.begin(); it != mineArray.end(); ++it)
+		delete(*it);
+	mineArray.clear();
 
 	for(std::vector<Turret*>::iterator it = turretArray.begin(); it != turretArray.end(); ++it)
 		delete(*it);
@@ -1287,6 +1314,38 @@ void StateGame::checkCollision(int dt)
 			}
 			else
 				++it;
+		}
+		else
+			++it;
+	}
+
+	// Minas: armam a espoleta (600 ms) a 110 px da nave e o contato
+	// direto detona na hora. A explosao fica para a passada propria.
+	for(std::vector<Mine*>::iterator it = mineArray.begin(); it != mineArray.end(); ++it)
+	{
+		float mdx = (*it)->x + (*it)->w/2 - scx;
+		float mdy = (*it)->y + (*it)->h/2 - scy;
+		if(mdx*mdx + mdy*mdy < 110.0f * 110.0f && (*it)->fuse < 0)
+		{
+			(*it)->fuse = 600;
+			addFloater("!", (*it)->x + (*it)->w/2, (*it)->y, makeColor(255, 90, 90), false, 600);
+		}
+		if((*it)->collidesWith(ship))
+			(*it)->fuse = 0;
+	}
+
+	// Detonacoes pendentes (a cadeia arma as vizinhas dentro do detonate).
+	// Apos cada erase o vetor desloca e o end() encolhe: revalida do
+	// inicio a cada remocao (sao no maximo 4 minas, e cada detonacao remove
+	// uma, entao sempre termina). Sem isso o iterador avancado antes do
+	// erase passa do novo fim e le lixo alem do vetor.
+	for(std::vector<Mine*>::iterator it = mineArray.begin(); it != mineArray.end(); )
+	{
+		if((*it)->fuse == 0)
+		{
+			std::vector<Mine*>::iterator vitima = it;
+			detonateMine(vitima); // apaga vitima do vetor
+			it = mineArray.begin(); // revalida (o erase invalidou o resto)
 		}
 		else
 			++it;
@@ -1475,7 +1534,33 @@ void StateGame::updateBullets(int dt)
 			}
 		}
 
-		// UFO: chefe com HP escalonado. Derrota-lo abre a proxima onda.
+		// Minas: 1 tiro, 15 pontos e 25% de drop.
+	if(!remove && !it->enemy)
+	{
+		for(std::vector<Mine*>::iterator m = mineArray.begin(); m != mineArray.end(); ++m)
+		{
+			if(bulletHit(*it, *m))
+			{
+				boomX = (*m)->x + (*m)->w/2;
+				boomY = (*m)->y + (*m)->h/2;
+				boomActive = true;
+				boom->restart();
+				sfx->play(0);
+				destroyedCount++;
+
+				addKillScore(15, (*m)->x + (*m)->w/2, (*m)->y);
+				spawnDrop((*m)->x + (*m)->w/2, (*m)->y + (*m)->h/2, 25);
+
+				delete(*m);
+				mineArray.erase(m);
+
+				remove = true;
+				break;
+			}
+		}
+	}
+
+	// UFO: chefe com HP escalonado. Derrota-lo abre a proxima onda.
 		if(!remove && !it->enemy && ufo && bulletHit(*it, ufo))
 		{
 			ufo->hp -= 1;
@@ -1585,12 +1670,90 @@ void StateGame::addPlanet()
 			break;
 	}
 
+	// A partir dos 45 s, 15% dos spawns viram minas de proximidade
+	// (limite de 4 ativas): area negada com espoleta e reacao em cadeia.
+	if(gameTimeMs > 45000 && mineArray.size() < 4 && (rand() % 100 < 15))
+	{
+		spawnMineAt(planetX, planetY);
+		return;
+	}
+
 	PlanetRed *novo = new PlanetRed(sprite, planetX, planetY, roxo ? 4 : 2,
 	                                (float)worldWidth, (float)worldHeight,
 	                                roxo ? 25 : 10, roxo ? 60 : 20,
 	                                roxo ? 0.55f : 1.0f, tileMap,
 	                                roxo ? 8 : 5);
 	planetArray.push_back(novo);
+}
+
+// Sorteio de mina dentro do spawn de planetas: a partir dos 45 s, 15%
+// dos spawns viram minas de proximidade (limite de 4 ativas). A posicao
+// ja foi validada acima (longe da nave, fora de painel solido).
+void StateGame::spawnMineAt(int px, int py)
+{
+	int mineW = mineSprite->getRenderWidth();
+	int mineH = mineSprite->getRenderHeight();
+	int mx = clampi(px, 0, worldWidth - mineW);
+	int my = clampi(py, 0, worldHeight - mineH);
+	mineArray.push_back(new Mine(mineSprite, (float)mx, (float)my,
+		(float)worldWidth, (float)worldHeight, tileMap));
+}
+
+void StateGame::detonateMine(std::vector<Mine*>::iterator vitima)
+{
+	Mine *m = *vitima;
+	float ux = m->x + m->w/2;
+	float uy = m->y + m->h/2;
+
+	boomX = ux;
+	boomY = uy;
+	boomActive = true;
+	boom->restart();
+	sfx->play(0);
+	if(shakeTime < 250)
+		shakeTime = 250;
+
+	destroyedCount++;
+	addKillScore(15, ux, uy);
+	spawnDrop(ux, uy, 25);
+
+	// Reacao em cadeia: vizinhas a 140 px armam com 150 ms.
+	for(std::vector<Mine*>::iterator o = mineArray.begin(); o != mineArray.end(); ++o)
+	{
+		if(o == vitima || (*o)->fuse == 0)
+			continue;
+		float odx = (*o)->x + (*o)->w/2 - ux;
+		float ody = (*o)->y + (*o)->h/2 - uy;
+		if(odx*odx + ody*ody < 140.0f * 140.0f)
+		{
+			if((*o)->fuse < 0 || (*o)->fuse > 150)
+				(*o)->fuse = 150;
+		}
+	}
+
+	// Dano em area (raio 130) com as mesmas regras dos planetas.
+	if(ship)
+	{
+		float sdx = ship->x + ship->w/2 - ux;
+		float sdy = ship->y + ship->h/2 - uy;
+		if(sdx*sdx + sdy*sdy < 130.0f * 130.0f &&
+		   invulnTime <= 0 && ship->getShieldTime() <= 0)
+		{
+			int dano = (int)(m->dano * GameSettings::damageMult());
+			ship->hp -= dano;
+			hud->setLife(ship->hp);
+			invulnTime = 800;
+			shakeTime = 250;
+			tookDamage = true;
+
+			char buf[16];
+			snprintf(buf, sizeof(buf), "-%d", dano);
+			addFloater(buf, ship->x + ship->w/2, ship->y + ship->h/2, makeColor(255, 90, 90), false, 900);
+		}
+	}
+
+	delete(m);
+	mineArray.erase(vitima);
 }
 
 int StateGame::nextPlanetInterval()
@@ -1672,7 +1835,10 @@ void StateGame::endGame(bool win)
 
 	if(win)
 	{
-		tryAch(ACH_EARTH);
+		if(GameSettings::gameMode() == MODE_PTS)
+			tryAch(ACH_SURV);
+		else
+			tryAch(ACH_EARTH);
 		if(!tookDamage)
 			tryAch(ACH_NODMG);
 	}
@@ -1770,13 +1936,34 @@ int StateGame::update(int dt)
 	}
 	updateTutorial();
 
+	// Modo pontos: sobreviver 3:00 vence (sem Terra no mapa).
+	if(GameSettings::gameMode() == MODE_PTS && returnState != 3)
+	{
+		if(!survWarnShown && gameTimeMs >= 150000)
+		{
+			survWarnShown = true;
+			toast("FALTAM 30 S!");
+		}
+		if(gameTimeMs >= 180000)
+		{
+			endGame(true);
+			return returnState;
+		}
+	}
+
 	// Planetas (deriva lenta; quicam no mapa dentro do proprio update).
 	for(std::vector<Planet*>::iterator it = planetArray.begin(); it != planetArray.end(); ++it)
 		(*it)->update(dt);
 
-	// Terra, Lua
-	earth->update(dt);
-	moon->update(dt);
+	// Minas (mesma deriva/quique; a espoleta conta no proprio update).
+	for(std::vector<Mine*>::iterator it = mineArray.begin(); it != mineArray.end(); ++it)
+		(*it)->update(dt);
+
+	// Terra, Lua (inexistentes no modo pontos)
+	if(earth)
+		earth->update(dt);
+	if(moon)
+		moon->update(dt);
 
 	// Chefe: perseguidor com fases, tiros, invocacao e troca de ondas.
 	updateUfoBehavior(dt);
@@ -1794,8 +1981,8 @@ int StateGame::update(int dt)
 
 	// Gravidade da Terra: dentro do raio de influencia, a nave recebe uma
 	// "corrente" que a puxa para o nucleo, com damping independente
-	// do framerate para nao disparar sem controle.
-	if(ship)
+	// do framerate para nao disparar sem controle (so no modo travessia).
+	if(ship && earth)
 	{
 		float ex = earth->x + earth->w/2;
 		float ey = earth->y + earth->h/2;
@@ -1932,14 +2119,14 @@ int StateGame::update(int dt)
 		snprintf(buf, sizeof(buf),
 			"{\"t\":%d,\"st\":%d,\"p\":%d,\"x\":%.0f,\"y\":%.0f,\"r\":%.1f,"
 			"\"uh\":%d,\"um\":%d,\"ux\":%.0f,\"uy\":%.0f,\"w\":%d,\"k\":%d,"
-			"\"tp\":%d,\"tt\":%d,\"es\":%d,\"f\":%.0f,\"sc\":%d,\"cb\":%d}",
+			"\"tp\":%d,\"tt\":%d,\"tm\":%d,\"es\":%d,\"f\":%.0f,\"sc\":%d,\"cb\":%d}",
 			gameTimeMs, returnState, ship ? ship->hp : -1,
 			(double)(ship ? ship->x : -1.0f), (double)(ship ? ship->y : -1.0f),
 			(double)(ship ? ship->getRotation() : 0.0f),
 			ufo ? ufo->hp : -1, ufo ? ufo->maxHp : 0,
 			(double)(ufo ? ufo->x + ufo->w/2 : -1.0f), (double)(ufo ? ufo->y + ufo->h/2 : -1.0f),
 			wave, ufosKilledThisRun, (int)planetArray.size(), (int)turretArray.size(),
-			enemyShotsFired, (double)fuel, score, comboStreak);
+			(int)mineArray.size(), enemyShotsFired, (double)fuel, score, comboStreak);
 
 		EM_ASM({ window.__lokuras_debug = UTF8ToString($0); }, buf);
 
@@ -1958,6 +2145,10 @@ int StateGame::update(int dt)
 
 void StateGame::renderObjective(float cameraX, float cameraY)
 {
+	// Sem Terra (modo pontos), nao ha para onde apontar.
+	if(!earth)
+		return;
+
 	// (inalterado: a seta amarela continua apontando para a Terra)
 	float ecx = earth->x + earth->w/2 - cameraX;
 	float ecy = earth->y + earth->h/2 - cameraY;
@@ -2097,11 +2288,20 @@ void StateGame::render()
 	for(std::vector<Planet*>::iterator it = planetArray.begin(); it != planetArray.end(); ++it)
 		(*it)->render(cameraX, cameraY);
 
-	// Terra
-	earth->render(cameraX, cameraY);
+	// Minas (piscam quando armadas; fixas com flash reduzido)
+	for(std::vector<Mine*>::iterator it = mineArray.begin(); it != mineArray.end(); ++it)
+	{
+		if((*it)->fuse < 0 || GameSettings::reduceFlash() || (gameTimeMs / 120) % 2 == 0)
+			(*it)->render(cameraX, cameraY);
+	}
 
-	// Lua
-	moon->render(cameraX, cameraY);
+	// Terra (so no modo travessia)
+	if(earth)
+		earth->render(cameraX, cameraY);
+
+	// Lua (so no modo travessia)
+	if(moon)
+		moon->render(cameraX, cameraY);
 
 	// Torres
 	for(std::vector<Turret*>::iterator it = turretArray.begin(); it != turretArray.end(); ++it)

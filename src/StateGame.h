@@ -15,6 +15,7 @@
 #include "Sprite.h"
 #include "Camera.h"
 #include "PlanetRed.h"
+#include "Mine.h"
 #include "Earth.h"
 #include "Moon.h"
 #include "TileSet.h"
@@ -51,6 +52,10 @@ class StateGame: public State
 		Sprite *purplePlanetSprite;
 		std::vector<Planet*> planetArray;
 		int redPlanetCooldown;
+
+		// Minas de proximidade (explodem em area e detonam umas as outras)
+		Sprite *mineSprite;
+		std::vector<Mine*> mineArray;
 
 		// Terra
 		Sprite *earthSprite;
@@ -121,6 +126,7 @@ class StateGame: public State
 
 		// Flags de partida (conquistas)
 		bool tookDamage;
+		bool survWarnShown; // aviso de 30 s no modo pontos (uma vez)
 
 		// Tutorial dos primeiros 30 s: so mostra a dica de quem ainda nao
 		// fez a acao (acelerar, girar, atirar); o objetivo aparece uma vez.
@@ -180,6 +186,8 @@ class StateGame: public State
 		bool bulletHit(const Bullet &bullet, GameObject *object);
 		void resolveShipTiles();
 		void addPlanet();
+		void spawnMineAt(int px, int py);
+		void detonateMine(std::vector<Mine*>::iterator vitima);
 		int nextPlanetInterval();
 		void spawnPowerUp();
 		void spawnDrop(float x, float y, int chancePercent);

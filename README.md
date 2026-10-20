@@ -13,7 +13,8 @@ Este repositório reconstrói todo o **fluxo de desenvolvimento da disciplina** 
 
 Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas. Sua única esperança é voltar para a **Terra** — mas o caminho é cheio de planetas, torretas automáticas, uma lua indesejável e um UFO teimosamente em seu encalço.
 
-- **Objetivo:** alcançar a Terra para vencer. A seta amarela na borda da tela aponta a direção dela quando está fora do campo de visão. Chegar à Terra **sem levar nenhum dano** rende a conquista "INTACTO". A nave começa com **100** de vida (barra + contador no HUD).
+- **Objetivo (modo travessia, `4`):** alcançar a Terra para vencer. A seta amarela na borda da tela aponta a direção dela quando está fora do campo de visão. Chegar à Terra **sem levar nenhum dano** rende a conquista "INTACTO". A nave começa com **100** de vida (barra + contador no HUD).
+- **Modo pontos (`5`):** sem Terra, Lua ou gravidade — **sobreviva 3:00** para vencer ("VOCE SOBREVIVEU!", +500). A 30 s do fim aparece o aviso "FALTAM 30 S!". É o modo score attack: recorde separado por dificuldade.
 - **UFO (chefe em ondas):** caça a nave **sozinho** e acelera com o tempo (mas nunca passa da velocidade base da nave, para a fuga ser sempre possível). Tem **barra de vida própria** no HUD e muda de fase conforme apanha:
   - **Fase 1** (mais de 2/3 da vida): apenas persegue;
   - **Fase 2** (entre 1/3 e 2/3): passa a **atirar** projéteis na direção da nave (dano 6/8/10 no fácil/normal/difícil);
@@ -25,6 +26,7 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 - **Início da partida:** a nave começa com **3 s de escudo** (anel visível) para ninguém morrer nos primeiros segundos, e o mapa já começa com **2 a 4 planetas** espalhados. A **Terra** e o **UFO** surgem em posições aleatórias, sempre longe da nave e um do outro.
 - **Planetas:** os **vermelhos** (2 tiros, dano 5, 10 pts) surgem sozinhos em ritmo crescente (~4 s → ~1,3 s). Os **roxos** (novos: 4 tiros, deriva lenta, dano 8, 25 pts e **drop quase garantido**) aparecem em ~25% dos spawns. Colidir custa vida e destrói o planeta — e o abalroamento também pontua (metade do valor) e conta no combo. A lua orbita a Terra e custa **10**.
 - **Torretas:** torres fixas ancoradas nos painéis do mapa (2 a 6, conforme a dificuldade). Giram na direção da nave e **só atiram com linha de visada livre** (painéis bloqueiam; tiro que morre no painel deixa uma faísca); caem com 2 tiros (30 pts, 40% de drop). Tiro inimigo (torres e UFO) causa 6/8/10 de dano no fácil/normal/difícil.
+- **Minas de proximidade:** a partir dos 45 s, 15% dos spawns viram minas (limite de 4 ativas). Derivam devagar e quicam como planetas, mas **armam espoleta de 600 ms** quando a nave chega a 110 px (com "!" de aviso) e **explodem em área** (raio 130, dano 12). Uma explosão **detona as vizinhas** a 140 px — limpe de longe: 1 tiro rende 15 pts.
 - **Pontuação e combo:** abates valem pontos (planeta 10/25, torreta 30, chefe 300×onda, abalroamento metade); abates emendados criam um **combo que multiplica em até ×3** (janela de 4 s no primeiro minuto e 3 s depois, exibido no HUD). Sobreviver rende +10 a cada 10 s; vencer soma +500.
 - **Combustível:** a barra laranja abaixo da vida **drena com o tempo**; aos 25% aparece o aviso "COMBUSTIVEL BAIXO!" e, quando zera, a nave perde **3 de vida por segundo** ("SEM COMBUSTIVEL!"). Cristais **amarelos** reabastecem +40%.
 - **Power-ups** surgem a cada 15–25 s e também **caem de abates** (chance por tipo). Cada tipo tem **cor e forma próprias** (marcador branco sobre o cristal; legenda no menu):
@@ -37,10 +39,11 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 - **Feedback de combate:** textos flutuantes de **pontos (+25)** e **dano (-30)** nos impactos, "!" sobre a nave quando há **tiro inimigo a menos de 180 px**, avisos grandes na tela ("UFO DESTRUÍDO!", "ONDA 2: o UFO voltou mais forte!", conquistas), barra de vida **fixa ou piscando** conforme o flash reduzido, explosão em **cadeia** ao matar o chefe, tremor de tela e motor da nave com **hum** proporcional à aceleração.
 - **Acessibilidade:** tecla **F** alterna o **flash reduzido** (barras e nave param de piscar); volume de **música (+/-)** e de **efeitos (9/0)** separados (título da janela mostra os dois níveis); **M** continua como mudo geral.
 - **Dificuldade (teclas 1/2/3 no menu):** FÁCIL / NORMAL / DIFÍCIL ajustam o ritmo dos spawns, a vida e a velocidade do chefe, a cadência **e o dano** dos tiros inimigos (6/8/10), o número de torretas, o dano recebido e o dreno do combustível. O menu mostra o resumo do que cada nível muda.
-- **Conquistas (salvas):** ATERISSAGEM, CACADOR DE UFO, EXTERMINADOR (50 planetas somando todas as partidas), INTACTO, SOBREVIVENTE (5 min numa partida) e EM CHAMA (combo x3) — a lista aparece no menu e cada nova conquista é anunciada na hora.
+- **Conquistas (salvas):** ATERRISSAGEM, CACADOR DE UFO, EXTERMINADOR (50 planetas somando todas as partidas), INTACTO (vencer sem dano), SOBREVIVENTE (5 min numa partida), EM CHAMA (combo x3) e RESISTENCIA (vencer no modo pontos) — a lista aparece no menu e cada nova conquista é anunciada na hora.
+- **Desafio do dia:** `?daily=1` no navegador (ou `--daily` no desktop) faz **todos jogarem o mesmo mapa e grava a melhor do dia** no ranking local (melhor por dia, últimos 7 dias); o menu mostra a sua melhor de hoje e convida a jogar.
 - **Semente fixa / desafio do dia:** `?seed=N` no navegador faz **todos jogarem o mesmo mapa e posições**; `?daily=1` usa o dia atual como semente. No desktop: `game.exe --seed N` ou `--daily`.
 - **Gravidade da Terra:** perto do destino, a nave sente uma "corrente" que a puxa — chegue com cuidado.
-- **Recorde por dificuldade:** a pontuação da partida (combo + sobrevivência + bônus de vitória) é salva em `lokuras.rec` no navegador/PC, com contadores acumulados e conquistas; o menu mostra o recorde da dificuldade selecionada.
+- **Recorde por modo e dificuldade:** a pontuação da partida (combo + sobrevivência + bônus de vitória) é salva em `lokuras.rec` no navegador/PC, com contadores acumulados e conquistas; o menu mostra o recorde do modo e dificuldade selecionados.
 - **Câmera** com lookahead na direção do movimento e aproximação suave, presa aos limites do mundo; após o fim da partida ela fica livre (setas).
 
 ### Controles
@@ -48,7 +51,8 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 | Entrada | Ação |
 | --- | --- |
 | `ENTER` | Iniciar o jogo (menu) / jogar de novo (vitória ou derrota) |
-| `1` / `2` / `3` (no menu) | Dificuldade: fácil / normal / difícil (o recorde é salvo por dificuldade) |
+| `1` / `2` / `3` (no menu) | Dificuldade: fácil / normal / difícil (o recorde é salvo por modo e dificuldade) |
+| `4` / `5` (no menu) | Modo: travessia (alcance a Terra) / pontos (sobreviva 3:00) |
 | `W` / `S` | Acelerar / frear a nave (movimento acelerado com atrito) |
 | `A` / `D` | Rotacionar a nave |
 | `ESPAÇO` ou `Mouse 1` ou botão 0 do gamepad | Atirar na direção do bico da nave |

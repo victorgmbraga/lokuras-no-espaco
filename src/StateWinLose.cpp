@@ -27,7 +27,10 @@ void StateWinLose::load(int stack)
 	if(win)
 	{
 		bg = new Sprite("img/stateWin.jpg");
-		txt = new Text("ttf/PirataOne-Regular.ttf", "MISSAO CUMPRIDA!", 34, 0, {255, 255, 255}, 0, 0);
+		if(GameSettings::gameMode() == MODE_PTS)
+			txt = new Text("ttf/PirataOne-Regular.ttf", "VOCE SOBREVIVEU!", 34, 0, {255, 255, 255}, 0, 0);
+		else
+			txt = new Text("ttf/PirataOne-Regular.ttf", "MISSAO CUMPRIDA!", 34, 0, {255, 255, 255}, 0, 0);
 		music = new Audio("sfx/stateWin.ogg", AUDIOTYPE_MUSIC);
 	}
 	else
