@@ -54,6 +54,22 @@ void StateMenu::load(int stack)
 		achTexts[i]->setPos(24, 90 + i * 30);
 	}
 
+	// Legenda dos power-ups (coluna direita): forma + cor + efeito.
+	// Mesmos marcadores brancos desenhados sobre os cristais no jogo.
+	struct Legenda { const char *texto; unsigned char r, g, b; };
+	static const Legenda legendas[MENU_LEG_LINHAS] = {
+		{"+ VIDA: +20", 130, 255, 160},
+		{"O ESCUDO: 6 s imune", 140, 200, 255},
+		{"> TURBO: vel. x1.6", 255, 190, 110},
+		{"<> COMB.: +40%", 255, 230, 130}
+	};
+	for(int i = 0; i < MENU_LEG_LINHAS; ++i)
+	{
+		legendTexts[i] = new Text("ttf/PirataOne-Regular.ttf", legendas[i].texto, 22, 0,
+			{legendas[i].r, legendas[i].g, legendas[i].b}, 0, 0);
+		legendTexts[i]->setPos(SCREEN_W - legendTexts[i]->getWidth() - 24, 90 + i * 30);
+	}
+
 	shownDifficulty = -1; // força o primeiro refresh
 	refreshTexts();
 }
@@ -111,6 +127,9 @@ int StateMenu::unload()
 	for(int i = 0; i < MENU_ACH_LINHAS; ++i)
 		delete(achTexts[i]);
 
+	for(int i = 0; i < MENU_LEG_LINHAS; ++i)
+		delete(legendTexts[i]);
+
 	delete(music);
 
 	return 0;
@@ -164,4 +183,6 @@ void StateMenu::render()
 
 	for(int i = 0; i < MENU_ACH_LINHAS; ++i)
 		achTexts[i]->render();
+	for(int i = 0; i < MENU_LEG_LINHAS; ++i)
+		legendTexts[i]->render();
 }

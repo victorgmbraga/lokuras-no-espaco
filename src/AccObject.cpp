@@ -37,9 +37,21 @@ void AccObject::update(int dt)
 
 	// Teclado ou joystick: o eixo 1 (vertical) controla o acelerador
 	// (para cima = frente) e o eixo 0 (horizontal) age como A/D.
-	bool frente = im.isKeyPressed(SDLK_w) || im.getJoyAxis(1) < 0;
-	bool tras   = im.isKeyPressed(SDLK_s) || im.getJoyAxis(1) > 0;
-	int eixoX   = im.getJoyAxis(0);
+	// O analogico e proporcional: meio curso = meia forca.
+	float joyY = im.getJoyAxisRaw(1);
+	float joyX = im.getJoyAxisRaw(0);
+	bool frente = im.isKeyPressed(SDLK_w) || joyY < -JOY_DEAD;
+	bool tras   = im.isKeyPressed(SDLK_s) || joyY > JOY_DEAD;
+	float forca = 1.0f;
+	if(!im.isKeyPressed(SDLK_w) && !im.isKeyPressed(SDLK_s))
+	{
+		if(joyY < -JOY_DEAD || joyY > JOY_DEAD)
+		{
+			forca = joyY < 0 ? -joyY : joyY;
+			if(forca > 1.0f)
+				forca = 1.0f;
+		}
+	}
 
 	// Turbo em vigor multiplica velocidade maxima e aceleracao.
 	float mult = boostTime > 0 ? boostMult : 1.0f;
@@ -49,12 +61,12 @@ void AccObject::update(int dt)
 	if(frente)
 	{
 		atrito = false;
-		acceleration = -acel;
+		acceleration = -acel * forca;
 	}
 	else if(tras)
 	{
 		atrito = false;
-		acceleration = acel;
+		acceleration = acel * forca;
 	}
 	else
 	{
@@ -65,10 +77,16 @@ void AccObject::update(int dt)
 			acceleration = FRICTION;
 	}
 
-	if(im.isKeyPressed(SDLK_d) || eixoX > 0)
-		rotation -= ROTATION_SPEED * dt;
-	if(im.isKeyPressed(SDLK_a) || eixoX < 0)
-		rotation += ROTATION_SPEED * dt;
+	if(im.isKeyPressed(SDLK_d) || joyX > JOY_DEAD)
+	{
+		float giro = im.isKeyPressed(SDLK_d) ? 1.0f : joyX;
+		rotation -= ROTATION_SPEED * giro * dt;
+	}
+	if(im.isKeyPressed(SDLK_a) || joyX < -JOY_DEAD)
+	{
+		float giro = im.isKeyPressed(SDLK_a) ? 1.0f : -joyX;
+		rotation += ROTATION_SPEED * giro * dt;
+	}
 
 	// Normaliza o angulo (evita perder precisao com valores gigantes).
 	if(rotation > 360)
@@ -159,6 +177,16 @@ bool AccObject::isAccelerating()
 float AccObject::getSpeed()
 {
 	return speed;
+}
+
+float AccObject::getVelX() const
+{
+	return speed * cos((rotation - 90) * PI / 180);
+}
+
+float AccObject::getVelY() const
+{
+	return speed * -sin((rotation - 90) * PI / 180);
 }
 
 void AccObject::setSpeed(float v)

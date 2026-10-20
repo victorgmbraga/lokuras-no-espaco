@@ -39,6 +39,8 @@ class GameSettings
 		// Multiplicadores por dificuldade (index = difficulty()).
 		static float planetSpawnMult()  { static const float v[3] = {1.3f, 1.0f, 0.72f}; return v[difficulty()]; }
 		static float damageMult()       { static const float v[3] = {0.75f, 1.0f, 1.3f}; return v[difficulty()]; }
+		// Flash reduzido (tecla F): sem piscadas de alerta (acessibilidade).
+		static bool& reduceFlash()   { static bool v = false; return v; }
 		static float chaseMult()        { static const float v[3] = {0.88f, 1.0f, 1.15f}; return v[difficulty()]; }
 		static float enemyShotMult()    { static const float v[3] = {1.3f, 1.0f, 0.78f}; return v[difficulty()]; }
 		// Dano do tiro inimigo (chefe e torres) por dificuldade.

@@ -172,6 +172,8 @@ void StateGame::load(int stack)
 	fuelAnnounced = false;
 	fuelLowAnnounced = false;
 	tookDamage = false;
+	tutThrustDone = tutTurnDone = tutShotDone = false;
+	tutThrustShown = tutTurnShown = tutShotShown = tutEarthShown = false;
 	enemyShotsFired = 0;
 	debugMs = 0;
 
@@ -222,7 +224,7 @@ void StateGame::load(int stack)
 
 void StateGame::buildRandomMap()
 {
-	// Dimensoes sorteadas dentro do limite (13 a 16 tiles de lado).
+	// Dimensoes sorteadas dentro do limite (18 a 22 tiles de lado).
 	int mapW = TILEMAP_MIN_SIZE + rand() % (TILEMAP_MAX_SIZE - TILEMAP_MIN_SIZE + 1);
 	int mapH = TILEMAP_MIN_SIZE + rand() % (TILEMAP_MAX_SIZE - TILEMAP_MIN_SIZE + 1);
 
@@ -230,6 +232,9 @@ void StateGame::buildRandomMap()
 	worldHeight = mapH * TILE_SIZE;
 
 	tileMap = new TileMap(mapW, mapH, 2, tileSet);
+
+	// A camera nao mostra fora do mundo (mundo maior que a tela agora).
+	Camera::getInstance().setBounds(worldWidth, worldHeight);
 
 	int totalTiles = tileSet->getTileCount();
 	if(totalTiles <= 0)
@@ -773,6 +778,22 @@ void StateGame::killUfo()
 	if(shakeTime < 700)
 		shakeTime = 700;
 
+	// Espolio do chefe: combustivel + escudo garantidos no ponto da morte
+	// (vira decisao risco/recompensa cacar o UFO). Respeita um teto de 6
+	// itens para nao lotar a tela junto da agenda e dos drops.
+	int tipos[2] = {PowerUp::FUEL, PowerUp::ESCUDO};
+	for(int i = 0; i < 2; ++i)
+	{
+		if(powerUpArray.size() >= 6)
+			break;
+		int pw = powerUpSprites[tipos[i]]->getRenderWidth();
+		int ph = powerUpSprites[tipos[i]]->getRenderHeight();
+		float px = clampi((int)(ux + (i == 0 ? -40.0f : 40.0f)), 0, worldWidth - pw);
+		float py = clampi((int)uy, 0, worldHeight - ph);
+		powerUpArray.push_back(new PowerUp(powerUpSprites[tipos[i]], px, py, tipos[i]));
+	}
+	addFloater("RECOMPENSA!", ux, uy - 60.0f, makeColor(130, 255, 160), false, 1200);
+
 	delete(ufo);
 	ufo = NULL;
 	hud->setBossLife(0, 0, wave);
@@ -1006,6 +1027,34 @@ void StateGame::renderFloaters(float cameraX, float cameraY)
 	}
 }
 
+void StateGame::updateTutorial()
+{
+	if(!ship || returnState == 3)
+		return;
+
+	// Cada dica aparece uma vez, so para quem ainda nao fez a acao.
+	if(!tutThrustShown && !tutThrustDone && gameTimeMs > 4000)
+	{
+		tutThrustShown = true;
+		toast("W/S: impulso e freio");
+	}
+	if(!tutTurnShown && !tutTurnDone && gameTimeMs > 9000)
+	{
+		tutTurnShown = true;
+		toast("A/D: gira a nave");
+	}
+	if(!tutShotShown && !tutShotDone && gameTimeMs > 14000)
+	{
+		tutShotShown = true;
+		toast("ESPACO/MOUSE1: atira");
+	}
+	if(!tutEarthShown && gameTimeMs > 21000)
+	{
+		tutEarthShown = true;
+		toast("Siga a seta amarela ate a Terra");
+	}
+}
+
 // ------------------------------------------------------------------ combustivel
 
 void StateGame::updateFuel(int dt)
@@ -1116,6 +1165,7 @@ int StateGame::unload()
 
 	// A camera e singleton (vive fora deste estado); desvincula do objeto morto.
 	Camera::getInstance().unBind();
+	Camera::getInstance().clearBounds();
 
 	return returnStack;
 }
@@ -1306,6 +1356,8 @@ void StateGame::shoot()
 {
 	if(ship == NULL)
 		return;
+
+	tutShotDone = true; // tutorial: o jogador ja sabe atirar
 
 	// Direcao do bico da nave (mesma rotacao usada por AccObject::update:
 	// rotacao 0 aponta para cima, +90 para a esquerda).
@@ -1677,6 +1729,13 @@ int StateGame::update(int dt)
 	if(im.isKeyDown(SDLK_h) && hud)
 		hud->toggleHints();
 
+	// F alterna o flash reduzido (sem piscadas de alerta).
+	if(im.isKeyDown(SDLK_f))
+	{
+		GameSettings::reduceFlash() = !GameSettings::reduceFlash();
+		toast(GameSettings::reduceFlash() ? "FLASH REDUZIDO: ON" : "FLASH REDUZIDO: OFF");
+	}
+
 	// ESC pausa o jogo (voltar: ESC; menu: Q).
 	if(im.isKeyDown(SDLK_ESCAPE))
 	{
@@ -1700,6 +1759,16 @@ int StateGame::update(int dt)
 
 	// Tempo de partida (nao conta durante a pausa, pois retornamos acima).
 	gameTimeMs += dt;
+
+	// Tutorial: registra o que o jogador ja fez e mostra so o que falta.
+	if(ship)
+	{
+		if(!tutThrustDone && ship->isAccelerating())
+			tutThrustDone = true;
+		if(!tutTurnDone && (ship->getRotation() > 8.0f || ship->getRotation() < -8.0f))
+			tutTurnDone = true;
+	}
+	updateTutorial();
 
 	// Planetas (deriva lenta; quicam no mapa dentro do proprio update).
 	for(std::vector<Planet*>::iterator it = planetArray.begin(); it != planetArray.end(); ++it)
@@ -1767,7 +1836,7 @@ int StateGame::update(int dt)
 	if(shootCooldown > 0)
 		shootCooldown -= dt;
 
-	bool atirando = im.isKeyPressed(SDLK_SPACE) || im.isMouseHeld(1) || im.isMouseDown(1);
+	bool atirando = im.isKeyPressed(SDLK_SPACE) || im.isMouseHeld(1) || im.isMouseDown(1) || im.isJoyHeld(0);
 	if(ship && atirando && shootCooldown <= 0)
 	{
 		shoot();
@@ -2038,9 +2107,36 @@ void StateGame::render()
 	for(std::vector<Turret*>::iterator it = turretArray.begin(); it != turretArray.end(); ++it)
 		(*it)->render(cameraX, cameraY);
 
-	// Power-ups
+	// Power-ups, cada tipo com seu marcador branco acima do cristal
+	// (forma alem da cor: cruz = vida, anel = escudo, seta = turbo,
+	// losango = combustivel). Legenda no menu.
 	for(std::vector<PowerUp*>::iterator it = powerUpArray.begin(); it != powerUpArray.end(); ++it)
+	{
 		(*it)->render(cameraX, cameraY);
+
+		float pcx = (*it)->x + (*it)->w/2 - cameraX;
+		float ptop = (*it)->y - cameraY - 12.0f;
+		if((*it)->kind == PowerUp::VIDA) // cruz
+		{
+			SDLBase::drawLine(pcx - 6, ptop, pcx + 6, ptop, 0xFFFFFF, 1);
+			SDLBase::drawLine(pcx, ptop - 6, pcx, ptop + 6, 0xFFFFFF, 1);
+		}
+		else if((*it)->kind == PowerUp::ESCUDO) // anel
+			SDLBase::drawCircle((int)pcx, (int)ptop, 6, 0xFFFFFF);
+		else if((*it)->kind == PowerUp::TURBO) // seta (triangulo)
+		{
+			SDLBase::drawLine(pcx - 6, ptop + 5, pcx, ptop - 6, 0xFFFFFF, 1);
+			SDLBase::drawLine(pcx, ptop - 6, pcx + 6, ptop + 5, 0xFFFFFF, 1);
+			SDLBase::drawLine(pcx - 6, ptop + 5, pcx + 6, ptop + 5, 0xFFFFFF, 1);
+		}
+		else // FUEL: losango
+		{
+			SDLBase::drawLine(pcx, ptop - 7, pcx + 6, ptop, 0xFFFFFF, 1);
+			SDLBase::drawLine(pcx + 6, ptop, pcx, ptop + 7, 0xFFFFFF, 1);
+			SDLBase::drawLine(pcx, ptop + 7, pcx - 6, ptop, 0xFFFFFF, 1);
+			SDLBase::drawLine(pcx - 6, ptop, pcx, ptop - 7, 0xFFFFFF, 1);
+		}
+	}
 
 	// UFO (sem linhas de fila no modo perseguidor)
 	if(ufo)
@@ -2073,10 +2169,10 @@ void StateGame::render()
 		}
 	}
 
-	// Nave (pisca durante os i-frames; anel quando o escudo esta ativo)
+	// Nave (pisca durante os i-frames, exceto com flash reduzido).
 	if(ship)
 	{
-		if(invulnTime <= 0 || (gameTimeMs / 90) % 2 == 0)
+		if(invulnTime <= 0 || GameSettings::reduceFlash() || (gameTimeMs / 90) % 2 == 0)
 			ship->render(cameraX, cameraY);
 
 		if(ship->getShieldTime() > 0)
@@ -2094,6 +2190,28 @@ void StateGame::render()
 		float scy = ship->y + ship->h/2 - cameraY;
 		SDLBase::drawLine(scx + dirX * 58.0f, scy + dirY * 58.0f,
 		                  scx + dirX * 130.0f, scy + dirY * 130.0f, 0x80D0FF, 1);
+
+		// Legenda visual de perigo proximo: "!" sobre a nave quando um
+		// tiro inimigo esta a menos de 180 px (o som por si so nao diz
+		// de onde vem).
+		bool tiroPerto = false;
+		for(std::vector<Bullet>::iterator b = bulletArray.begin(); b != bulletArray.end(); ++b)
+		{
+			if(!b->enemy)
+				continue;
+			float bdx = b->x - (ship->x + ship->w/2);
+			float bdy = b->y - (ship->y + ship->h/2);
+			if(bdx*bdx + bdy*bdy < 180.0f * 180.0f)
+			{
+				tiroPerto = true;
+				break;
+			}
+		}
+		if(tiroPerto)
+		{
+			SDLBase::drawRect((int)scx - 2, (int)scy - 92, 4, 16, 0xFFE14D);
+			SDLBase::drawRect((int)scx - 2, (int)scy - 72, 4, 4, 0xFFE14D);
+		}
 	}
 
 	// Explosao (uma vez, centrada no ponto da colisao)

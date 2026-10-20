@@ -122,6 +122,12 @@ class StateGame: public State
 		// Flags de partida (conquistas)
 		bool tookDamage;
 
+		// Tutorial dos primeiros 30 s: so mostra a dica de quem ainda nao
+		// fez a acao (acelerar, girar, atirar); o objetivo aparece uma vez.
+		bool tutThrustDone, tutTurnDone, tutShotDone;
+		bool tutThrustShown, tutTurnShown, tutShotShown, tutEarthShown;
+		void updateTutorial();
+
 		// Contador de disparos inimigos emitidos (torres + chefe) e timer do
 		// JSON de diagnostico (publicado em window.__lokuras_debug no web).
 		int enemyShotsFired;

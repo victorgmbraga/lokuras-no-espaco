@@ -24,7 +24,10 @@ class Camera
 		float x, y;
 		static Camera *instance;
 		GameObject *bindObject;
+		int boundW, boundH;  // limites do mundo atual (px); sem limites = livre
+		bool hasBounds;
 		Camera(float x = 0, float y = 0, GameObject* bindObject = NULL);
+		void clampToBounds();
 
 		Camera(const Camera&) = delete;
 		Camera& operator=(const Camera&) = delete;
@@ -35,6 +38,8 @@ class Camera
 		inline float getY() { return y; }
 		void bind(GameObject* bindObject);
 		void unBind();
+		void setBounds(int w, int h);
+		void clearBounds();
 };
 
 #endif /* CAMERA_H_ */

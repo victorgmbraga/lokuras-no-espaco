@@ -199,6 +199,36 @@ int InputManager::getJoyAxis(int axis)
 	return axis >= 0 && axis < 2 ? joyAxes[axis] : 0;
 }
 
+// Tenta abrir o joystick 0 sob demanda (hotplug: conectado depois do inicio).
+static SDL_Joystick* abrirJoystickSePreciso(SDL_Joystick *atual)
+{
+	if(atual != NULL || SDL_NumJoysticks() <= 0)
+		return atual;
+	SDL_Joystick *joy = SDL_JoystickOpen(0);
+	if(joy != NULL)
+		SDL_JoystickEventState(SDL_ENABLE);
+	return joy;
+}
+
+float InputManager::getJoyAxisRaw(int axis)
+{
+	if(axis < 0 || axis > 1)
+		return 0.0f;
+	joystick = abrirJoystickSePreciso(joystick);
+	if(joystick == NULL)
+		return 0.0f;
+	Sint16 v = SDL_JoystickGetAxis(joystick, axis);
+	float f = (float)v / 32768.0f;
+	if(f > 1.0f)
+		f = 1.0f;
+	if(f < -1.0f)
+		f = -1.0f;
+	// Mesma zona morta dos eventos (~24% do curso).
+	if(f > -0.24f && f < 0.24f)
+		return 0.0f;
+	return f;
+}
+
 bool InputManager::isJoyDown(int button)
 {
 	return button >= 0 && button < N_JOY_BUTTONS && joyButtonState[button];
@@ -207,6 +237,16 @@ bool InputManager::isJoyDown(int button)
 bool InputManager::isJoyUp(int button)
 {
 	return button >= 0 && button < N_JOY_BUTTONS && joyButtonUp[button];
+}
+
+bool InputManager::isJoyHeld(int button)
+{
+	if(button < 0 || button >= N_JOY_BUTTONS)
+		return false;
+	joystick = abrirJoystickSePreciso(joystick);
+	if(joystick == NULL)
+		return false;
+	return SDL_JoystickGetButton(joystick, button) != 0;
 }
 
 bool InputManager::quitGame()

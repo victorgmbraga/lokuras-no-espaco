@@ -52,8 +52,12 @@ class InputManager
 		int mousePosY();
 		bool isMouseInside(SDL_Rect *rect);
 		int getJoyAxis(int axis);
+		// Eixo proporcional -1..1 com zona morta (para acelerador e giro).
+		float getJoyAxisRaw(int axis);
 		bool isJoyDown(int button);
 		bool isJoyUp(int button);
+		// Botao segurado agora (polling): permite atirar segurando no gamepad.
+		bool isJoyHeld(int button);
 		bool quitGame();
 		bool consumeFullscreenToggle();
 };

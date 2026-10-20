@@ -21,6 +21,9 @@
 #define BOOST_MULT 1.6f
 #define BOOST_TIME 5000
 
+// Zona morta do analogico do gamepad (mesmos ~24% do InputManager).
+#define JOY_DEAD 0.24f
+
 #include "GameObject.h"
 #include "Animation.h"
 
@@ -51,6 +54,9 @@ class AccObject: public GameObject
 		// StateGame para "quicar" a nave nos tiles solidos do mapa.
 		float getSpeed();
 		void setSpeed(float v);
+		// Componentes da velocidade (px/ms) para o lookahead da Camera.
+		virtual float getVelX() const;
+		virtual float getVelY() const;
 };
 
 #endif /* ACCOBJECT_H_ */

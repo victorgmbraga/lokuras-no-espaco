@@ -16,6 +16,7 @@
 #include "PlayStats.h"
 
 #define MENU_ACH_LINHAS 6
+#define MENU_LEG_LINHAS 4
 
 class StateMenu: public State
 {
@@ -28,6 +29,7 @@ class StateMenu: public State
 		Text *diffDesc;      // o que muda em cada dificuldade
 		Text *hintText;    // semente/desafio do dia
 		Text *achTexts[MENU_ACH_LINHAS]; // lista de conquistas (lado esquerdo)
+		Text *legendTexts[MENU_LEG_LINHAS]; // legenda dos power-ups (lado direito)
 		Audio *music;
 		int titleX, titleY;
 		float menuTime;    // para o "swing" do titulo

@@ -100,12 +100,17 @@ void StateManager::frame()
 			Audio::refreshCaption();
 	}
 
-	// Teclas globais de volume (tocam em qualquer estado).
+	// Teclas globais de volume (tocam em qualquer estado): +/- musica,
+	// 9/0 efeitos (SFX), M mudo geral.
 	InputManager &im = InputManager::getInstance();
 	if(im.isKeyDown(SDLK_PLUS) || im.isKeyDown(SDLK_EQUALS) || im.isKeyDown(SDLK_KP_PLUS))
 		Audio::setMusicVolume(Audio::getMusicVolume() + 16);
 	if(im.isKeyDown(SDLK_MINUS) || im.isKeyDown(SDLK_KP_MINUS))
 		Audio::setMusicVolume(Audio::getMusicVolume() - 16);
+	if(im.isKeyDown(SDLK_9))
+		Audio::setSoundVolume(Audio::getSoundVolume() - 16);
+	if(im.isKeyDown(SDLK_0))
+		Audio::setSoundVolume(Audio::getSoundVolume() + 16);
 	if(im.isKeyDown(SDLK_m))
 		Audio::toggleMute();
 

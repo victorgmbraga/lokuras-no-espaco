@@ -6,6 +6,7 @@
  */
 
 #include "HUD.h"
+#include "GameSettings.h"
 
 HUD::HUD()
 {
@@ -49,7 +50,7 @@ HUD::HUD()
 	int textPosY = SCREEN_H - commandsText->getHeight();
 	commandsText->setPos(14, textPosY);
 
-	commandsText3 = new Text("ttf/PirataOne-Regular.ttf", "Paineis bloqueiam tiros: use-os de cobertura   |   H: dicas   |   ESC: pausa", 24, 0, {255, 255, 255}, 0, 0);
+	commandsText3 = new Text("ttf/PirataOne-Regular.ttf", "Paineis bloqueiam tiros: use-os de cobertura   |   H: dicas   |   F: menos flash   |   ESC: pausa", 24, 0, {255, 255, 255}, 0, 0);
 	textPosY = SCREEN_H - commandsText->getHeight() * 2;
 	commandsText3->setPos(14, textPosY);
 
@@ -59,7 +60,7 @@ HUD::HUD()
 	int posTextY = SCREEN_H / 2 - pauseText->getHeight() - 10;
 	pauseText->setPos(posTextX, posTextY);
 
-	pauseHint = new Text("ttf/PirataOne-Regular.ttf", "ESC: continuar   |   Q: voltar ao menu   |   +/-: volume   |   M: mudo", 30, 0, {255, 255, 255}, 0, 0);
+	pauseHint = new Text("ttf/PirataOne-Regular.ttf", "ESC: continuar   |   Q: menu   |   +/-: musica   |   9/0: sfx   |   M: mudo", 30, 0, {255, 255, 255}, 0, 0);
 	posTextX = SCREEN_W / 2 - pauseHint->getWidth() / 2;
 	posTextY = SCREEN_H / 2 + 24;
 	pauseHint->setPos(posTextX, posTextY);
@@ -157,10 +158,13 @@ void HUD::displayLife()
 	if(barWidth > maxWidth)
 		barWidth = maxWidth;
 
-	// Vida baixa: pisca em vermelho forte para dar alerta.
+	// Vida baixa: pisca em vermelho forte (ou vermelho fixo com flash
+	// reduzido) para dar alerta.
 	int color;
 	if(life > 20)
 		color = 0x00EA00;
+	else if(GameSettings::reduceFlash())
+		color = 0xC03030;
 	else if((pulseMs / 200) % 2 == 0)
 		color = 0xFF4040;
 	else
@@ -180,10 +184,13 @@ void HUD::displayFuel()
 	if(barWidth > maxWidth)
 		barWidth = maxWidth;
 
-	// Acabando o combustivel: a barra pisca em vermelho.
+	// Acabando o combustivel: a barra pisca em vermelho (fixo com flash
+	// reduzido).
 	int color;
 	if(fuel > 20)
 		color = 0xFFB23A;
+	else if(GameSettings::reduceFlash())
+		color = 0xC03030;
 	else if((pulseMs / 250) % 2 == 0)
 		color = 0xFF4040;
 	else

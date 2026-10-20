@@ -10,9 +10,10 @@
 
 // Dimensoes do mundo: cada partida gera um mapa aleatorio entre
 // TILEMAP_MIN_SIZE e TILEMAP_MAX_SIZE tiles de lado (75 px cada). O limite
-// maximo de 16 x 16 tiles resulta em um mundo de 1200 x 1200 px.
-#define TILEMAP_MIN_SIZE 13
-#define TILEMAP_MAX_SIZE 16
+// maximo de 22 x 22 tiles resulta em um mundo de 1650 x 1650 px, maior que
+// a tela de 1280 x 720: explorar e seguir a seta voltam a importar.
+#define TILEMAP_MIN_SIZE 18
+#define TILEMAP_MAX_SIZE 22
 #define TILE_SIZE 75
 
 #include "TileSet.h"

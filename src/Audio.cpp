@@ -133,6 +133,8 @@ void Audio::setSoundVolume(int volume)
 		muted = false;
 
 	Mix_Volume(-1, muted ? 0 : soundVolume);
+	captionActive = true;
+	refreshCaption();
 }
 
 void Audio::toggleMute()
@@ -149,9 +151,10 @@ void Audio::refreshCaption()
 	string caption;
 
 	if (muted)
-		caption = string(GAME_NAME) + " | Musica: MUDO (M)";
+		caption = string(GAME_NAME) + " | MUDO (M)";
 	else
-		caption = string(GAME_NAME) + " | Musica: " + std::to_string(musicVolume * 100 / MIX_MAX_VOLUME) + "% (+/-)";
+		caption = string(GAME_NAME) + " | Musica: " + std::to_string(musicVolume * 100 / MIX_MAX_VOLUME) + "% (+/-)" +
+		          " | SFX: " + std::to_string(soundVolume * 100 / MIX_MAX_VOLUME) + "% (9/0)";
 
 	SDL_WM_SetCaption(caption.c_str(), caption.c_str());
 }
