@@ -8,6 +8,9 @@
 #include "StateGame.h"
 #include <cmath>
 
+// Dano do UFO: 30% da vida maxima da nave (100).
+static const int UFO_COLLISION_DAMAGE = 30;
+
 void StateGame::load(int stack)
 {
 	// Recorde persistido (arquivo lokuras.rec).
@@ -222,10 +225,21 @@ void StateGame::checkCollision(int dt)
 		shakeTime = 250;
 	}
 
-	// UFO: ser capturada pelo perseguidor significa o fim (o escudo nao salvar,
-	// apenas da uma ultima chance de escapar dele).
-	if(ufo && ship->collidesWith(ufo) && ship->getShieldTime() <= 0)
-		ship->hp = 0;
+	// UFO: encostar custa 30 de vida (30% do maximo), com os mesmos i-frames
+	// dos planetas/lua. O escudo evita o dano enquanto estiver ativo.
+	if(ufo && ship->collidesWith(ufo) && invulnTime <= 0 && ship->getShieldTime() <= 0)
+	{
+		boomX = ufo->x + ufo->w/2;
+		boomY = ufo->y + ufo->h/2;
+		boomActive = true;
+		boom->restart();
+
+		ship->hp -= UFO_COLLISION_DAMAGE;
+		hud->setLife(ship->hp);
+		sfx->play(0);
+		invulnTime = 800;
+		shakeTime = 250;
+	}
 
 	if(ship->hp <= 0)
 	{
