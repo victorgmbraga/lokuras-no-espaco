@@ -41,6 +41,8 @@ class GameSettings
 		static float damageMult()       { static const float v[3] = {0.75f, 1.0f, 1.3f}; return v[difficulty()]; }
 		static float chaseMult()        { static const float v[3] = {0.88f, 1.0f, 1.15f}; return v[difficulty()]; }
 		static float enemyShotMult()    { static const float v[3] = {1.3f, 1.0f, 0.78f}; return v[difficulty()]; }
+		// Dano do tiro inimigo (chefe e torres) por dificuldade.
+		static int enemyShotDamage()    { static const int v[3] = {6, 8, 10}; return v[difficulty()]; }
 		static int ufoBaseHp()          { static const int v[3] = {14, 20, 28}; return v[difficulty()]; }
 		static int ufoHpPerWave()       { static const int v[3] = {6, 10, 14}; return v[difficulty()]; }
 		static int turretCount()        { static const int v[3] = {2, 4, 6}; return v[difficulty()]; }

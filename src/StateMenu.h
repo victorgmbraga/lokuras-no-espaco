@@ -25,6 +25,7 @@ class StateMenu: public State
 		Text *title;
 		Text *recordText;  // recorde da dificuldade escolhida (NULL se ainda nao existe)
 		Text *difficultyText;
+		Text *diffDesc;      // o que muda em cada dificuldade
 		Text *hintText;    // semente/desafio do dia
 		Text *achTexts[MENU_ACH_LINHAS]; // lista de conquistas (lado esquerdo)
 		Audio *music;

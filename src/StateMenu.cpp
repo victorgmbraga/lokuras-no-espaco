@@ -35,7 +35,10 @@ void StateMenu::load(int stack)
 
 	// Selecao de dificuldade (1/2/3) e recorde correspondente.
 	difficultyText = new Text("ttf/PirataOne-Regular.ttf", "Dificuldade", 30, 0, {255, 255, 255}, 0, 0);
-	difficultyText->setPos(0, (SCREEN_H/4) * 3 - 40);
+	difficultyText->setPos(0, (SCREEN_H/4) * 3 - 95);
+
+	// O que muda em cada dificuldade (atualizado no refreshTexts).
+	diffDesc = new Text("ttf/PirataOne-Regular.ttf", "", 22, 0, {180, 210, 180}, 0, 0);
 
 	recordText = new Text("ttf/PirataOne-Regular.ttf", "Recorde", 26, 0, {255, 230, 130}, 0, 0);
 
@@ -61,7 +64,16 @@ void StateMenu::refreshTexts()
 	shownDifficulty = diff;
 
 	difficultyText->setText(std::string("Dificuldade: ") + GameSettings::difficultyName(diff) + "   (1 = facil, 2 = normal, 3 = dificil)");
-	difficultyText->setPos(SCREEN_W/2 - difficultyText->getWidth()/2, (SCREEN_H/4) * 3 - 40);
+	difficultyText->setPos(SCREEN_W/2 - difficultyText->getWidth()/2, (SCREEN_H/4) * 3 - 95);
+
+	// Resumo honesto do que cada dificuldade muda (spawn, chefe, torres, tiro, combustivel).
+	if(diff == DIF_FACIL)
+		diffDesc->setText("Facil: UFO lento e fraco, 2 torres, tiro inimigo fraco, mais combustivel");
+	else if(diff == DIF_DIFICIL)
+		diffDesc->setText("Dificil: UFO rapido e forte, 6 torres, tiro inimigo forte, pouco combustivel");
+	else
+		diffDesc->setText("Normal: desafio equilibrado, 4 torres, tiro e combustivel padrao");
+	diffDesc->setPos(SCREEN_W/2 - diffDesc->getWidth()/2, (SCREEN_H/4) * 3 - 55);
 
 	int best = PlayStats::bestScore(diff);
 	recordText->setText(best >= 0 ? "Recorde nessa dificuldade: " + std::to_string(best) + " pontos"
@@ -92,6 +104,7 @@ int StateMenu::unload()
 	delete(pressEnter);
 	delete(title);
 	delete(difficultyText);
+	delete(diffDesc);
 	delete(recordText);
 	delete(hintText);
 
@@ -145,6 +158,7 @@ void StateMenu::render()
 
 	pressEnter->render();
 	difficultyText->render();
+	diffDesc->render();
 	recordText->render();
 	hintText->render();
 

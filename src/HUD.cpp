@@ -14,6 +14,8 @@ HUD::HUD()
 	comboMult = 1.0f;
 	comboStreak = 0;
 	pulseMs = 0;
+	hintsOn = true;
+	hintsUntilMs = 12000;
 
 	// Contador numerico ao lado da barra de vida.
 	lifeCounter = new Text("ttf/PirataOne-Regular.ttf", "Vida: 100", 28, 0, {255, 255, 255}, 0, 0);
@@ -42,12 +44,12 @@ HUD::HUD()
 	bossMax = 0;
 	bossWave = 1;
 
-	// Dicas de controle (rodape).
-	commandsText = new Text("ttf/PirataOne-Regular.ttf", "W, A, S, D: Move a nave   |   ESPACO/MOUSE1: Atira   |   Paineis bloqueiam tiros: use-os de cobertura", 24, 0, {255, 255, 255}, 0, 0);
+	// Dicas de controle (rodape): somem sozinhas aos 12 s; H reexibe.
+	commandsText = new Text("ttf/PirataOne-Regular.ttf", "W/S: impulso   A/D: gira   ESPACO/MOUSE1: atira", 24, 0, {255, 255, 255}, 0, 0);
 	int textPosY = SCREEN_H - commandsText->getHeight();
 	commandsText->setPos(14, textPosY);
 
-	commandsText3 = new Text("ttf/PirataOne-Regular.ttf", "ESC: Pausa   |   +/-: Volume   |   M: Mudo", 24, 0, {255, 255, 255}, 0, 0);
+	commandsText3 = new Text("ttf/PirataOne-Regular.ttf", "Paineis bloqueiam tiros: use-os de cobertura   |   H: dicas   |   ESC: pausa", 24, 0, {255, 255, 255}, 0, 0);
 	textPosY = SCREEN_H - commandsText->getHeight() * 2;
 	commandsText3->setPos(14, textPosY);
 
@@ -57,7 +59,7 @@ HUD::HUD()
 	int posTextY = SCREEN_H / 2 - pauseText->getHeight() - 10;
 	pauseText->setPos(posTextX, posTextY);
 
-	pauseHint = new Text("ttf/PirataOne-Regular.ttf", "ESC: continuar   |   Q: voltar ao menu", 30, 0, {255, 255, 255}, 0, 0);
+	pauseHint = new Text("ttf/PirataOne-Regular.ttf", "ESC: continuar   |   Q: voltar ao menu   |   +/-: volume   |   M: mudo", 30, 0, {255, 255, 255}, 0, 0);
 	posTextX = SCREEN_W / 2 - pauseHint->getWidth() / 2;
 	posTextY = SCREEN_H / 2 + 24;
 	pauseHint->setPos(posTextX, posTextY);
@@ -117,8 +119,24 @@ void HUD::render()
 	scoreText->render();
 	comboText->render();
 	renderBossBar();
-	commandsText->render();
-	commandsText3->render();
+	// Dicas do rodape: visiveis no comeco da partida; H reexibe por 15 s.
+	if(hintsOn && pulseMs <= hintsUntilMs)
+	{
+		commandsText->render();
+		commandsText3->render();
+	}
+}
+
+void HUD::toggleHints()
+{
+	// Se ja estao visiveis, esconde na hora; senao reexibe por 15 s.
+	if(hintsOn && pulseMs <= hintsUntilMs)
+		hintsOn = false;
+	else
+	{
+		hintsOn = true;
+		hintsUntilMs = pulseMs + 15000;
+	}
 }
 
 void HUD::renderPause()

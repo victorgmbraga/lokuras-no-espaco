@@ -14,19 +14,19 @@ Este repositório reconstrói todo o **fluxo de desenvolvimento da disciplina** 
 Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas. Sua única esperança é voltar para a **Terra** — mas o caminho é cheio de planetas, torretas automáticas, uma lua indesejável e um UFO teimosamente em seu encalço.
 
 - **Objetivo:** alcançar a Terra para vencer. A seta amarela na borda da tela aponta a direção dela quando está fora do campo de visão. Chegar à Terra **sem levar nenhum dano** rende a conquista "INTACTO". A nave começa com **100** de vida (barra + contador no HUD).
-- **UFO (chefe em ondas):** caça a nave **sozinho** e acelera com o tempo. Tem **barra de vida própria** no HUD e muda de fase conforme apanha:
+- **UFO (chefe em ondas):** caça a nave **sozinho** e acelera com o tempo (mas nunca passa da velocidade base da nave, para a fuga ser sempre possível). Tem **barra de vida própria** no HUD e muda de fase conforme apanha:
   - **Fase 1** (mais de 2/3 da vida): apenas persegue;
-  - **Fase 2** (entre 1/3 e 2/3): passa a **atirar** projéteis na direção da nave;
+  - **Fase 2** (entre 1/3 e 2/3): passa a **atirar** projéteis na direção da nave (dano 6/8/10 no fácil/normal/difícil);
   - **Fase 3** (menos de 1/3): ainda mais rápido, atira em **leque de 3** e invoca planetas extras.
 
-  Destruí-lo **não encerra a partida**: após ~6,5 s uma **nova onda** chega mais forte (mais vida e +3% de velocidade por onda, com aviso na tela). Encostar custa **30 de vida** (com i-frames de 0,8 s); o escudo bloqueia.
-- **Tiro:** `ESPAÇO` ou **Mouse 1** disparam na direção do bico da nave (cadência de ~4,5 tiros/s). Cada planeta vermelho cai com **2 tiros**; os tiros são **bloqueados pelos painéis sólidos** da estação — use-os como cobertura.
+  Destruí-lo **não encerra a partida**: após ~6,5 s uma **nova onda** chega mais forte (mais vida e +3% de velocidade por onda, com aviso na tela). Uma **seta vermelha** na borda indica a direção do UFO fora da tela. Encostar custa **30 de vida** (com i-frames de 0,8 s); o escudo bloqueia.
+- **Tiro:** `ESPAÇO` ou **Mouse 1** disparam na direção do bico da nave (cadência de ~4,5 tiros/s; uma linha curta no bico mostra a direção). Cada planeta vermelho cai com **2 tiros**; os tiros são **bloqueados pelos painéis sólidos** da estação — use-os como cobertura (o tiro que morre no painel deixa uma faísca).
 - **Mapa aleatório:** a cada partida o mapa é gerado com **13 a 16 tiles de lado** (máximo de 16×16 = 1200×1200 px), em duas camadas com parallax. Os painéis da **camada da frente são sólidos**: a nave **quica** neles, os planetas ricocheteiam e os tiros (seus e inimigos) param ali.
-- **Início da partida:** o mapa já começa com **2 a 4 planetas** espalhados. A **Terra** e o **UFO** surgem em posições aleatórias, sempre longe da nave e um do outro.
-- **Planetas:** os **vermelhos** (2 tiros, dano 5, 10 pts) surgem sozinhos em ritmo crescente (~4 s → ~1,3 s). Os **roxos** (novos: 4 tiros, deriva lenta, dano 8, 25 pts e **drop quase garantido**) aparecem em ~25% dos spawns. Colidir custa vida mas destrói o planeta. A lua orbita a Terra e custa **10**.
-- **Torretas:** torres fixas ancoradas nos painéis do mapa (2 a 6, conforme a dificuldade). Giram na direção da nave e **só atiram com linha de visada livre** (painéis bloqueiam); caem com 2 tiros (30 pts, 40% de drop).
-- **Pontuação e combo:** abates valem pontos (planeta 10/25, torreta 30, chefe 300×onda); abates emendados em até 3 s criam um **combo que multiplica em até ×3** (exibido no HUD). Sobreviver rende +10 a cada 10 s; vencer soma +500.
-- **Combustível:** a barra laranja abaixo da vida **drena com o tempo**; quando zera, a nave perde **3 de vida por segundo** ("SEM COMBUSTIVEL!"). Cristais **amarelos** reabastecem +40%.
+- **Início da partida:** a nave começa com **3 s de escudo** (anel visível) para ninguém morrer nos primeiros segundos, e o mapa já começa com **2 a 4 planetas** espalhados. A **Terra** e o **UFO** surgem em posições aleatórias, sempre longe da nave e um do outro.
+- **Planetas:** os **vermelhos** (2 tiros, dano 5, 10 pts) surgem sozinhos em ritmo crescente (~4 s → ~1,3 s). Os **roxos** (novos: 4 tiros, deriva lenta, dano 8, 25 pts e **drop quase garantido**) aparecem em ~25% dos spawns. Colidir custa vida e destrói o planeta — e o abalroamento também pontua (metade do valor) e conta no combo. A lua orbita a Terra e custa **10**.
+- **Torretas:** torres fixas ancoradas nos painéis do mapa (2 a 6, conforme a dificuldade). Giram na direção da nave e **só atiram com linha de visada livre** (painéis bloqueiam; tiro que morre no painel deixa uma faísca); caem com 2 tiros (30 pts, 40% de drop). Tiro inimigo (torres e UFO) causa 6/8/10 de dano no fácil/normal/difícil.
+- **Pontuação e combo:** abates valem pontos (planeta 10/25, torreta 30, chefe 300×onda, abalroamento metade); abates emendados criam um **combo que multiplica em até ×3** (janela de 4 s no primeiro minuto e 3 s depois, exibido no HUD). Sobreviver rende +10 a cada 10 s; vencer soma +500.
+- **Combustível:** a barra laranja abaixo da vida **drena com o tempo**; aos 25% aparece o aviso "COMBUSTIVEL BAIXO!" e, quando zera, a nave perde **3 de vida por segundo** ("SEM COMBUSTIVEL!"). Cristais **amarelos** reabastecem +40%.
 - **Power-ups** surgem a cada 15–25 s e também **caem de abates** (chance por tipo):
   - **Verde (vida):** recupera 20 de vida (até o limite de 100);
   - **Azul (escudo):** 6 s de invulnerabilidade a planetas, lua, UFO e tiros (anel em volta da nave);
@@ -34,7 +34,7 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
   - **Amarelo (combustível):** reabastece +40% do tanque.
 - **Invulnerabilidade:** após levar dano a nave fica **0,8 s intocável** (piscando) — vale para planetas, lua, UFO e tiros inimigos; nesse intervalo ela atravessa planetas sem destruí-los.
 - **Feedback de combate:** textos flutuantes de **pontos (+25)** e **dano (-30)** nos impactos, avisos grandes na tela ("UFO DESTRUÍDO!", "ONDA 2: o UFO voltou mais forte!", conquistas), barra de vida **piscando** quando baixa, explosão em **cadeia** ao matar o chefe, tremor de tela e motor da nave com **hum** proporcional à aceleração.
-- **Dificuldade (teclas 1/2/3 no menu):** FÁCIL / NORMAL / DIFÍCIL ajustam o ritmo dos spawns, a vida e a velocidade do chefe, a cadência dos tiros inimigos, o número de torretas, o dano recebido e o dreno do combustível.
+- **Dificuldade (teclas 1/2/3 no menu):** FÁCIL / NORMAL / DIFÍCIL ajustam o ritmo dos spawns, a vida e a velocidade do chefe, a cadência **e o dano** dos tiros inimigos (6/8/10), o número de torretas, o dano recebido e o dreno do combustível. O menu mostra o resumo do que cada nível muda.
 - **Conquistas (salvas):** ATERISSAGEM, CACADOR DE UFO, EXTERMINADOR (50 planetas somando todas as partidas), INTACTO, SOBREVIVENTE (5 min numa partida) e EM CHAMA (combo x3) — a lista aparece no menu e cada nova conquista é anunciada na hora.
 - **Semente fixa / desafio do dia:** `?seed=N` no navegador faz **todos jogarem o mesmo mapa e posições**; `?daily=1` usa o dia atual como semente. No desktop: `game.exe --seed N` ou `--daily`.
 - **Gravidade da Terra:** perto do destino, a nave sente uma "corrente" que a puxa — chegue com cuidado.
@@ -51,6 +51,7 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 | `A` / `D` | Rotacionar a nave |
 | `ESPAÇO` ou `Mouse 1` | Atirar na direção do bico da nave |
 | `ESC` | Pausar o jogo; no menu encerra; nas telas finais volta ao menu |
+| `H` | Mostrar/esconder as dicas do rodapé (somem sozinhas aos 12 s) |
 | `Q` (na pausa) | Voltar ao menu |
 | `+` / `=` e `-` / `KP-` | Volume da música acima/abaixo (mostra no título da janela) |
 | `M` | Mudo (a qualquer momento) |

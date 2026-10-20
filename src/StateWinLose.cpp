@@ -27,13 +27,13 @@ void StateWinLose::load(int stack)
 	if(win)
 	{
 		bg = new Sprite("img/stateWin.jpg");
-		txt = new Text("ttf/PirataOne-Regular.ttf", "PARABÉNS AE MANOLO", 34, 0, {255, 255, 255}, 0, 0);
+		txt = new Text("ttf/PirataOne-Regular.ttf", "MISSAO CUMPRIDA!", 34, 0, {255, 255, 255}, 0, 0);
 		music = new Audio("sfx/stateWin.ogg", AUDIOTYPE_MUSIC);
 	}
 	else
 	{
 		bg = new Sprite("img/stateLose.jpg");
-		txt = new Text("ttf/PirataOne-Regular.ttf", "VC MORREU, RSRSRSRS", 34, 0, {255, 255, 255}, 0, 0);
+		txt = new Text("ttf/PirataOne-Regular.ttf", "NAVE DESTRUIDA", 34, 0, {255, 255, 255}, 0, 0);
 		music = new Audio("sfx/stateLose.ogg", AUDIOTYPE_MUSIC);
 	}
 	bg->resizeCover(SCREEN_W, SCREEN_H);

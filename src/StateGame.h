@@ -105,6 +105,7 @@ class StateGame: public State
 		float fuel;          // 0..100 (%); drena com o tempo de partida
 		int fuelDamageTimer; // 1 s sem combustivel = 4 de vida
 		bool fuelAnnounced;  // toast de "sem combustivel" so uma vez
+		bool fuelLowAnnounced; // aviso de "combustivel baixo" (25%) so uma vez
 
 		// Textos flutuantes (pool de Text pre-alocado)
 		struct Floater
@@ -190,6 +191,7 @@ class StateGame: public State
 		void checkAchievements();
 		void endGame(bool win);
 		void renderObjective(float cameraX, float cameraY);
+		void renderThreat(float cameraX, float cameraY);
 	public:
 		StateGame() {}
 		virtual ~StateGame() {}

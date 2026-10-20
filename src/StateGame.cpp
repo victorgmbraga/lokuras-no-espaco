@@ -170,6 +170,7 @@ void StateGame::load(int stack)
 	fuel = 100.0f;
 	fuelDamageTimer = 0;
 	fuelAnnounced = false;
+	fuelLowAnnounced = false;
 	tookDamage = false;
 	enemyShotsFired = 0;
 	debugMs = 0;
@@ -207,6 +208,12 @@ void StateGame::load(int stack)
 	shakeTime = 0;
 	shootCooldown = 0;
 	paused = false;
+
+	// Protecao de saida: 3 s de escudo (com anel visivel) para a partida
+	// nao acabar nos primeiros segundos, e dica do objetivo.
+	if(ship)
+		ship->setShield(3000);
+	toast("CHEGUE A TERRA!");
 
 	// Variáveis de retorno
 	returnState = 0;
@@ -588,7 +595,9 @@ void StateGame::addKillScore(int base, float x, float y)
 	++comboStreak;
 	if(comboStreak > bestStreak)
 		bestStreak = comboStreak;
-	comboTimer = (int)COMBO_WINDOW_MS;
+	// Janela maior no primeiro minuto (4 s): o spawn ainda e lento e o
+	// combo seria impossivel de emendar. Depois volta aos 3 s normais.
+	comboTimer = (gameTimeMs < 60000) ? 4000 : (int)COMBO_WINDOW_MS;
 
 	// x1.0 no primeiro abate; +0.25 por abate emendado, ate o teto de x3.
 	comboMult = 1.0f + 0.25f * (comboStreak - 1);
@@ -684,7 +693,9 @@ void StateGame::updateUfoBehavior(int dt)
 		return;
 
 	// Fases por vida restante: 1 persegue, 2 atira, 3 atira em leque e
-	// invoca planetas. Cada fase tambem acelera a perseguinte.
+	// invoca planetas. Cada fase tambem acelera a perseguinte, mas o teto
+	// fica abaixo da velocidade base da nave (0.35): pressao sem tornar a
+	// fuga impossivel sem turbo.
 	int fase = (ufo->hp * 3 > ufo->maxHp * 2) ? 1 : (ufo->hp * 3 > ufo->maxHp) ? 2 : 3;
 	float chase = 0.22f + 0.14f * (gameTimeMs / 120000.0f);
 	if(chase > 0.36f)
@@ -692,8 +703,8 @@ void StateGame::updateUfoBehavior(int dt)
 	chase += 0.03f * (wave - 1);            // ondas sucessivas sao mais rapidas
 	chase *= (fase == 2) ? 1.1f : (fase == 3) ? 1.22f : 1.0f;
 	chase *= GameSettings::chaseMult();
-	if(chase > 0.5f)
-		chase = 0.5f;
+	if(chase > 0.33f)
+		chase = 0.33f;
 	ufo->setChaseSpeed(chase);
 	ufo->update(dt);
 
@@ -709,15 +720,16 @@ void StateGame::updateUfoBehavior(int dt)
 		{
 			if(fase == 3)
 			{
-				// Leque de 3 tiros.
-				addEnemyShot(ux, uy, sx, sy, 0.30f, 8, -20);
-				addEnemyShot(ux, uy, sx, sy, 0.30f, 8, 0);
-				addEnemyShot(ux, uy, sx, sy, 0.30f, 8, 20);
+				// Leque de 3 tiros (dano da dificuldade).
+				int danoTiro = GameSettings::enemyShotDamage();
+				addEnemyShot(ux, uy, sx, sy, 0.30f, danoTiro, -20);
+				addEnemyShot(ux, uy, sx, sy, 0.30f, danoTiro, 0);
+				addEnemyShot(ux, uy, sx, sy, 0.30f, danoTiro, 20);
 				ufoShootTimer = (int)(1600 * GameSettings::enemyShotMult());
 			}
 			else
 			{
-				addEnemyShot(ux, uy, sx, sy, 0.28f, 8, 0);
+				addEnemyShot(ux, uy, sx, sy, 0.28f, GameSettings::enemyShotDamage(), 0);
 				ufoShootTimer = (int)(2300 * GameSettings::enemyShotMult());
 			}
 		}
@@ -862,7 +874,7 @@ void StateGame::updateTurrets(int dt)
 		if(t->cooldown <= 0 && distanceBetween(tcx, tcy, scx, scy) < 560.0f &&
 		   lineIsClear(tcx, tcy, scx, scy))
 		{
-			addEnemyShot(tcx, tcy, scx, scy, 0.34f, 8, 0);
+			addEnemyShot(tcx, tcy, scx, scy, 0.34f, GameSettings::enemyShotDamage(), 0);
 			t->cooldown = (int)(2300 * GameSettings::enemyShotMult());
 		}
 	}
@@ -1011,8 +1023,21 @@ void StateGame::updateFuel(int dt)
 	{
 		fuelAnnounced = false;
 		fuelDamageTimer = 0;
-		return;
 	}
+	else
+		fuelLowAnnounced = true; // ja vazio: nao avisa "baixo" depois
+
+	// Pre-aviso aos 25%: da tempo de cacar um cristal amarelo.
+	if(fuel <= 25.0f && fuel > 5.0f && !fuelLowAnnounced)
+	{
+		fuelLowAnnounced = true;
+		toast("COMBUSTIVEL BAIXO!");
+	}
+	if(fuel > 30.0f)
+		fuelLowAnnounced = false;
+
+	if(fuel > 5.0f)
+		return;
 
 	// Tanque vazio: a nave perde 3 de vida por segundo.
 	if(!fuelAnnounced)
@@ -1193,6 +1218,11 @@ void StateGame::checkCollision(int dt)
 				ship->hp -= dano;
 				hud->setLife(ship->hp);
 				destroyedCount++;
+				// Abalroar tambem pontua (metade do valor, arredondando para
+				// cima) e pode dropar: o kill por corpo entra no combo como
+				// o kill por tiro, sem confundir o jogador.
+				addKillScore((p->valor + 1) / 2, (*it)->x + (*it)->w/2, (*it)->y);
+				spawnDrop((*it)->x + (*it)->w/2, (*it)->y + (*it)->h/2, p->dropChance);
 				sfx->play(0);
 				invulnTime = 800;
 				shakeTime = 250;
@@ -1322,10 +1352,16 @@ void StateGame::updateBullets(int dt)
 		// Nenhum tiro atravessa painel solido: os dois lados usam o mapa
 		// como cobertura. O "grace" inicial impede que o tiro morra no
 		// proprio painel de origem (torre dentro do tile / nave encostada).
+		// Tiro do jogador que morre no painel deixa uma faisca ("x") para
+		// o bloqueio ficar visivel.
 		if(it->grace > 0)
 			it->grace -= dt;
 		else if(!remove && tileMap && tileMap->solidAt(it->x, it->y))
+		{
+			if(!it->enemy)
+				addFloater("x", it->x, it->y, makeColor(255, 200, 110), false, 300);
 			remove = true;
+		}
 
 		if(!remove && !it->enemy)
 		{
@@ -1637,6 +1673,10 @@ int StateGame::update(int dt)
 {
 	InputManager &im = InputManager::getInstance();
 
+	// H mostra/esconde as dicas do rodape (que somem sozinhas aos 12 s).
+	if(im.isKeyDown(SDLK_h) && hud)
+		hud->toggleHints();
+
 	// ESC pausa o jogo (voltar: ESC; menu: Q).
 	if(im.isKeyDown(SDLK_ESCAPE))
 	{
@@ -1902,6 +1942,65 @@ void StateGame::renderObjective(float cameraX, float cameraY)
 	                  ax - dx*12 - px*12, ay - dy*12 - py*12, cor, 1);
 }
 
+void StateGame::renderThreat(float cameraX, float cameraY)
+{
+	// Seta vermelha para o UFO fora da tela (mesma conta da seta da Terra):
+	// morte sem telegrafar a direcao e frustracao gratuita.
+	if(!ufo || !ship)
+		return;
+
+	float ucx = ufo->x + ufo->w/2 - cameraX;
+	float ucy = ufo->y + ufo->h/2 - cameraY;
+
+	if(ucx >= 0 && ucx <= SCREEN_W && ucy >= 0 && ucy <= SCREEN_H)
+		return;
+
+	float dx = ucx - SCREEN_W / 2.0f;
+	float dy = ucy - SCREEN_H / 2.0f;
+	float d = sqrtf(dx*dx + dy*dy);
+	if(d < 1.0f)
+		return;
+
+	dx /= d;
+	dy /= d;
+
+	float t = 1e9f;
+	if(dx > 0.0001f)
+	{
+		float cand = (SCREEN_W - 70 - SCREEN_W/2.0f) / dx;
+		if(cand < t) t = cand;
+	}
+	else if(dx < -0.0001f)
+	{
+		float cand = (70 - SCREEN_W/2.0f) / dx;
+		if(cand < t) t = cand;
+	}
+	if(dy > 0.0001f)
+	{
+		float cand = (SCREEN_H - 70 - SCREEN_H/2.0f) / dy;
+		if(cand < t) t = cand;
+	}
+	else if(dy < -0.0001f)
+	{
+		float cand = (70 - SCREEN_H/2.0f) / dy;
+		if(cand < t) t = cand;
+	}
+
+	float ax = SCREEN_W / 2.0f + dx * t;
+	float ay = SCREEN_H / 2.0f + dy * t;
+
+	float px = -dy;
+	float py = dx;
+	float hx = ax + dx * 30;
+	float hy = ay + dy * 30;
+	int cor = 0xFF4040;
+
+	SDLBase::drawLine(ax - dx*12 + px*12, ay - dy*12 + py*12, hx, hy, cor, 1);
+	SDLBase::drawLine(ax - dx*12 - px*12, ay - dy*12 - py*12, hx, hy, cor, 1);
+	SDLBase::drawLine(ax - dx*12 + px*12, ay - dy*12 + py*12,
+	                  ax - dx*12 - px*12, ay - dy*12 - py*12, cor, 1);
+}
+
 void StateGame::render()
 {
 	float cameraX = Camera::getInstance().getX();
@@ -1986,6 +2085,15 @@ void StateGame::render()
 			float scy = ship->y + ship->h/2 - cameraY;
 			SDLBase::drawCircle((int)scx, (int)scy, 64, 0x00E5C8);
 		}
+
+		// Guia de mira: linha curta no bico da nave (o tiro sai dali).
+		float angulo = (ship->getRotation() - 90.0f) * PI / 180.0f;
+		float dirX = -cosf(angulo);
+		float dirY = sinf(angulo);
+		float scx = ship->x + ship->w/2 - cameraX;
+		float scy = ship->y + ship->h/2 - cameraY;
+		SDLBase::drawLine(scx + dirX * 58.0f, scy + dirY * 58.0f,
+		                  scx + dirX * 130.0f, scy + dirY * 130.0f, 0x80D0FF, 1);
 	}
 
 	// Explosao (uma vez, centrada no ponto da colisao)
@@ -1993,8 +2101,9 @@ void StateGame::render()
 		boom->render(boomX - cameraX - boom->getClip()->w/2,
 		             boomY - cameraY - boom->getClip()->h/2);
 
-	// Seta de objetivo (Terra fora da tela)
+	// Seta de objetivo (Terra fora da tela) e de ameaca (UFO fora da tela).
 	renderObjective(cameraX, cameraY);
+	renderThreat(cameraX, cameraY);
 
 	// Textos flutuantes (pontos/dano/avisos) por cima do mundo, abaixo do HUD.
 	renderFloaters(cameraX, cameraY);
