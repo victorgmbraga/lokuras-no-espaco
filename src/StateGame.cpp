@@ -31,6 +31,9 @@ void StateGame::load(int stack)
 	ufoSprite = new Sprite("img/ufo.png");
 	ufoSprite->scale(3);
 	ufo = new FollowerObject(ufoSprite, 960, 435);
+	// O PNG 32x32 escalado 3x tem margens transparentes em cima/embaixo;
+	// usa uma hitbox central menor, sem deslocar o desenho do UFO.
+	ufo->setHitbox(80, 48);
 	ufo->setAutonomous(true);
 	ufo->setChaseTarget(ship);
 	ufo->setChaseSpeed(0.22);

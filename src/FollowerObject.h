@@ -29,6 +29,9 @@ class FollowerObject: public GameObject
 		bool autonomous;
 		GameObject* target;
 		float chaseSpeed;
+		// Deslocamento do sprite em relacao a hitbox (quando ela e menor
+		// que a imagem, como no UFO, que tem margens transparentes).
+		float renderOffsetX, renderOffsetY;
 	public:
 		int hp;     // vida do chefe (UFO)
 		int maxHp;
@@ -41,6 +44,7 @@ class FollowerObject: public GameObject
 		void setAutonomous(bool value);
 		void setChaseTarget(GameObject* target);
 		void setChaseSpeed(float speed);
+		void setHitbox(float width, float height);
 		bool isAutonomous();
 };
 

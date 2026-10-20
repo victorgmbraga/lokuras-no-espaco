@@ -22,6 +22,8 @@ FollowerObject::FollowerObject(Sprite* sprite, float x, float y):
 	chaseSpeed = 0;
 	hp = UFO_MAX_HP;
 	maxHp = UFO_MAX_HP;
+	renderOffsetX = 0;
+	renderOffsetY = 0;
 	xCoordinatesQueue = new std::queue<float>;
 	yCoordinatesQueue = new std::queue<float>;
 }
@@ -45,6 +47,28 @@ void FollowerObject::setChaseTarget(GameObject* target)
 void FollowerObject::setChaseSpeed(float speed)
 {
 	chaseSpeed = speed;
+}
+
+void FollowerObject::setHitbox(float width, float height)
+{
+	float spriteW = sprite->getRenderWidth();
+	float spriteH = sprite->getRenderHeight();
+
+	if(width <= 0 || height <= 0 || width > spriteW || height > spriteH)
+		return;
+
+	// Mantem o centro do objeto (e o sprite no mesmo lugar) e encolhe a
+	// caixa de colisao em volta dele.
+	float centerX = x + w/2;
+	float centerY = y + h/2;
+
+	w = width;
+	h = height;
+	x = centerX - w/2;
+	y = centerY - h/2;
+
+	renderOffsetX = (spriteW - w) / 2;
+	renderOffsetY = (spriteH - h) / 2;
 }
 
 bool FollowerObject::isAutonomous()
@@ -137,10 +161,10 @@ void FollowerObject::update(int dt)
 
 void FollowerObject::render(float cameraX, float cameraY)
 {
-	// box e imagem tem o mesmo tamanho (getRenderWidth no construtor):
-	// desenhar de (x, y) deixa a hitbox exatamente sobre o sprite.
+	// A hitbox pode ser menor que o sprite (UFO com margens transparentes);
+	// o offset mantem a imagem exatamente onde estava em relacao ao centro.
 	if(sprite)
-		sprite->render(x - cameraX, y - cameraY);
+		sprite->render(x - cameraX - renderOffsetX, y - cameraY - renderOffsetY);
 }
 
 void FollowerObject::renderQueueLines(float cameraX, float cameraY)
