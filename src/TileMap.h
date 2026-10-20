@@ -8,9 +8,11 @@
 #ifndef TILEMAP_H_
 #define TILEMAP_H_
 
-// Dimensoes do mundo: mapa de TILEMAP_SIZE^2 tiles de TILE_SIZE px
-// (16 x 16 tiles de 75 px = mundo de 1200 x 1200 px).
-#define TILEMAP_SIZE 16
+// Dimensoes do mundo: cada partida gera um mapa aleatorio entre
+// TILEMAP_MIN_SIZE e TILEMAP_MAX_SIZE tiles de lado (75 px cada). O limite
+// maximo de 16 x 16 tiles resulta em um mundo de 1200 x 1200 px.
+#define TILEMAP_MIN_SIZE 13
+#define TILEMAP_MAX_SIZE 16
 #define TILE_SIZE 75
 
 #include "TileSet.h"

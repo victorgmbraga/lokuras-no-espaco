@@ -74,7 +74,8 @@ jobs:
 
           Requisitos: runtime do SDL 1.2 (SDL, SDL_image, SDL_ttf, SDL_mixer
           e SDL_gfx). Em distros modernas, o sdl12-compat fornece a API 1.2.
-          Os assets (img/, sfx/, map/, ttf/) precisam ficar ao lado do jogo.
+          Os assets (img/, sfx/, ttf/) precisam ficar ao lado do jogo.
+          Cada partida gera um mapa aleatorio (limite de 16x16 tiles).
           EOF
           cat > dist/lokuras-linux/jogar.sh <<'EOF'
           #!/bin/sh
@@ -157,7 +158,8 @@ jobs:
             'Lokuras no Espaco - Windows x86',
             '',
             'Extraia esta pasta e execute game.exe (ou jogar.bat).',
-            'As DLLs e os assets (img\, sfx\, map\, ttf\) precisam ficar juntos.',
+            'As DLLs e os assets (img\, sfx\, ttf\) precisam ficar juntos.',
+            'Cada partida gera um mapa aleatorio (limite de 16x16 tiles).',
             '',
             'Controles: ENTER comeca; W/S acelera/freia; A/D gira; ESPACO/MOUSE1 atira;',
             'ESC pausa; M muda o som.'

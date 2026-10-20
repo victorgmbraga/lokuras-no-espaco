@@ -16,7 +16,9 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 - **Objetivo:** alcançar a Terra — ou destruir o UFO — sem perder toda a vida. A seta amarela na borda da tela aponta a direção da Terra quando ela está fora do campo de visão.
 - **UFO (chefe):** caça a nave **sozinho** e acelera com o tempo (a partir de ~2 minutos fica mais rápido que a nave pela velocidade base). Tem uma **barra de vida própria** no HUD e precisa de **20 tiros** para ser destruído; encostar tira **30 de vida** (30% do máximo), com **0,8 s de invulnerabilidade** depois — o escudo evita esse dano enquanto durar.
 - **Tiro:** `ESPAÇO` ou **Mouse 1** disparam na direção do bico da nave (cadência de ~4,5 tiros/s). Cada planeta vermelho cai com **2 tiros**.
-- **Planetas vermelhos** surgem sozinhos em posições aleatórias, e o ritmo aumenta com o tempo: o intervalo começa em ~4 s e cai para ~1,3 s por volta de 2 min de partida. Colidir custa **5 de vida**. A lua orbita a Terra e custa **10**. A nave começa com **100** de vida (barra + contador no HUD).
+- **Mapa aleatório:** a cada partida o mapa é gerado com **13 a 16 tiles de lado** (máximo de 16×16 = 1200×1200 px). Os painéis da estação são espalhados aleatoriamente em duas camadas com parallax.
+- **Início da partida:** o mapa já começa com **2 a 4 planetas vermelhos** espalhados. A **Terra** e o **UFO** surgem em posições aleatórias, sempre longe da nave e um do outro.
+- **Planetas vermelhos** também surgem sozinhos durante a partida, em posições aleatórias, e o ritmo aumenta com o tempo: o intervalo começa em ~4 s e cai para ~1,3 s por volta de 2 min de partida. Colidir custa **5 de vida**. A lua orbita a Terra e custa **10**. A nave começa com **100** de vida (barra + contador no HUD).
 - **Invulnerabilidade:** após levar dano a nave fica **0,8 s intocável** (piscando) — vale para planetas, lua e UFO; nesse intervalo ela atravessa planetas sem destruí-los.
 - **Gravidade da Terra:** perto do destino, a nave sente uma "corrente" que a puxa — chegue com cuidado.
 - **Power-ups** surgem a cada 15–25 s (no máximo 2 por vez):
@@ -42,7 +44,7 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 | `Alt+Enter` | Alternar entre janela e tela cheia (em qualquer estado) |
 | Gamepad | Analógico esquerdo acelera e rotaciona; fechar a janela sai |
 
-Os planetas vermelhos **não são criados pelo jogador**: eles surgem automaticamente, em posições aleatórias, com frequência crescente ao longo da partida.
+Os planetas vermelhos **não são criados pelo jogador**: a partida já começa com alguns espalhados pelo mapa e novos surgem automaticamente, em posições aleatórias, com frequência crescente ao longo da partida. A Terra e o UFO também são sorteados a cada partida, longe da nave e um do outro.
 
 A janela inicia em **1280×720** (16:9). O `Alt+Enter` alterna para tela cheia e volta para a janela sem reiniciar o jogo.
 
@@ -307,7 +309,7 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 ├── lib/                     # SDL 1.2: headers (include/), libs de importação (lib/) e licenças (LICENSES/)
 ├── bin/                     # DLLs de runtime do Windows + binários compilados (game.exe/game, ignorados)
 ├── img/                     # sprites (nave, planetas, UFO, power-ups), telas e Tileset.png
-├── map/tileMap.txt          # mapa em camadas
+├── map/tileMap.txt          # mapa de referência (o mapa da partida é gerado em código)
 ├── sfx/                     # músicas (ogg) e efeitos (boom/pickup/engine .wav)
 ├── ttf/                     # PirataOne e SpaceAge
 ├── build.bat                # compilação no Windows (MinGW + SDL 1.2 de lib/) -> bin/game.exe

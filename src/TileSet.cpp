@@ -37,6 +37,17 @@ TileSet::TileSet(int tileWidth, int tileHeight)
 	tileSet = NULL;
 }
 
+TileSet::~TileSet()
+{
+	// O TileSet e dono da imagem e dos tiles individuais que carregou.
+	delete(tileSet);
+	tileSet = NULL;
+
+	for(std::vector<Sprite*>::iterator it = vTiles.begin(); it != vTiles.end(); ++it)
+		delete(*it);
+	vTiles.clear();
+}
+
 void TileSet::addTile(string filePath)
 {
 	if(!usingSingleFile())
@@ -84,4 +95,9 @@ int TileSet::getTileWidth()
 int TileSet::getTileHeight()
 {
 	return tileHeight;
+}
+
+int TileSet::getTileCount()
+{
+	return columns * lines;
 }

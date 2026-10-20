@@ -7,11 +7,14 @@
 
 #include "PlanetRed.h"
 
-PlanetRed::PlanetRed(Sprite* sprite, float x, float y, int hp): Planet(sprite, x, y, hp)
+PlanetRed::PlanetRed(Sprite* sprite, float x, float y, int hp,
+                     float mundoW, float mundoH): Planet(sprite, x, y, hp)
 {
 	// Deriva lenta e aleatoria. srand() precisa ter sido semeado.
 	vx = ((rand() % 200) - 100) * 0.0002f;    // ate +-0.02 px/ms
 	vy = ((rand() % 200) - 100) * 0.0002f;
+	this->mundoW = mundoW;
+	this->mundoH = mundoH;
 }
 
 void PlanetRed::update(int dt)
@@ -19,7 +22,7 @@ void PlanetRed::update(int dt)
 	x += vx * dt;
 	y += vy * dt;
 
-	// Quica nas bordas do mundo (mapa de TILEMAP_SIZE x TILEMAP_SIZE tiles).
+	// Quica nas bordas do mundo gerado para esta partida.
 	if(x < 0)
 	{
 		x = 0;
@@ -30,14 +33,14 @@ void PlanetRed::update(int dt)
 		y = 0;
 		vy = -vy;
 	}
-	if(x + w > WORLD_W)
+	if(x + w > mundoW)
 	{
-		x = WORLD_W - w;
+		x = mundoW - w;
 		vx = -vx;
 	}
-	if(y + h > WORLD_H)
+	if(y + h > mundoH)
 	{
-		y = WORLD_H - h;
+		y = mundoH - h;
 		vy = -vy;
 	}
 }

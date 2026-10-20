@@ -8,19 +8,22 @@
 #ifndef PLANETRED_H_
 #define PLANETRED_H_
 
-// Mundo jogavel = area do tilemap (TILEMAP_SIZE^2 tiles).
-#define WORLD_W (TILEMAP_SIZE * TILE_SIZE)
-#define WORLD_H (TILEMAP_SIZE * TILE_SIZE)
+// Limites padrao usados quando nenhum tamanho de mundo e informado.
+// O StateGame passa as dimensoes reais do mapa aleatorio da partida.
+#define WORLD_W (TILEMAP_MAX_SIZE * TILE_SIZE)
+#define WORLD_H (TILEMAP_MAX_SIZE * TILE_SIZE)
 
-#include "TileMap.h" // TILEMAP_SIZE / TILE_SIZE
+#include "TileMap.h" // TILEMAP_MAX_SIZE / TILE_SIZE
 #include "Planet.h"
 
 class PlanetRed: public Planet
 {
 	private:
-		float vx, vy; // deriva lenta (px/ms)
+		float vx, vy;     // deriva lenta (px/ms)
+		float mundoW, mundoH; // limites do mapa atual (px)
 	public:
-		PlanetRed(Sprite* sprite, float x, float y, int hp = 1);
+		PlanetRed(Sprite* sprite, float x, float y, int hp = 1,
+		          float mundoW = WORLD_W, float mundoH = WORLD_H);
 		virtual void update(int dt);
 };
 

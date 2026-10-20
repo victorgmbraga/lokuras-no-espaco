@@ -11,29 +11,54 @@
 // Dano do UFO: 30% da vida maxima da nave (100).
 static const int UFO_COLLISION_DAMAGE = 30;
 
+// Utilitarios do gerador aleatorio do mapa/posicoes iniciais.
+static float random01()
+{
+	return (float)rand() / (float)RAND_MAX;
+}
+
+static float randomRange(float minValue, float maxValue)
+{
+	if(maxValue <= minValue)
+		return minValue;
+
+	return minValue + (maxValue - minValue) * random01();
+}
+
+static float distanceBetween(float ax, float ay, float bx, float by)
+{
+	float dx = ax - bx;
+	float dy = ay - by;
+	return sqrtf(dx*dx + dy*dy);
+}
+
 void StateGame::load(int stack)
 {
 	// Recorde persistido (arquivo lokuras.rec).
 	PlayStats::load();
 
+	// Background
+	bg = new Sprite("img/fundo.png");
+	bg->resizeCover(SCREEN_W, SCREEN_H);
+
+	// TileSet e mapa aleatorio. O tamanho maximo e TILEMAP_MAX_SIZE x
+	// TILEMAP_MAX_SIZE tiles; cada partida sorteia um mundo dentro do limite.
+	tileSet = new TileSet(TILE_SIZE, TILE_SIZE, "img/Tileset.png");
+	buildRandomMap();
+
+	// Nave (criada antes da Terra e do UFO, que precisam da posicao dela)
+	shipAnimation = new Animation("img/NaveSheet.png", 200, 4);
+	ship = new AccObject(shipAnimation, 0, 0, 94, 100, 100);
+
 	// Terra (escala assada na surface: hitbox == imagem renderizada)
 	earthSprite = new Sprite("img/PlanetaTerra.png");
 	earthSprite->scale(3);
-	earth = new Earth(earthSprite, 1000, 1600, 100);
-
-	// Lua (orbita a Terra e machuca a nave)
-	moonSprite = new Sprite("img/Lua.png");
-	moonSprite->scale(3);
-	moon = new Moon(moonSprite, 1, earth);
-
-	// Nave (sempre criada antes do UFO, que persegue ela)
-	shipAnimation = new Animation("img/NaveSheet.png", 200, 4);
-	ship = new AccObject(shipAnimation, 0, 0, 94, 100, 100);
+	earth = new Earth(earthSprite, 0, 0, 100);
 
 	// UFO perseguidor autonomo
 	ufoSprite = new Sprite("img/ufo.png");
 	ufoSprite->scale(3);
-	ufo = new FollowerObject(ufoSprite, 960, 435);
+	ufo = new FollowerObject(ufoSprite, 0, 0);
 	// O PNG 32x32 escalado 3x tem margens transparentes em cima/embaixo;
 	// usa uma hitbox central menor, sem deslocar o desenho do UFO.
 	ufo->setHitbox(80, 48);
@@ -41,25 +66,26 @@ void StateGame::load(int stack)
 	ufo->setChaseTarget(ship);
 	ufo->setChaseSpeed(0.22);
 
+	// Terra e UFO surgem longe da nave e um do outro.
+	placeEarthAndUfo();
+
+	// Lua (orbita a Terra ja posicionada e machuca a nave)
+	moonSprite = new Sprite("img/Lua.png");
+	moonSprite->scale(3);
+	moon = new Moon(moonSprite, 1, earth);
+
+	// Planetas Vermelhos: a partida comeca com alguns ja espalhados pelo
+	// mapa; depois eles surgem sozinhos com ritmo crescente.
+	redPlanetSprite = new Sprite("img/PlanetaVermelho.png");
+	spawnInitialPlanets();
+	redPlanetCooldown = 2500 + (rand() % 1500);
+
 	// Explosao (one-shot: toca uma vez e congela no ultimo quadro)
 	boom = new Animation("img/BoomSheet.png", 200, 8);
 	boom->setOneShot(true);
 	boomX = 0;
 	boomY = 0;
 	boomActive = false;
-
-	// Background
-	bg = new Sprite("img/fundo.png");
-	bg->resizeCover(SCREEN_W, SCREEN_H);
-
-	// TileSet e TileMap
-	tileSet = new TileSet(75, 75, "img/Tileset.png");
-	tileMap = new TileMap("map/tileMap.txt", tileSet);
-
-	// Planetas Vermelhos: surgem sozinhos. O primeiro nasce entre 2,5 e 4 s;
-	// depois o intervalo cai conforme o tempo de partida aumenta.
-	redPlanetSprite = new Sprite("img/PlanetaVermelho.png");
-	redPlanetCooldown = 2500 + (rand() % 1500);
 
 	// Power-ups (vida, escudo e turbo)
 	powerUpSprites[0] = new Sprite("img/PowerVida.png");
@@ -105,9 +131,284 @@ void StateGame::load(int stack)
 	returnStack = 0;
 }
 
+void StateGame::buildRandomMap()
+{
+	// Dimensoes sorteadas dentro do limite (13 a 16 tiles de lado).
+	int mapW = TILEMAP_MIN_SIZE + rand() % (TILEMAP_MAX_SIZE - TILEMAP_MIN_SIZE + 1);
+	int mapH = TILEMAP_MIN_SIZE + rand() % (TILEMAP_MAX_SIZE - TILEMAP_MIN_SIZE + 1);
+
+	worldWidth = mapW * TILE_SIZE;
+	worldHeight = mapH * TILE_SIZE;
+
+	tileMap = new TileMap(mapW, mapH, 2, tileSet);
+
+	int totalTiles = tileSet->getTileCount();
+	if(totalTiles <= 0)
+		return;
+
+	bool ocupado[TILEMAP_MAX_SIZE][TILEMAP_MAX_SIZE];
+	for(int x = 0; x < TILEMAP_MAX_SIZE; ++x)
+		for(int y = 0; y < TILEMAP_MAX_SIZE; ++y)
+			ocupado[x][y] = false;
+
+	// Ocupa de 50% a 70% das celulas: paineis espalhados, mas sem virar
+	// uma parede solida sem espaco para o fundo estrelado aparecer.
+	int alvo = (mapW * mapH) * (50 + rand() % 21) / 100;
+	int colocados = 0;
+
+	// Primeiro sorteia alguns blocos ("salas") de 2 a 4 tiles por lado.
+	// Eles dao variedade visual; o restante e preenchido com tiles soltos.
+	int salas = 8 + rand() % 7;
+	for(int s = 0; s < salas && colocados < alvo; ++s)
+	{
+		int salaW = 2 + rand() % 3;
+		int salaH = 2 + rand() % 3;
+		if(salaW > mapW)
+			salaW = mapW;
+		if(salaH > mapH)
+			salaH = mapH;
+
+		int salaX = rand() % (mapW - salaW + 1);
+		int salaY = rand() % (mapH - salaH + 1);
+		int camada = (rand() % 100 < 60) ? 0 : 1;
+
+		for(int y = salaY; y < salaY + salaH; ++y)
+			for(int x = salaX; x < salaX + salaW; ++x)
+			{
+				if(ocupado[x][y])
+					continue;
+
+				tileMap->at(x, y, camada) = 1 + rand() % totalTiles;
+				ocupado[x][y] = true;
+				++colocados;
+			}
+	}
+
+	// Completa as celulas restantes com tiles aleatorios isolados.
+	int tentativas = 0;
+	int limite = mapW * mapH * 10;
+	while(colocados < alvo && tentativas < limite)
+	{
+		int x = rand() % mapW;
+		int y = rand() % mapH;
+		if(!ocupado[x][y])
+		{
+			int camada = (rand() % 100 < 60) ? 0 : 1;
+			tileMap->at(x, y, camada) = 1 + rand() % totalTiles;
+			ocupado[x][y] = true;
+			++colocados;
+		}
+		++tentativas;
+	}
+}
+
+void StateGame::placeEarthAndUfo()
+{
+	if(!ship || !earth || !ufo)
+		return;
+
+	float shipCX = ship->x + ship->w/2;
+	float shipCY = ship->y + ship->h/2;
+
+	// Distancias proporcionais ao tamanho do mundo: os dois objetos ficam
+	// longe da nave e um do outro em qualquer um dos tamanhos sorteados.
+	float diagonal = sqrtf((float)(worldWidth * worldWidth + worldHeight * worldHeight));
+	float minPlayerDist = diagonal * 0.50f;
+	float minEarthUfoDist = diagonal * 0.42f;
+
+	// Terra: margem extra para a orbita da Lua (raio 200 + metade da Lua)
+	// caber dentro do mapa.
+	float earthHalfW = earth->w / 2;
+	float earthHalfH = earth->h / 2;
+	float earthMargin = earthHalfW + 250.0f;
+	if(earthMargin > worldWidth / 2)
+		earthMargin = worldWidth / 2;
+	if(earthMargin > worldHeight / 2)
+		earthMargin = worldHeight / 2;
+
+	// Grade de posicoes validas para a Terra (longe da nave), sorteada no
+	// final. A margem tambem mantem a orbita da Lua dentro do mapa.
+	struct Ponto { float x, y; };
+	std::vector<Ponto> candidatosTerra;
+
+	float earthX = worldWidth / 2.0f;
+	float earthY = worldHeight / 2.0f;
+	float bestDist = -1.0f;
+	const float passo = 20.0f;
+	for(float cx = earthMargin; cx <= worldWidth - earthMargin; cx += passo)
+		for(float cy = earthMargin; cy <= worldHeight - earthMargin; cy += passo)
+		{
+			float d = distanceBetween(cx, cy, shipCX, shipCY);
+
+			if(d > bestDist)
+			{
+				bestDist = d;
+				earthX = cx;
+				earthY = cy;
+			}
+
+			if(d >= minPlayerDist)
+			{
+				Ponto p;
+				p.x = cx;
+				p.y = cy;
+				candidatosTerra.push_back(p);
+			}
+		}
+
+	if(!candidatosTerra.empty())
+	{
+		int escolhido = rand() % (int)candidatosTerra.size();
+		earthX = candidatosTerra[escolhido].x;
+		earthY = candidatosTerra[escolhido].y;
+	}
+
+	earth->x = earthX - earthHalfW;
+	earth->y = earthY - earthHalfH;
+
+	float earthCX = earth->x + earthHalfW;
+	float earthCY = earth->y + earthHalfH;
+
+	// UFO: tambem longe da nave e, alem disso, longe da Terra.
+	float ufoHalf = ufoSprite->getRenderWidth() / 2.0f;
+	float ufoMargin = ufoHalf + 4.0f;
+	if(ufoMargin > worldWidth / 2)
+		ufoMargin = worldWidth / 2;
+	if(ufoMargin > worldHeight / 2)
+		ufoMargin = worldHeight / 2;
+
+	// O UFO tem duas restricoes (nave e Terra). Em vez de tentar sorteios
+	// independentes, varre uma grade de posicoes validas e escolhe uma ao
+	// acaso: garante as distancias minimas sem perder a variedade.
+	std::vector<Ponto> candidatos;
+
+	float ufoCX = worldWidth / 2.0f;
+	float ufoCY = worldHeight / 2.0f;
+	bestDist = -1.0f;
+
+	for(float cx = ufoMargin; cx <= worldWidth - ufoMargin; cx += passo)
+		for(float cy = ufoMargin; cy <= worldHeight - ufoMargin; cy += passo)
+		{
+			float dPlayer = distanceBetween(cx, cy, shipCX, shipCY);
+			float dEarth = distanceBetween(cx, cy, earthCX, earthCY);
+			float score = dPlayer < dEarth ? dPlayer : dEarth;
+
+			if(score > bestDist)
+			{
+				bestDist = score;
+				ufoCX = cx;
+				ufoCY = cy;
+			}
+
+			if(dPlayer >= minPlayerDist && dEarth >= minEarthUfoDist)
+			{
+				Ponto p;
+				p.x = cx;
+				p.y = cy;
+				candidatos.push_back(p);
+			}
+		}
+
+	if(!candidatos.empty())
+	{
+		int escolhido = rand() % (int)candidatos.size();
+		ufoCX = candidatos[escolhido].x;
+		ufoCY = candidatos[escolhido].y;
+	}
+
+	// FollowerObject usa o centro da hitbox para se mover; manter o centro
+	// no ponto sorteado preserva o sprite 96x96 centralizado.
+	ufo->x = ufoCX - ufo->w/2;
+	ufo->y = ufoCY - ufo->h/2;
+}
+
+void StateGame::spawnInitialPlanets()
+{
+	if(!redPlanetSprite || !ship || !earth || !ufo)
+		return;
+
+	float planetW = redPlanetSprite->getRenderWidth();
+	float planetH = redPlanetSprite->getRenderHeight();
+	float shipCX = ship->x + ship->w/2;
+	float shipCY = ship->y + ship->h/2;
+	float earthCX = earth->x + earth->w/2;
+	float earthCY = earth->y + earth->h/2;
+	float ufoCX = ufo->x + ufo->w/2;
+	float ufoCY = ufo->y + ufo->h/2;
+
+	// Pequena quantidade inicial: 2 a 4 planetas ja posicionados no mapa.
+	int quantidade = 2 + rand() % 3;
+
+	for(int i = 0; i < quantidade; ++i)
+	{
+		// Tambem usa uma grade de posicoes validas: garante que os planetas
+		// iniciais nao nascam em cima da nave, da Terra, do UFO ou uns dos
+		// outros, e sorteia entre as opcoes.
+		struct Ponto { float x, y; };
+		std::vector<Ponto> candidatos;
+
+		float bestX = 0.0f;
+		float bestY = 0.0f;
+		float bestScore = -1.0f;
+		const float passo = 20.0f;
+
+		for(float x = 0; x <= worldWidth - planetW; x += passo)
+			for(float y = 0; y <= worldHeight - planetH; y += passo)
+			{
+				float cx = x + planetW / 2;
+				float cy = y + planetH / 2;
+
+				float dPlayer = distanceBetween(cx, cy, shipCX, shipCY);
+				float dEarth = distanceBetween(cx, cy, earthCX, earthCY);
+				float dUfo = distanceBetween(cx, cy, ufoCX, ufoCY);
+				float dOther = 1e9f;
+
+				for(std::vector<Planet*>::iterator it = planetArray.begin(); it != planetArray.end(); ++it)
+				{
+					float d = distanceBetween(cx, cy, (*it)->x + (*it)->w/2, (*it)->y + (*it)->h/2);
+					if(d < dOther)
+						dOther = d;
+				}
+
+				float score = dPlayer;
+				if(dEarth < score) score = dEarth;
+				if(dUfo < score) score = dUfo;
+				if(dOther < score) score = dOther;
+
+				if(score > bestScore)
+				{
+					bestScore = score;
+					bestX = x;
+					bestY = y;
+				}
+
+				if(dPlayer >= 280.0f && dEarth >= 220.0f &&
+				   dUfo >= 170.0f && dOther >= 120.0f)
+				{
+					Ponto p;
+					p.x = x;
+					p.y = y;
+					candidatos.push_back(p);
+				}
+			}
+
+		if(!candidatos.empty())
+		{
+			int escolhido = rand() % (int)candidatos.size();
+			bestX = candidatos[escolhido].x;
+			bestY = candidatos[escolhido].y;
+		}
+
+		planetArray.push_back(new PlanetRed(redPlanetSprite, bestX, bestY, 2,
+		                                    (float)worldWidth, (float)worldHeight));
+	}
+}
+
 int StateGame::unload()
 {
 	delete(bg);
+	delete(tileMap);
+	delete(tileSet);
 	delete(redPlanetSprite);
 	delete(earth);
 	delete(earthSprite);
@@ -357,13 +658,38 @@ void StateGame::addPlanet()
 	float sx = ship->x + ship->w/2;
 	float sy = ship->y + ship->h/2;
 
+	int planetW = redPlanetSprite->getRenderWidth();
+	int planetH = redPlanetSprite->getRenderHeight();
+
+	// Intersecao entre a tela atual e o mapa: o planeta nasce visivel e
+	// nunca fora dos limites do mundo aleatorio.
+	int areaMinX = (int)Camera::getInstance().getX();
+	int areaMaxX = areaMinX + SCREEN_W - planetW;
+	int areaMinY = (int)Camera::getInstance().getY();
+	int areaMaxY = areaMinY + SCREEN_H - planetH;
+	if(areaMinX < 0)
+		areaMinX = 0;
+	if(areaMinY < 0)
+		areaMinY = 0;
+	if(areaMaxX > worldWidth - planetW)
+		areaMaxX = worldWidth - planetW;
+	if(areaMaxY > worldHeight - planetH)
+		areaMaxY = worldHeight - planetH;
+	if(areaMaxX < areaMinX || areaMaxY < areaMinY)
+	{
+		areaMinX = 0;
+		areaMaxX = worldWidth - planetW;
+		areaMinY = 0;
+		areaMaxY = worldHeight - planetH;
+	}
+
 	// Posicao aleatoria na tela, tentando nascer longe da nave.
-	int planetX = Camera::getInstance().getX() + (rand() % SCREEN_W);
-	int planetY = Camera::getInstance().getY() + (rand() % SCREEN_H);
+	int planetX = areaMinX + rand() % (areaMaxX - areaMinX + 1);
+	int planetY = areaMinY + rand() % (areaMaxY - areaMinY + 1);
 	for(int tentativa = 0; tentativa < 20; ++tentativa)
 	{
-		planetX = Camera::getInstance().getX() + (rand() % SCREEN_W);
-		planetY = Camera::getInstance().getY() + (rand() % SCREEN_H);
+		planetX = areaMinX + rand() % (areaMaxX - areaMinX + 1);
+		planetY = areaMinY + rand() % (areaMaxY - areaMinY + 1);
 
 		float dx = planetX - sx;
 		float dy = planetY - sy;
@@ -372,7 +698,8 @@ void StateGame::addPlanet()
 	}
 
 	// 2 tiros: cada projetil tira 1 de vida.
-	PlanetRed *planetRed = new PlanetRed(redPlanetSprite, planetX, planetY, 2);
+	PlanetRed *planetRed = new PlanetRed(redPlanetSprite, planetX, planetY, 2,
+	                                     (float)worldWidth, (float)worldHeight);
 	planetArray.push_back(planetRed);
 }
 
@@ -402,12 +729,36 @@ void StateGame::spawnPowerUp()
 	float sy = ship->y + ship->h/2;
 
 	int kind = rand() % 3;
-	int px = Camera::getInstance().getX() + (rand() % SCREEN_W);
-	int py = Camera::getInstance().getY() + (rand() % SCREEN_H);
+	int powerW = powerUpSprites[kind]->getRenderWidth();
+	int powerH = powerUpSprites[kind]->getRenderHeight();
+
+	// Mesma regra dos planetas: nasce na tela e dentro do mapa.
+	int areaMinX = (int)Camera::getInstance().getX();
+	int areaMaxX = areaMinX + SCREEN_W - powerW;
+	int areaMinY = (int)Camera::getInstance().getY();
+	int areaMaxY = areaMinY + SCREEN_H - powerH;
+	if(areaMinX < 0)
+		areaMinX = 0;
+	if(areaMinY < 0)
+		areaMinY = 0;
+	if(areaMaxX > worldWidth - powerW)
+		areaMaxX = worldWidth - powerW;
+	if(areaMaxY > worldHeight - powerH)
+		areaMaxY = worldHeight - powerH;
+	if(areaMaxX < areaMinX || areaMaxY < areaMinY)
+	{
+		areaMinX = 0;
+		areaMaxX = worldWidth - powerW;
+		areaMinY = 0;
+		areaMaxY = worldHeight - powerH;
+	}
+
+	int px = areaMinX + rand() % (areaMaxX - areaMinX + 1);
+	int py = areaMinY + rand() % (areaMaxY - areaMinY + 1);
 	for(int tentativa = 0; tentativa < 20; ++tentativa)
 	{
-		px = Camera::getInstance().getX() + (rand() % SCREEN_W);
-		py = Camera::getInstance().getY() + (rand() % SCREEN_H);
+		px = areaMinX + rand() % (areaMaxX - areaMinX + 1);
+		py = areaMinY + rand() % (areaMaxY - areaMinY + 1);
 
 		float dx = px - sx;
 		float dy = py - sy;

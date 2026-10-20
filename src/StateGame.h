@@ -39,9 +39,10 @@ class StateGame: public State
 		// Background
 		Sprite *bg;
 
-		// TileSet e TileMap
+		// TileSet e TileMap (mapa aleatorio gerado a cada partida)
 		TileSet *tileSet;
 		TileMap *tileMap;
+		int worldWidth, worldHeight; // limites do mapa atual (px)
 
 		// Planetas Vermelhos (surgem sozinhos; o ritmo aumenta com o tempo)
 		Sprite *redPlanetSprite;
@@ -106,6 +107,9 @@ class StateGame: public State
 		int returnState;
 		int returnStack;
 
+		void buildRandomMap();
+		void placeEarthAndUfo();
+		void spawnInitialPlanets();
 		void checkCollision(int dt);
 		void shoot();
 		void updateBullets(int dt);
