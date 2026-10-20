@@ -155,3 +155,13 @@ bool AccObject::isAccelerating()
 {
 	return !atrito;
 }
+
+float AccObject::getSpeed()
+{
+	return speed;
+}
+
+void AccObject::setSpeed(float v)
+{
+	speed = v;
+}

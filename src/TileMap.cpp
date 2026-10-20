@@ -114,6 +114,25 @@ int& TileMap::at(int x, int y, int z)
 	return tileMatrix[x][y][z];
 }
 
+bool TileMap::solidAt(float x, float y) const
+{
+	// Sem segunda camada, nao ha o que colidir (a camada 0 e fundo com
+	// parallax e nao representa obstaculos no mundo).
+	if(mapLayers < 2)
+		return false;
+
+	if(x < 0.0f || y < 0.0f)
+		return false;
+
+	int tx = (int)(x / TILE_SIZE);
+	int ty = (int)(y / TILE_SIZE);
+
+	if(tx >= mapWidth || ty >= mapHeight)
+		return false;
+
+	return tileMatrix[tx][ty][1] != 0;
+}
+
 void TileMap::render(float cameraX, float cameraY)
 {
 	// Checa se o tileSet não é nulo.

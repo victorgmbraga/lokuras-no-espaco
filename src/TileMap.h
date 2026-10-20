@@ -34,6 +34,10 @@ class TileMap
 		void load(std::string mapPath);
 		void setTileSet(TileSet* tileSet);
 		int& at(int x, int y, int z = 0);
+		// Colisao com o mapa: a camada 1 anda 1:1 com a camera (mesma "escala"
+		// dos objetos do mundo), entao os tiles dela sao solidos. Fora do mapa
+		// (ou com uma camada so) nao ha obstaculo.
+		bool solidAt(float x, float y) const;
 		void render(float cameraX = 0.0, float cameraY = 0.0);
 		int width();
 		int height();

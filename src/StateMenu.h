@@ -15,17 +15,24 @@
 #include "Audio.h"
 #include "PlayStats.h"
 
+#define MENU_ACH_LINHAS 6
+
 class StateMenu: public State
 {
 	private:
 		Sprite *bg;
 		Text *pressEnter;
 		Text *title;
-		Text *recordText;  // recorde persistido (NULL se ainda nao existe)
+		Text *recordText;  // recorde da dificuldade escolhida (NULL se ainda nao existe)
+		Text *difficultyText;
+		Text *hintText;    // semente/desafio do dia
+		Text *achTexts[MENU_ACH_LINHAS]; // lista de conquistas (lado esquerdo)
 		Audio *music;
 		int titleX, titleY;
 		float menuTime;    // para o "swing" do titulo
 		int returnState;
+		int shownDifficulty; // última dificuldade refletida nos textos
+		void refreshTexts();
 	public:
 		StateMenu() {}
 		virtual ~StateMenu() {}

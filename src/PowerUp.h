@@ -17,7 +17,7 @@
 class PowerUp: public Planet
 {
 	public:
-		enum Kind { VIDA = 0, ESCUDO = 1, TURBO = 2 };
+		enum Kind { VIDA = 0, ESCUDO = 1, TURBO = 2, FUEL = 3 };
 
 		int kind;
 		float baseY;

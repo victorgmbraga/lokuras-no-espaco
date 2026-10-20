@@ -24,6 +24,7 @@ class StateWinLose: public State
 		Sprite *bg;
 		Text *txt;
 		Text *statsText;   // tempo, planetas e pontos da partida
+	Text *waveText;    // UFOs destruidos e melhor sequencia de combo
 		Text *recordText;  // "NOVO RECORDE!" quando for o caso (NULL senao)
 		Text *pressEnter;
 		Audio *music;

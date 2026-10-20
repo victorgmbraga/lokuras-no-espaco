@@ -23,18 +23,27 @@ class HUD
 		Text *pauseText;
 		Text *pauseHint;
 		Text *bossLabel;
+		Text *scoreText;    // pontos da partida (abaixo do cronometro)
+		Text *comboText;    // "COMBO x1.5" enquanto a sequencia durar
+		Text *fuelCounter;  // percentual de combustivel
 		int life;
-		int bossLife, bossMax;
+		int fuel;           // 0..100
+		int bossLife, bossMax, bossWave;
+		int pulseMs;        // tempo da partida (para as piscadas de alerta)
+		float comboMult;
+		int comboStreak;
 		void displayLife();
+		void displayFuel();
 		void renderBossBar();
 	public:
 		HUD();
 		virtual ~HUD();
-		void update(int timeMs, int destroyed);
+		void update(int timeMs, int destroyed, int score, float comboMult, int comboStreak);
 		void render();
 		void renderPause();
 		void setLife(int life);
-		void setBossLife(int life, int max);
+		void setFuel(int fuel);
+		void setBossLife(int life, int max, int wave = 1);
 };
 
 #endif /* HUD_H_ */

@@ -11,22 +11,34 @@ Este repositório reconstrói todo o **fluxo de desenvolvimento da disciplina** 
 
 ## O jogo
 
-Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas. Sua única esperança é voltar para a **Terra** — mas o caminho é cheio de planetas vermelhos, uma lua indesejável e um UFO teimosamente em seu encalço.
+Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas. Sua única esperança é voltar para a **Terra** — mas o caminho é cheio de planetas, torretas automáticas, uma lua indesejável e um UFO teimosamente em seu encalço.
 
-- **Objetivo:** alcançar a Terra — ou destruir o UFO — sem perder toda a vida. A seta amarela na borda da tela aponta a direção da Terra quando ela está fora do campo de visão.
-- **UFO (chefe):** caça a nave **sozinho** e acelera com o tempo (a partir de ~2 minutos fica mais rápido que a nave pela velocidade base). Tem uma **barra de vida própria** no HUD e precisa de **20 tiros** para ser destruído; encostar tira **30 de vida** (30% do máximo), com **0,8 s de invulnerabilidade** depois — o escudo evita esse dano enquanto durar.
-- **Tiro:** `ESPAÇO` ou **Mouse 1** disparam na direção do bico da nave (cadência de ~4,5 tiros/s). Cada planeta vermelho cai com **2 tiros**.
-- **Mapa aleatório:** a cada partida o mapa é gerado com **13 a 16 tiles de lado** (máximo de 16×16 = 1200×1200 px). Os painéis da estação são espalhados aleatoriamente em duas camadas com parallax.
-- **Início da partida:** o mapa já começa com **2 a 4 planetas vermelhos** espalhados. A **Terra** e o **UFO** surgem em posições aleatórias, sempre longe da nave e um do outro.
-- **Planetas vermelhos** também surgem sozinhos durante a partida, em posições aleatórias, e o ritmo aumenta com o tempo: o intervalo começa em ~4 s e cai para ~1,3 s por volta de 2 min de partida. Colidir custa **5 de vida**. A lua orbita a Terra e custa **10**. A nave começa com **100** de vida (barra + contador no HUD).
-- **Invulnerabilidade:** após levar dano a nave fica **0,8 s intocável** (piscando) — vale para planetas, lua e UFO; nesse intervalo ela atravessa planetas sem destruí-los.
-- **Gravidade da Terra:** perto do destino, a nave sente uma "corrente" que a puxa — chegue com cuidado.
-- **Power-ups** surgem a cada 15–25 s (no máximo 2 por vez):
+- **Objetivo:** alcançar a Terra para vencer. A seta amarela na borda da tela aponta a direção dela quando está fora do campo de visão. Chegar à Terra **sem levar nenhum dano** rende a conquista "INTACTO". A nave começa com **100** de vida (barra + contador no HUD).
+- **UFO (chefe em ondas):** caça a nave **sozinho** e acelera com o tempo. Tem **barra de vida própria** no HUD e muda de fase conforme apanha:
+  - **Fase 1** (mais de 2/3 da vida): apenas persegue;
+  - **Fase 2** (entre 1/3 e 2/3): passa a **atirar** projéteis na direção da nave;
+  - **Fase 3** (menos de 1/3): ainda mais rápido, atira em **leque de 3** e invoca planetas extras.
+
+  Destruí-lo **não encerra a partida**: após ~6,5 s uma **nova onda** chega mais forte (mais vida e +3% de velocidade por onda, com aviso na tela). Encostar custa **30 de vida** (com i-frames de 0,8 s); o escudo bloqueia.
+- **Tiro:** `ESPAÇO` ou **Mouse 1** disparam na direção do bico da nave (cadência de ~4,5 tiros/s). Cada planeta vermelho cai com **2 tiros**; os tiros são **bloqueados pelos painéis sólidos** da estação — use-os como cobertura.
+- **Mapa aleatório:** a cada partida o mapa é gerado com **13 a 16 tiles de lado** (máximo de 16×16 = 1200×1200 px), em duas camadas com parallax. Os painéis da **camada da frente são sólidos**: a nave **quica** neles, os planetas ricocheteiam e os tiros (seus e inimigos) param ali.
+- **Início da partida:** o mapa já começa com **2 a 4 planetas** espalhados. A **Terra** e o **UFO** surgem em posições aleatórias, sempre longe da nave e um do outro.
+- **Planetas:** os **vermelhos** (2 tiros, dano 5, 10 pts) surgem sozinhos em ritmo crescente (~4 s → ~1,3 s). Os **roxos** (novos: 4 tiros, deriva lenta, dano 8, 25 pts e **drop quase garantido**) aparecem em ~25% dos spawns. Colidir custa vida mas destrói o planeta. A lua orbita a Terra e custa **10**.
+- **Torretas:** torres fixas ancoradas nos painéis do mapa (2 a 6, conforme a dificuldade). Giram na direção da nave e **só atiram com linha de visada livre** (painéis bloqueiam); caem com 2 tiros (30 pts, 40% de drop).
+- **Pontuação e combo:** abates valem pontos (planeta 10/25, torreta 30, chefe 300×onda); abates emendados em até 3 s criam um **combo que multiplica em até ×3** (exibido no HUD). Sobreviver rende +10 a cada 10 s; vencer soma +500.
+- **Combustível:** a barra laranja abaixo da vida **drena com o tempo**; quando zera, a nave perde **3 de vida por segundo** ("SEM COMBUSTIVEL!"). Cristais **amarelos** reabastecem +40%.
+- **Power-ups** surgem a cada 15–25 s e também **caem de abates** (chance por tipo):
   - **Verde (vida):** recupera 20 de vida (até o limite de 100);
-  - **Azul (escudo):** 6 s de invulnerabilidade a planetas, lua e UFO (anel desenhado em volta da nave);
-  - **Laranja (turbo):** velocidade e aceleração **×1,6** por 5 s.
-- **Tremor de tela** ao levar dano; explosão (BoomSheet) centralizada no ponto do impacto; motor da nave com **hum** que acompanha a aceleração.
-- **Recorde:** a pontuação (`destruídos × 50 + segundos sobrevividos`, + 500 bônus ao vencer) é salva em `lokuras.rec` junto do jogo e aparece no menu ("Recorde: N pontos") e na tela final ("NOVO RECORDE!" quando o caso).
+  - **Azul (escudo):** 6 s de invulnerabilidade a planetas, lua, UFO e tiros (anel em volta da nave);
+  - **Laranja (turbo):** velocidade e aceleração **×1,6** por 5 s;
+  - **Amarelo (combustível):** reabastece +40% do tanque.
+- **Invulnerabilidade:** após levar dano a nave fica **0,8 s intocável** (piscando) — vale para planetas, lua, UFO e tiros inimigos; nesse intervalo ela atravessa planetas sem destruí-los.
+- **Feedback de combate:** textos flutuantes de **pontos (+25)** e **dano (-30)** nos impactos, avisos grandes na tela ("UFO DESTRUÍDO!", "ONDA 2: o UFO voltou mais forte!", conquistas), barra de vida **piscando** quando baixa, explosão em **cadeia** ao matar o chefe, tremor de tela e motor da nave com **hum** proporcional à aceleração.
+- **Dificuldade (teclas 1/2/3 no menu):** FÁCIL / NORMAL / DIFÍCIL ajustam o ritmo dos spawns, a vida e a velocidade do chefe, a cadência dos tiros inimigos, o número de torretas, o dano recebido e o dreno do combustível.
+- **Conquistas (salvas):** ATERISSAGEM, CACADOR DE UFO, EXTERMINADOR (50 planetas somando todas as partidas), INTACTO, SOBREVIVENTE (5 min numa partida) e EM CHAMA (combo x3) — a lista aparece no menu e cada nova conquista é anunciada na hora.
+- **Semente fixa / desafio do dia:** `?seed=N` no navegador faz **todos jogarem o mesmo mapa e posições**; `?daily=1` usa o dia atual como semente. No desktop: `game.exe --seed N` ou `--daily`.
+- **Gravidade da Terra:** perto do destino, a nave sente uma "corrente" que a puxa — chegue com cuidado.
+- **Recorde por dificuldade:** a pontuação da partida (combo + sobrevivência + bônus de vitória) é salva em `lokuras.rec` no navegador/PC, com contadores acumulados e conquistas; o menu mostra o recorde da dificuldade selecionada.
 - **Câmera** centralizada na nave; após o fim da partida ela fica livre (setas).
 
 ### Controles
@@ -34,6 +46,7 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 | Entrada | Ação |
 | --- | --- |
 | `ENTER` | Iniciar o jogo (menu) / jogar de novo (vitória ou derrota) |
+| `1` / `2` / `3` (no menu) | Dificuldade: fácil / normal / difícil (o recorde é salvo por dificuldade) |
 | `W` / `S` | Acelerar / frear a nave (movimento acelerado com atrito) |
 | `A` / `D` | Rotacionar a nave |
 | `ESPAÇO` ou `Mouse 1` | Atirar na direção do bico da nave |
@@ -44,13 +57,13 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
 | `Alt+Enter` | Alternar entre janela e tela cheia (em qualquer estado) |
 | Gamepad | Analógico esquerdo acelera e rotaciona; fechar a janela sai |
 
-Os planetas vermelhos **não são criados pelo jogador**: a partida já começa com alguns espalhados pelo mapa e novos surgem automaticamente, em posições aleatórias, com frequência crescente ao longo da partida. A Terra e o UFO também são sorteados a cada partida, longe da nave e um do outro.
+Os planetas **não são criados pelo jogador**: a partida já começa com alguns espalhados pelo mapa e novos surgem automaticamente, em posições aleatórias, com frequência crescente. A Terra, o UFO e as torretas também são sorteados a cada partida — na web, `?seed=N` ou `?daily=1` fixam o sorteio para todos os jogadores.
 
 A janela inicia em **1280×720** (16:9). O `Alt+Enter` alterna para tela cheia e volta para a janela sem reiniciar o jogo.
 
 ### Estados
 
-`StateMenu` (título, recorde e música) → `StateGame` (jogabilidade, pausável com ESC) → `StateWinLose` (tela de vitória ou derrota com estatísticas da partida).
+`StateMenu` (título, escolha de dificuldade com 1/2/3, recorde por dificuldade e lista de conquistas) → `StateGame` (jogabilidade, pausável com ESC) → `StateWinLose` (tela de vitória ou derrota com estatísticas da partida).
 
 Cada estado tem música tema; o estado de jogo tem `stateGame.ogg` e o SFX `boom.wav`. As trocas de estado usam **fade** (escurece, troca, clareia), e o loop roda com **dt real** limitado a 50 ms por frame, com alvo de ~60 FPS (sem busy-loop).
 
@@ -83,7 +96,7 @@ g++ -std=gnu++11 -O2 -w -Dmain=SDL_main -I"lib\include" -I"lib\include\SDL" -I"s
   src\FollowerObject.cpp src\GameObject.cpp src\HUD.cpp src\InputManager.cpp src\main.cpp ^
   src\Moon.cpp src\Planet.cpp src\PlanetRed.cpp src\Point.cpp src\SDLBase.cpp ^
   src\Sprite.cpp src\StateGame.cpp src\StateManager.cpp src\StateMenu.cpp ^
-  src\StateWinLose.cpp src\Text.cpp src\TileMap.cpp src\TileSet.cpp src\Timer.cpp ^
+  src\StateWinLose.cpp src\Text.cpp src\TileMap.cpp src\TileSet.cpp src\Timer.cpp src\Turret.cpp ^
   -o bin\game.exe ^
   -mwindows -L"lib\lib" -lmingw32 -lSDLmain -lSDL_gfx -lSDL_image -lSDL_ttf -lSDL_mixer -lSDL ^
   -static-libgcc -static-libstdc++
@@ -277,11 +290,12 @@ Sprite ──► Animation
 
 GameObject (box AABB)
  ├── Planet (abstrata)
- │    ├── PlanetRed   (planetas vermelhos destrutíveis)
+ │    ├── PlanetRed   (planetas vermelhos e roxos destrutíveis, quicam nos tiles)
  │    ├── Earth        (objetivo da nave)
  │    ├── Moon         (orbita a Terra)
- │    └── PowerUp      (cristais de vida/escudo/turbo)
- ├── FollowerObject    (UFO: perseguidor autônomo na partida)
+ │    └── PowerUp      (cristais de vida/escudo/turbo/combustível)
+ ├── FollowerObject    (UFO: chefe perseguidor autônomo, com fases e ondas)
+ ├── Turret            (torretas fixas nos painéis, com linha de visada)
  └── AccObject         (nave Hyperion: aceleração, rotação, atrito, animação)
 
 State
@@ -303,12 +317,13 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 │   ├── SDLBase.* Sprite.* Animation.* Text.* Audio.* Timer.*
 │   ├── InputManager.* Camera.* State.* StateManager.* StateMenu.* StateGame.* StateWinLose.*
 │   ├── TileSet.* TileMap.* Rect.h Point.*
-│   ├── GameObject.* Planet.* PlanetRed.* Earth.* Moon.* FollowerObject.* AccObject.* HUD.*
+│   ├── GameObject.* Planet.* PlanetRed.* Earth.* Moon.* FollowerObject.* Turret.* AccObject.* HUD.*
 │   ├── PowerUp.h            # cristais de power-up (header-only)
-│   └── PlayStats.h          # recorde/timer de partidas (header-only)
+│   ├── GameSettings.h       # dificuldade e semente da sessão (header-only)
+│   └── PlayStats.h          # recordes por dificuldade, contadores e conquistas (header-only)
 ├── lib/                     # SDL 1.2: headers (include/), libs de importação (lib/) e licenças (LICENSES/)
 ├── bin/                     # DLLs de runtime do Windows + binários compilados (game.exe/game, ignorados)
-├── img/                     # sprites (nave, planetas, UFO, power-ups), telas e Tileset.png
+├── img/                     # sprites (nave, planetas vermelho/roxo, UFO, torreta, power-ups), telas e Tileset.png
 ├── map/tileMap.txt          # mapa de referência (o mapa da partida é gerado em código)
 ├── sfx/                     # músicas (ogg) e efeitos (boom/pickup/engine .wav)
 ├── ttf/                     # PirataOne e SpaceAge

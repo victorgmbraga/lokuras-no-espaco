@@ -14,6 +14,7 @@ void StateWinLose::load(int stack)
 	bg = NULL;
 	txt = NULL;
 	statsText = NULL;
+	waveText = NULL;
 	recordText = NULL;
 	pressEnter = NULL;
 	music = NULL;
@@ -53,6 +54,15 @@ void StateWinLose::load(int stack)
 	textPosY = SCREEN_H/2 - statsText->getHeight()/2;
 	statsText->setPos(textPosX, textPosY);
 
+	// Onda do chefe alcancada e melhor sequencia de combo da partida.
+	waveText = new Text("ttf/PirataOne-Regular.ttf",
+		"UFOs destruidos: " + std::to_string(PlayStats::lastWave() - 1) +
+		"   |   Melhor sequencia de combo: " + std::to_string(PlayStats::lastCombo()) + " abates",
+		26, 0, {180, 200, 230}, 0, 0);
+	textPosX = SCREEN_W/2 - waveText->getWidth()/2;
+	textPosY = SCREEN_H/2 - statsText->getHeight()/2 + statsText->getHeight() + 8;
+	waveText->setPos(textPosX, textPosY);
+
 	recordText = NULL;
 	if(PlayStats::beatRecord())
 	{
@@ -60,7 +70,7 @@ void StateWinLose::load(int stack)
 			"NOVO RECORDE: " + std::to_string(PlayStats::lastScore()) + " pontos",
 			34, 0, {130, 255, 160}, 0, 0);
 		textPosX = SCREEN_W/2 - recordText->getWidth()/2;
-		textPosY = SCREEN_H/2 + 40;
+		textPosY = SCREEN_H/2 + 90;
 		recordText->setPos(textPosX, textPosY);
 	}
 
@@ -75,6 +85,7 @@ int StateWinLose::unload()
 	delete(bg);
 	delete(txt);
 	delete(statsText);
+	delete(waveText);
 	delete(recordText);
 	delete(music);
 	delete(pressEnter);
@@ -106,6 +117,7 @@ void StateWinLose::render()
 	bg->render(0,0);
 	txt->render();
 	statsText->render();
+	waveText->render();
 
 	if(recordText)
 		recordText->render();

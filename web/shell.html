@@ -91,6 +91,7 @@
       <div id="progresso"><div id="barra"></div></div>
       <ul class="controles">
         <li><b>ENTER</b> começar · <b>W</b>/<b>S</b> acelerar/frear · <b>A</b>/<b>D</b> girar · <b>ESPAÇO</b>/<b>Mouse 1</b> atirar</li>
+        <li><b>1</b>/<b>2</b>/<b>3</b> no menu escolhem a dificuldade · painéis da estação bloqueiam tiros e servem de esconderijo</li>
         <li><b>ESC</b> pausa · <b>Q</b> (na pausa) volta ao menu</li>
         <li><b>M</b> mudo · <b>+</b>/<b>-</b> volume · <b>Alt+Enter</b> tela cheia · gamepad funciona</li>
       </ul>
@@ -144,6 +145,18 @@
         });
       }
     };
+
+    // ?seed=N fixa o mapa/posicoes da partida; ?daily=1 usa o numero do dia
+    // (desafio diario: todo mundo joga o mesmo mundo). Viram argumentos da
+    // linha de comando do programa (main.cpp: --seed / --daily).
+    (function () {
+      var qs = new URLSearchParams(location.search);
+      var semente = qs.get('seed');
+      if (semente && /^\d+$/.test(semente))
+        Module.arguments = ['--seed', semente];
+      else if (qs.get('daily'))
+        Module.arguments = ['--daily'];
+    })();
 
     // A "janela" do jogo comeca com a sobreposicao por cima: o primeiro
     // clique/tecla libera a caixinha de som do navegador (autoplay) e da

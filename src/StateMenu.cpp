@@ -6,12 +6,13 @@
  */
 
 #include "StateMenu.h"
+#include "GameSettings.h"
 #include "InputManager.h"
 #include <cmath>
 
 void StateMenu::load(int stack)
 {
-	// Recorde salvo de partidas anteriores (arquivo lokuras.rec).
+	// Recordes, contadores e conquistas salvos de partidas anteriores.
 	PlayStats::load();
 
 	bg = new Sprite("img/stateMenu.jpg");
@@ -32,16 +33,56 @@ void StateMenu::load(int stack)
 	titleY = (SCREEN_H/4) * 1;
 	title->setPos(titleX, titleY);
 
-	// Mostra o recorde, se houver.
-	recordText = NULL;
-	if(PlayStats::bestScore() >= 0)
+	// Selecao de dificuldade (1/2/3) e recorde correspondente.
+	difficultyText = new Text("ttf/PirataOne-Regular.ttf", "Dificuldade", 30, 0, {255, 255, 255}, 0, 0);
+	difficultyText->setPos(0, (SCREEN_H/4) * 3 - 40);
+
+	recordText = new Text("ttf/PirataOne-Regular.ttf", "Recorde", 26, 0, {255, 230, 130}, 0, 0);
+
+	hintText = new Text("ttf/PirataOne-Regular.ttf",
+		"?seed=N ou ?daily=1 no navegador: mapa e posicoes iguais para todos",
+		22, 0, {150, 160, 190}, 0, 0);
+	hintText->setPos(SCREEN_W/2 - hintText->getWidth()/2, SCREEN_H - 30);
+
+	// Lista de conquistas (coluna esquerda).
+	for(int i = 0; i < MENU_ACH_LINHAS; ++i)
 	{
-		recordText = new Text("ttf/PirataOne-Regular.ttf",
-			"Recorde: " + std::to_string(PlayStats::bestScore()) + " pontos",
-			30, 0, {255, 230, 130}, 0, 0);
-		textPosX = SCREEN_W/2 - recordText->getWidth()/2;
-		textPosY = (SCREEN_H/4) * 3 + pressEnter->getHeight() + 12;
-		recordText->setPos(textPosX, textPosY);
+		achTexts[i] = new Text("ttf/PirataOne-Regular.ttf", "", 22, 0, {180, 200, 230}, 0, 0);
+		achTexts[i]->setPos(24, 90 + i * 30);
+	}
+
+	shownDifficulty = -1; // força o primeiro refresh
+	refreshTexts();
+}
+
+void StateMenu::refreshTexts()
+{
+	int diff = GameSettings::difficulty();
+	shownDifficulty = diff;
+
+	difficultyText->setText(std::string("Dificuldade: ") + GameSettings::difficultyName(diff) + "   (1 = facil, 2 = normal, 3 = dificil)");
+	difficultyText->setPos(SCREEN_W/2 - difficultyText->getWidth()/2, (SCREEN_H/4) * 3 - 40);
+
+	int best = PlayStats::bestScore(diff);
+	recordText->setText(best >= 0 ? "Recorde nessa dificuldade: " + std::to_string(best) + " pontos"
+	                              : "Sem recorde nessa dificuldade ainda");
+	recordText->setPos(SCREEN_W/2 - recordText->getWidth()/2, (SCREEN_H/4) * 3 + pressEnter->getHeight() + 14);
+
+	for(int i = 0; i < MENU_ACH_LINHAS; ++i)
+	{
+		achTexts[i]->setText(std::string(PlayStats::ach(i) ? "[X] " : "[ ] ") + PlayStats::achName(i));
+
+		// Conquistadas ficam verdes, pendentes em cinza.
+		SDL_Color cor;
+		if(PlayStats::ach(i))
+		{
+			cor.r = 130; cor.g = 255; cor.b = 160;
+		}
+		else
+		{
+			cor.r = 150; cor.g = 155; cor.b = 175;
+		}
+		achTexts[i]->setColor(cor);
 	}
 }
 
@@ -50,7 +91,13 @@ int StateMenu::unload()
 	delete(bg);
 	delete(pressEnter);
 	delete(title);
+	delete(difficultyText);
 	delete(recordText);
+	delete(hintText);
+
+	for(int i = 0; i < MENU_ACH_LINHAS; ++i)
+		delete(achTexts[i]);
+
 	delete(music);
 
 	return 0;
@@ -64,6 +111,17 @@ int StateMenu::update(int dt)
 	menuTime += dt;
 
 	InputManager &im = InputManager::getInstance();
+
+	// 1/2/3 escolhem a dificuldade; os textos refletem a mudanca na hora.
+	if(im.isKeyDown(SDLK_1) && GameSettings::difficulty() != DIF_FACIL)
+		GameSettings::difficulty() = DIF_FACIL;
+	if(im.isKeyDown(SDLK_2) && GameSettings::difficulty() != DIF_NORMAL)
+		GameSettings::difficulty() = DIF_NORMAL;
+	if(im.isKeyDown(SDLK_3) && GameSettings::difficulty() != DIF_DIFICIL)
+		GameSettings::difficulty() = DIF_DIFICIL;
+
+	if(GameSettings::difficulty() != shownDifficulty)
+		refreshTexts();
 
 	if(im.isKeyDown(SDLK_RETURN))
 		returnState = STATE_GAME;
@@ -86,7 +144,10 @@ void StateMenu::render()
 	title->render();
 
 	pressEnter->render();
+	difficultyText->render();
+	recordText->render();
+	hintText->render();
 
-	if(recordText)
-		recordText->render();
+	for(int i = 0; i < MENU_ACH_LINHAS; ++i)
+		achTexts[i]->render();
 }

@@ -6,6 +6,7 @@
  */
 
 #include "StateManager.h"
+#include "GameSettings.h"
 #include <time.h>
 
 #ifdef __EMSCRIPTEN__
@@ -34,9 +35,18 @@ StateManager::StateManager()
 	// Inicializa a SDL
 	SDLBase::loadSDL();
 
-	// Semeia o gerador de numeros aleatorios uma unica vez (spawns de
-	// planetas/power-ups dependem dele).
-	srand(time(NULL));
+	// Semeia o gerador de numeros aleatorios uma unica vez (mapa, spawns e
+	// posicoes iniciais dependem dele). --seed N fixa a semente e --daily usa
+	// o numero do dia (mesma semente para todos); sem nada, cada execucao
+	// sorteia do relogio como antes.
+	{
+		unsigned int s = GameSettings::seed();
+		if(s == 0 && GameSettings::daily())
+			s = (unsigned int)(time(NULL) / 86400);
+		if(s == 0)
+			s = (unsigned int)time(NULL);
+		srand(s);
+	}
 
 	timer = new Timer();
 	timer->start();

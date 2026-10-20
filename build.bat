@@ -45,7 +45,7 @@ if not exist bin mkdir bin
   src\FollowerObject.cpp src\GameObject.cpp src\HUD.cpp src\InputManager.cpp src\main.cpp ^
   src\Moon.cpp src\Planet.cpp src\PlanetRed.cpp src\Point.cpp src\SDLBase.cpp ^
   src\Sprite.cpp src\StateGame.cpp src\StateManager.cpp src\StateMenu.cpp ^
-  src\StateWinLose.cpp src\Text.cpp src\TileMap.cpp src\TileSet.cpp src\Timer.cpp ^
+  src\StateWinLose.cpp src\Text.cpp src\TileMap.cpp src\TileSet.cpp src\Timer.cpp src\Turret.cpp ^
   -o bin\game.exe ^
   -mwindows -L"lib\lib" -lmingw32 -lSDLmain -lSDL_gfx -lSDL_image -lSDL_ttf -lSDL_mixer -lSDL ^
   -static-libgcc -static-libstdc++

@@ -53,7 +53,7 @@ exit /b 1
 if not exist bin\web mkdir bin\web
 
 rem A lista de fontes e explicita porque o cmd nao expande curingas.
-set "FONTES=src\AccObject.cpp src\Animation.cpp src\Audio.cpp src\Camera.cpp src\Earth.cpp src\FollowerObject.cpp src\GameObject.cpp src\HUD.cpp src\InputManager.cpp src\main.cpp src\Moon.cpp src\Planet.cpp src\PlanetRed.cpp src\Point.cpp src\SDLBase.cpp src\Sprite.cpp src\StateGame.cpp src\StateManager.cpp src\StateMenu.cpp src\StateWinLose.cpp src\Text.cpp src\TileMap.cpp src\TileSet.cpp src\Timer.cpp web\compat\sdl12_web.cpp"
+set "FONTES=src\AccObject.cpp src\Animation.cpp src\Audio.cpp src\Camera.cpp src\Earth.cpp src\FollowerObject.cpp src\GameObject.cpp src\HUD.cpp src\InputManager.cpp src\main.cpp src\Moon.cpp src\Planet.cpp src\PlanetRed.cpp src\Point.cpp src\SDLBase.cpp src\Sprite.cpp src\StateGame.cpp src\StateManager.cpp src\StateMenu.cpp src\StateWinLose.cpp src\Text.cpp src\TileMap.cpp src\TileSet.cpp src\Timer.cpp src\Turret.cpp web\compat\sdl12_web.cpp"
 
 rem Flags: mesma linguagem/otimizacao do desktop + a pagina do jogo e os ports
 rem (SDL 2 + image/ttf/mixer/gfx). O -lidbfs.js da o /save persistente

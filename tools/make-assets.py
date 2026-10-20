@@ -490,6 +490,7 @@ GEM_SPECS = {
     "PowerVida":   ((80, 235, 125), (14, 80, 40)),
     "PowerEscudo": ((85, 165, 255), (18, 45, 105)),
     "PowerTurbo":  ((255, 165, 65), (110, 55, 12)),
+    "PowerCombustivel": ((255, 210, 90), (115, 78, 16)),
 }
 
 
@@ -519,6 +520,36 @@ def draw_gem(name):
     # brilho
     d.line(P([(8, 8), (10, 5)]), fill=(255, 255, 255, 230), width=SS)
     d.point(P([(9, 15)]), fill=(255, 255, 255, 160))
+    return img.resize((w, w), LANCZOS)
+
+
+# --------------------------------------------------------------------- torreta
+
+def draw_turret():
+    """Torreta fixa 32x32: cupula metalica com cano apontando para cima."""
+    w = 32
+    img = Image.new("RGBA", (w * SS, w * SS), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    def P(pts):
+        return [(x * SS, y * SS) for (x, y) in pts]
+
+    metal = (120, 132, 150, 255)
+    metal_dark = (58, 66, 82, 255)
+    outline = (22, 26, 34, 255)
+
+    # base (anel) e cupula
+    d.ellipse(P([(3, 6), (29, 30)]), fill=metal_dark, outline=outline)
+    d.ellipse(P([(6, 9), (26, 27)]), fill=metal)
+    d.arc(P([(8, 11), (24, 24)]), 200, 340, fill=(200, 210, 226, 255), width=SS)
+
+    # cano voltado para cima (o jogo rotaciona a sprite ate a nave)
+    d.rectangle(P([(13, 1), (19, 12)]), fill=metal_dark, outline=outline)
+    d.rectangle(P([(14, 2), (18, 11)]), fill=metal)
+
+    # olho vermelho de mira
+    d.ellipse(P([(14, 14), (18, 18)]), fill=(255, 70, 60, 255), outline=outline)
+
     return img.resize((w, w), LANCZOS)
 
 
@@ -569,6 +600,11 @@ def main():
 
     red = sphere(44, (215, 90, 40), (60, 20, 12), (255, 190, 120), seed=5, craters=4)
     red.save(os.path.join(img_dir, "PlanetaVermelho.png"))
+
+    purple = sphere(52, (150, 80, 215), (38, 16, 70), (230, 180, 255), seed=17, craters=5, glow=(190, 120, 255, ))
+    purple.save(os.path.join(img_dir, "PlanetaRoxo.png"))
+
+    draw_turret().save(os.path.join(img_dir, "Torreta.png"))
 
     moon = sphere(16, (170, 170, 175), (50, 50, 58), (70, 70, 75), seed=9, craters=5)
     moon.save(os.path.join(img_dir, "Lua.png"))

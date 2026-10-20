@@ -47,6 +47,10 @@ class AccObject: public GameObject
 		int getShieldTime();
 		float getRotation();
 		bool isAccelerating();
+		// Velocidade ao longo do bico (negativa = marchar re). Usada pelo
+		// StateGame para "quicar" a nave nos tiles solidos do mapa.
+		float getSpeed();
+		void setSpeed(float v);
 };
 
 #endif /* ACCOBJECT_H_ */
