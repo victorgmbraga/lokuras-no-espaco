@@ -146,6 +146,11 @@ int AccObject::getShieldTime()
 	return shieldTime;
 }
 
+float AccObject::getRotation()
+{
+	return rotation;
+}
+
 bool AccObject::isAccelerating()
 {
 	return !atrito;

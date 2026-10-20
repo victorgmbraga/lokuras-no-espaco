@@ -64,6 +64,16 @@ class StateGame: public State
 		Animation *shipAnimation;
 		AccObject *ship;
 
+		// Tiros da nave (projeteis simples, sem sprite)
+		struct Bullet
+		{
+			float x, y;
+			float vx, vy;
+			int life; // ms restantes
+		};
+		std::vector<Bullet> bulletArray;
+		int shootCooldown;
+
 		// Música e Sons
 		Audio *music;
 		Audio *sfx;
@@ -97,6 +107,9 @@ class StateGame: public State
 		int returnStack;
 
 		void checkCollision(int dt);
+		void shoot();
+		void updateBullets(int dt);
+		bool bulletHit(const Bullet &bullet, GameObject *object);
 		void addPlanet();
 		int nextPlanetInterval();
 		void spawnPowerUp();

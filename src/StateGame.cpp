@@ -80,6 +80,7 @@ void StateGame::load(int stack)
 	// HUD
 	hud = new HUD();
 	hud->setLife(ship->hp);
+	hud->setBossLife(ufo->hp, ufo->maxHp);
 
 	// Cronometro da partida
 	gameTimer = new Timer();
@@ -90,6 +91,7 @@ void StateGame::load(int stack)
 	gravX = 0;
 	gravY = 0;
 	shakeTime = 0;
+	shootCooldown = 0;
 	paused = false;
 
 	// Variáveis de retorno
@@ -239,6 +241,97 @@ void StateGame::checkCollision(int dt)
 	}
 }
 
+void StateGame::shoot()
+{
+	if(ship == NULL)
+		return;
+
+	// Direcao do bico da nave (mesma rotacao usada por AccObject::update:
+	// rotacao 0 aponta para cima, +90 para a esquerda).
+	float angulo = (ship->getRotation() - 90.0f) * PI / 180.0f;
+	float dirX = -cosf(angulo);
+	float dirY = sinf(angulo);
+
+	float cx = ship->x + ship->w/2;
+	float cy = ship->y + ship->h/2;
+
+	Bullet bullet;
+	bullet.x = cx + dirX * 58.0f;
+	bullet.y = cy + dirY * 58.0f;
+	bullet.vx = dirX * 0.95f; // px/ms
+	bullet.vy = dirY * 0.95f;
+	bullet.life = 1300;       // alcance de ~1235 px
+	bulletArray.push_back(bullet);
+}
+
+bool StateGame::bulletHit(const Bullet &bullet, GameObject *object)
+{
+	const float raio = 4.0f;
+
+	return bullet.x + raio >= object->x &&
+	       bullet.x - raio <= object->x + object->w &&
+	       bullet.y + raio >= object->y &&
+	       bullet.y - raio <= object->y + object->h;
+}
+
+void StateGame::updateBullets(int dt)
+{
+	std::vector<Bullet>::iterator it = bulletArray.begin();
+	while(it != bulletArray.end())
+	{
+		it->x += it->vx * dt;
+		it->y += it->vy * dt;
+		it->life -= dt;
+
+		bool remove = it->life <= 0;
+
+		// Planetas vermelhos: 2 tiros (1 de dano por projetil).
+		if(!remove)
+		{
+			for(std::vector<Planet*>::iterator p = planetArray.begin(); p != planetArray.end(); ++p)
+			{
+				if(bulletHit(*it, *p))
+				{
+					(*p)->hp -= 1;
+					if((*p)->hp <= 0)
+					{
+						boomX = (*p)->x + (*p)->w/2;
+						boomY = (*p)->y + (*p)->h/2;
+						boomActive = true;
+						boom->restart();
+						sfx->play(0);
+						destroyedCount++;
+
+						delete(*p);
+						planetArray.erase(p);
+					}
+
+					remove = true;
+					break;
+				}
+			}
+		}
+
+		// UFO: chefe com UFO_MAX_HP tiros. Derrota-lo vence a partida.
+		if(!remove && ufo && bulletHit(*it, ufo))
+		{
+			ufo->hp -= 1;
+			if(ufo->hp <= 0)
+			{
+				endGame(true);
+				return;
+			}
+
+			remove = true;
+		}
+
+		if(remove)
+			it = bulletArray.erase(it);
+		else
+			++it;
+	}
+}
+
 void StateGame::addPlanet()
 {
 	if(ship == NULL)
@@ -261,7 +354,8 @@ void StateGame::addPlanet()
 			break;
 	}
 
-	PlanetRed *planetRed = new PlanetRed(redPlanetSprite, planetX, planetY, 20);
+	// 2 tiros: cada projetil tira 1 de vida.
+	PlanetRed *planetRed = new PlanetRed(redPlanetSprite, planetX, planetY, 2);
 	planetArray.push_back(planetRed);
 }
 
@@ -309,6 +403,11 @@ void StateGame::spawnPowerUp()
 
 void StateGame::endGame(bool win)
 {
+	// Pode ser chamado por mais de uma colisao no mesmo frame (ex.: o tiro
+	// que derrota o UFO e a nave encostando na Terra). So encerra uma vez.
+	if(returnState == 3)
+		return;
+
 	// Estatisticas da partida (consumidas pela tela final).
 	int score = destroyedCount * 50 + gameTimeMs / 1000;
 	if(win)
@@ -438,6 +537,24 @@ int StateGame::update(int dt)
 		ship->y += gravY * dt;
 	}
 
+	// Tiro: ESPACO dispara continuamente (cadencia de 220 ms) na direcao do
+	// bico da nave.
+	if(shootCooldown > 0)
+		shootCooldown -= dt;
+	if(ship && im.isKeyPressed(SDLK_SPACE) && shootCooldown <= 0)
+	{
+		shoot();
+		shootCooldown = 220;
+	}
+	updateBullets(dt);
+
+	// UFO derrotado: encerra antes das colisoes restantes deste frame.
+	if(returnState == 3)
+	{
+		hud->setBossLife(0, 0);
+		return returnState;
+	}
+
 	// Rastro do motor: volume proporcional a aceleracao (0 quando parada).
 	if(ship && ship->isAccelerating())
 		sfxEngine->setVolume(90);
@@ -482,7 +599,11 @@ int StateGame::update(int dt)
 	// Colisões
 	checkCollision(dt);
 
-	// HUD (estatisticas)
+	// HUD (estatisticas + barra de vida do chefe)
+	if(ufo)
+		hud->setBossLife(ufo->hp, ufo->maxHp);
+	else
+		hud->setBossLife(0, 0);
 	hud->update(gameTimeMs, destroyedCount);
 
 	return returnState;
@@ -589,6 +710,19 @@ void StateGame::render()
 		if(!ufo->isAutonomous())
 			ufo->renderQueueLines(cameraX, cameraY);
 		ufo->render(cameraX, cameraY);
+	}
+
+	// Tiros da nave: rastro luminoso + nucleo branco.
+	for(std::vector<Bullet>::iterator it = bulletArray.begin(); it != bulletArray.end(); ++it)
+	{
+		int bx = (int)(it->x - cameraX);
+		int by = (int)(it->y - cameraY);
+		int tx = (int)(it->x - it->vx * 18 - cameraX);
+		int ty = (int)(it->y - it->vy * 18 - cameraY);
+
+		SDLBase::drawLine(tx, ty, bx, by, 0x3FA8FF, 1);
+		SDLBase::drawRect(bx - 3, by - 3, 6, 6, 0x7DE1FF);
+		SDLBase::drawRect(bx - 1, by - 1, 2, 2, 0xFFFFFF);
 	}
 
 	// Nave (pisca durante os i-frames; anel quando o escudo esta ativo)

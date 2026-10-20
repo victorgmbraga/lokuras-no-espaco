@@ -45,6 +45,7 @@ class AccObject: public GameObject
 		void setBoost(float mult, int durationMs);
 		void setShield(int durationMs);
 		int getShieldTime();
+		float getRotation();
 		bool isAccelerating();
 };
 

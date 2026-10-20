@@ -22,8 +22,13 @@ HUD::HUD()
 	timerText = new Text("ttf/PirataOne-Regular.ttf", "Tempo: 00:00", 28, 0, {255, 230, 130}, 0, 0);
 	timerText->setPos(SCREEN_W - 200, 6);
 
+	// Barra de vida do UFO (chefe).
+	bossLabel = new Text("ttf/PirataOne-Regular.ttf", "UFO", 24, 0, {255, 180, 120}, 0, 0);
+	bossLife = 0;
+	bossMax = 0;
+
 	// Dicas de controle (rodape).
-	commandsText = new Text("ttf/PirataOne-Regular.ttf", "W, A, S, D: Move a nave", 24, 0, {255, 255, 255}, 0, 0);
+	commandsText = new Text("ttf/PirataOne-Regular.ttf", "W, A, S, D: Move a nave   |   ESPACO: Atira", 24, 0, {255, 255, 255}, 0, 0);
 	int textPosY = SCREEN_H - commandsText->getHeight();
 	commandsText->setPos(14, textPosY);
 
@@ -52,6 +57,7 @@ HUD::~HUD()
 	delete(commandsText3);
 	delete(pauseText);
 	delete(pauseHint);
+	delete(bossLabel);
 }
 
 void HUD::update(int timeMs, int destroyed)
@@ -70,6 +76,7 @@ void HUD::render()
 	lifeCounter->render();
 	destroyedText->render();
 	timerText->render();
+	renderBossBar();
 	commandsText->render();
 	commandsText3->render();
 }
@@ -104,4 +111,46 @@ void HUD::setLife(int life)
 		life = 0;
 
 	lifeCounter->setText("Vida: " + std::to_string(life));
+}
+
+void HUD::setBossLife(int life, int max)
+{
+	if(life < 0)
+		life = 0;
+	if(max < 0)
+		max = 0;
+
+	if(life == bossLife && max == bossMax)
+		return;
+
+	bossLife = life;
+	bossMax = max;
+
+	if(max > 0 && life > 0)
+		bossLabel->setText("UFO " + std::to_string(life) + "/" + std::to_string(max));
+}
+
+void HUD::renderBossBar()
+{
+	if(bossMax <= 0 || bossLife <= 0)
+		return;
+
+	const int barW = 360;
+	const int barH = 16;
+	int x = SCREEN_W / 2 - barW / 2;
+	int y = 52;
+
+	// Fundo/borda, trilho e preenchimento proporcional a vida do chefe.
+	SDLBase::drawRect(x - 3, y - 3, barW + 6, barH + 6, 0x000000);
+	SDLBase::drawRect(x, y, barW, barH, 0x3A0A0A);
+
+	int fill = barW * bossLife / bossMax;
+	if(fill < 0)
+		fill = 0;
+	if(fill > barW)
+		fill = barW;
+	SDLBase::drawRect(x, y, fill, barH, 0xE23B3B);
+
+	bossLabel->setPos(x - bossLabel->getWidth() - 12, y - 4);
+	bossLabel->render();
 }

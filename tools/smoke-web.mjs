@@ -258,14 +258,33 @@ try {
     });
     await dormir(800);
 
+    // Dispara por ~0,4 s: cobre a criacao, atualizacao e render dos tiros.
+    const atirar = {
+      key: " ",
+      code: "Space",
+      windowsVirtualKeyCode: 32,
+      nativeVirtualKeyCode: 32,
+      text: " ",
+    };
+    await devtools.enviar("Input.dispatchKeyEvent", { type: "rawKeyDown", ...atirar });
+    await dormir(400);
+    await devtools.enviar("Input.dispatchKeyEvent", {
+      type: "keyUp",
+      key: " ",
+      code: "Space",
+      windowsVirtualKeyCode: 32,
+      nativeVirtualKeyCode: 32,
+    });
+    await dormir(200);
+
     ultimo = await lerPagina(devtools);
     if (ultimo.quadros < antes + 30) {
       codigo = 1;
       console.error(
-        `FALHOU: o jogo parou depois do ENTER/A (frames ${antes} -> ${ultimo.quadros})`,
+        `FALHOU: o jogo parou depois do ENTER/A/ESPACO (frames ${antes} -> ${ultimo.quadros})`,
       );
     } else {
-      console.log(`OK: jogo rodando apos ENTER/A (frames ${antes} -> ${ultimo.quadros})`);
+      console.log(`OK: jogo rodando apos ENTER/A/ESPACO (frames ${antes} -> ${ultimo.quadros})`);
     }
 
     // O /save (IDBFS/IndexedDB) guarda o recorde: se a montagem falhou, o

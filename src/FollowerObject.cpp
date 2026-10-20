@@ -20,6 +20,8 @@ FollowerObject::FollowerObject(Sprite* sprite, float x, float y):
 	autonomous = false;
 	target = NULL;
 	chaseSpeed = 0;
+	hp = UFO_MAX_HP;
+	maxHp = UFO_MAX_HP;
 	xCoordinatesQueue = new std::queue<float>;
 	yCoordinatesQueue = new std::queue<float>;
 }

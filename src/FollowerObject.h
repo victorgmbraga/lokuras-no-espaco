@@ -11,6 +11,7 @@
 #include <queue>
 #define FOLLOW_SPEED 0.0008f // fracao da distancia restante por ms
 #define FOLLOW_MAX   0.4f    // limite de velocidade da fila (px/ms)
+#define UFO_MAX_HP   20      // tiros necessarios para derrotar o chefe
 
 #include "GameObject.h"
 #include "Sprite.h"
@@ -29,6 +30,8 @@ class FollowerObject: public GameObject
 		GameObject* target;
 		float chaseSpeed;
 	public:
+		int hp;     // vida do chefe (UFO)
+		int maxHp;
 		FollowerObject(Sprite* sprite, float x, float y);
 		virtual ~FollowerObject();
 		void update(int dt);

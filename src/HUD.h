@@ -22,8 +22,11 @@ class HUD
 		Text *timerText;
 		Text *pauseText;
 		Text *pauseHint;
+		Text *bossLabel;
 		int life;
+		int bossLife, bossMax;
 		void displayLife();
+		void renderBossBar();
 	public:
 		HUD();
 		virtual ~HUD();
@@ -31,6 +34,7 @@ class HUD
 		void render();
 		void renderPause();
 		void setLife(int life);
+		void setBossLife(int life, int max);
 };
 
 #endif /* HUD_H_ */
