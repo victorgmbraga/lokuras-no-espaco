@@ -7,6 +7,9 @@ stderr.txt
 stdout.txt
 tools/mingw32/
 tools/sdl12/
+tools/sdl12-macos/
+tools/sdl12-macos-build.log
+tools/package-macos.log
 tools/emsdk/
 tools/emsdk-install.log
 tools/web-build.log
@@ -17,3 +20,5 @@ tools/*.zip
 .delta/
 lokuras.rec
 tools/web-smoke*.png
+
+.DS_Store

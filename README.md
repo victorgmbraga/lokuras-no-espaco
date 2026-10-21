@@ -5,7 +5,7 @@
 
 **Jogue no navegador:** <https://victorgmbraga.github.io/lokuras-no-espaco/>
 
-Jogo 2D em **C++ com SDL 1.2**, desenvolvido para a disciplina **Introdução ao Desenvolvimento de Jogos (IDJ)** da Universidade de Brasília (UnB/CIC, Turma A, 2013 — Profª. Carla Denise Castanho). O mesmo código compila para **Windows**, **Linux** e **navegador (WebAssembly)**.
+Jogo 2D em **C++ com SDL 1.2**, desenvolvido para a disciplina **Introdução ao Desenvolvimento de Jogos (IDJ)** da Universidade de Brasília (UnB/CIC, Turma A, 2013 — Profª. Carla Denise Castanho). O mesmo código compila para **Windows**, **Linux**, **macOS** e **navegador (WebAssembly)**.
 
 Este repositório reconstrói todo o **fluxo de desenvolvimento da disciplina** em um histórico Git linear: cada entrega (trabalho **TR** ou exercício **EX**) virou um commit, partindo do game loop básico (TR01) até a game engine completa com máquina de estados (TR04), que dá origem ao jogo **Lokuras no Espaço**.
 
@@ -78,7 +78,7 @@ Cada estado tem música tema; o estado de jogo tem `stateGame.ogg` e o SFX `boom
 
 ## Como compilar e executar
 
-O mesmo `src/` compila para Windows (`build.bat`/`run.bat`), para Linux (`build.sh`/`run.sh`) e para o navegador (`build-web.bat`/`run-web.bat` e `build-web.sh`/`run-web.sh`), a partir da raiz do projeto.
+O mesmo `src/` compila para Windows (`build.bat`/`run.bat`), para Linux (`build.sh`/`run.sh`), para macOS (`build-macos.sh`/`run.sh`) e para o navegador (`build-web.bat`/`run-web.bat` e `build-web.sh`/`run-web.sh`), a partir da raiz do projeto.
 
 ### Windows
 
@@ -141,16 +141,50 @@ g++ -std=gnu++11 -O2 -w -Isrc src/*.cpp -o bin/game \
   -lSDL_image -lSDL_gfx -lSDL_ttf -lSDL_mixer -lSDL -lm
 ```
 
+### macOS
+
+**Requisitos**
+
+- macOS 11+ (Apple Silicon ou Intel) com **Xcode Command Line Tools** (`xcode-select --install`). O jogo usa alvo 11.0, mas o `.app` pode exigir uma versão maior por causa das bibliotecas do Homebrew — o empacotador grava a exigência real no `LSMinimumSystemVersion`;
+- **Homebrew**, para SDL 2 (`sdl2-compat`) e SDL 3, libpng, jpeg-turbo, freetype, libogg, libvorbis, `pkg-config` e `cmake`;
+- `dylibbundler` (opcional, só para gerar o `.app` autocontido).
+
+O macOS não traz o SDL 1.2 e o Homebrew não empacota mais o SDL_image/SDL_ttf/SDL_mixer da API 1.2. O `tools/setup-sdl12-macos.sh` baixa e compila as cinco bibliotecas usadas pelo jogo — **sdl12-compat**, **SDL_image**, **SDL_ttf**, **SDL_mixer** e **SDL_gfx** — dentro de `tools/sdl12-macos/`, sem root. Na primeira execução ele oferece instalar as fórmulas que faltarem no Homebrew (~4,5 MB no prefixo local; para desfazer, `rm -rf tools/sdl12-macos`).
+
+O **SDL_image** é compilado com `--disable-imageio`, usando o backend comum (libpng/libjpeg): o backend ImageIO do macOS carrega as imagens mas deixa todos os pixels pretos sob o sdl12-compat. Prefixos antigos são detectados e recompilados automaticamente pelo setup (ou pelo `build-macos.sh`, que oferece rodar o setup).
+
+O `sdl12-compat` não linka a SDL 2: carrega `libSDL2-2.0.0.dylib` por `dlopen` em runtime. No Apple Silicon o dyld não procura `/opt/homebrew/lib` pelo nome, então o setup também copia a SDL 2 (e a SDL 3, usada pelo `sdl2-compat` do Homebrew) para `tools/sdl12-macos/lib`. Sem essa cópia o jogo exibe `sdl12-compat: Failed loading SDL2 library.` e aborta. Se o prefixo já existir, rode o setup de novo para ele completar a cópia.
+
+```sh
+./tools/setup-sdl12-macos.sh   # uma vez: SDL 1.2 local (sem root)
+./build-macos.sh               # compila -> bin/game
+./run.sh                       # roda o jogo (compila antes, se necessário)
+./build-macos.sh --app         # compila e cria dist/Lokuras no Espaço.app
+```
+
+O `build.sh` detecta o macOS e delega para o `build-macos.sh`, então o `run.sh` e as tasks do Zed continuam valendo. O prefixo local é usado automaticamente (`SDL12_PREFIX` aponta para outro) e o compilador é resolvido em cascata (`CXX` → `clang++` → `g++`). A linha de compilação é a mesma do Linux, com `-Wno-c++11-narrowing` no clang e alvo mínimo `MACOSX_DEPLOYMENT_TARGET=11.0` (sobrescreva a variável se precisar):
+
+```sh
+clang++ -std=gnu++11 -O2 -w -Wno-c++11-narrowing -Isrc src/*.cpp -o bin/game \
+  -Itools/sdl12-macos/include -Itools/sdl12-macos/include/SDL \
+  -Ltools/sdl12-macos/lib -Wl,-rpath,tools/sdl12-macos/lib \
+  -lSDL_image -lSDL_gfx -lSDL_ttf -lSDL_mixer -lSDLmain -lSDL \
+  -Wl,-framework,Cocoa -lm -liconv
+```
+
+O `bin/game` fica ligado ao prefixo `tools/sdl12-macos` e às bibliotecas do Homebrew (como no Linux, o binário não é autocontido). Para gerar um app de duplo clique que não depende de nada disso, use `./build-macos.sh --app`: o bundle copia todas as bibliotecas não-sistema para `Contents/Frameworks` — inclusive a SDL 2 e a SDL 3, que o `sdl12-compat` e o `sdl2-compat` carregam em runtime —, reescreve os caminhos com o `dylibbundler`, gera o ícone a partir de `game.jpg` e assina ad-hoc — o resultado fica em `dist/Lokuras no Espaço.app` (~11 MB) e pode ser aberto com `open "dist/Lokuras no Espaço.app"`. O launcher mantém os assets dentro do bundle e grava o recorde em `~/Library/Application Support/Lokuras no Espaco/lokuras.rec`, então o app pode ser movido para `/Applications`. A assinatura é ad-hoc: se o `.app` for baixado de outro Mac, o Gatekeeper pode pedir **Ajustes → Privacidade e Segurança → Abrir Mesmo Assim** (ou clique com o botão direito → **Abrir**).
+
 ### Builds automáticos (GitHub Actions)
 
-O workflow [`ci.yml`](.github/workflows/ci.yml) compila o jogo para **Linux** e **Windows** em todo push e pull request (e também pelo botão **Run workflow**, na aba Actions). Os pacotes ficam nos **Artifacts** do run:
+O workflow [`ci.yml`](.github/workflows/ci.yml) compila o jogo para **Linux**, **Windows** e **macOS** em todo push e pull request (e também pelo botão **Run workflow**, na aba Actions). Os pacotes ficam nos **Artifacts** do run:
 
 | Artefato | Conteúdo |
 | --- | --- |
 | `lokuras-linux-x86_64` | `.tar.gz` com `game`, `jogar.sh`, assets e `LEIA-ME.txt` (binário dinâmico; requer o runtime do SDL 1.2) |
 | `lokuras-windows-x86` | `.zip` com `game.exe`, DLLs, assets, `jogar.bat` e `LEIA-ME.txt` (não precisa instalar nada) |
+| `lokuras-macos` | `.tar.gz` com `Lokuras no Espaço.app` (bibliotecas do SDL 1.2 e do Homebrew dentro de `Contents/Frameworks`, assinatura ad-hoc) |
 
-Os dois jobs rodam um smoke test de 5 s com os drivers dummy da SDL antes de publicar o pacote — se o jogo sair ou crashar, o job falha e o artefato não é gerado. O `build-windows` usa o MSYS2 com o MinGW i686, a mesma ABI (msvcrt) das import libs da SDL versionadas em `lib/`. O `build-linux` também roda o smoke test do desktop; o `build-web` compila o WebAssembly e, em `master`, publica o GitHub Pages.
+Os três jobs de desktop rodam um smoke test de 5 s com os drivers dummy da SDL antes de publicar o pacote — se o jogo sair ou crashar, o job falha e o artefato não é gerado. O `build-windows` usa o MSYS2 com o MinGW i686, a mesma ABI (msvcrt) das import libs da SDL versionadas em `lib/`. O `build-macos` instala as dependências pelo Homebrew, compila o SDL 1.2 local com `tools/setup-sdl12-macos.sh` e empacota o `.app` com `./build-macos.sh --app`. O `build-linux` também roda o smoke test do desktop; o `build-web` compila o WebAssembly e, em `master`, publica o GitHub Pages.
 
 ### Navegador (WebAssembly)
 
@@ -339,7 +373,8 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 ├── build.bat                # compilação no Windows (MinGW + SDL 1.2 de lib/) -> bin/game.exe
 ├── run.bat                  # executa o jogo no Windows (compila antes, se necessário)
 ├── build.sh                 # compilação no Linux (SDL 1.2 do sistema) -> bin/game
-├── run.sh                   # executa o jogo no Linux (compila antes, se necessário)
+├── build-macos.sh           # compilação no macOS (sdl12-compat + Homebrew) -> bin/game/.app
+├── run.sh                   # executa o jogo no Linux/macOS (compila antes, se necessário)
 ├── build-web.bat            # compilação para o navegador (Emscripten) -> bin/web/
 ├── run-web.bat              # serve bin/web por http e abre o navegador (Windows)
 ├── build-web.sh             # compilação para o navegador (Emscripten) -> bin/web/
@@ -349,13 +384,16 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 │   ├── pre.js               # monta/sincroniza /save (IDBFS) no runtime
 │   └── shell.html           # página do jogo (canvas, áudio, autoteste)
 ├── .zed/                    # tasks do Zed (Compilar/Executar, desktop e web) + wrappers sh/cmd
-├── .github/workflows/       # CI: builds Linux/Windows (+ artefatos) e web (+ GitHub Pages)
+├── .github/workflows/       # CI: builds Linux/Windows/macOS (+ artefatos) e web (+ GitHub Pages)
 └── tools/
     ├── make-assets.py       # regenera TODOS os assets (img/, sfx/) do zero
     ├── setup-mingw.ps1      # auto-bootstrap do MinGW no Windows (download com SHA-256)
     ├── mingw32/             # toolchain baixado pelo bootstrap (ignorado pelo git)
     ├── setup-sdl12.sh       # SDL 1.2 local no Linux, sem root (extrai .deb em sdl12/)
     ├── sdl12/               # SDL 1.2 baixado pelo script acima (ignorado pelo git)
+    ├── setup-sdl12-macos.sh # SDL 1.2 local no macOS: compila as cinco libs em sdl12-macos/
+    ├── sdl12-macos/         # SDL 1.2 compilado pelo script acima (ignorado pelo git)
+    ├── package-macos-app.sh # empacota bin/game em dist/Lokuras no Espaço.app
     ├── setup-emsdk.ps1      # auto-bootstrap do Emscripten no Windows
     ├── setup-emsdk.sh       # auto-bootstrap do Emscripten no Linux/macOS
     ├── smoke-web.mjs        # smoke test do build web (navegador headless via DevTools)

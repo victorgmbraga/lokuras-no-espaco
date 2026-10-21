@@ -1,5 +1,7 @@
 #!/bin/sh
 # Build do jogo no Linux (SDL 1.2 do sistema) -> bin/game
+# No macOS este script delega para o build-macos.sh (SDL 1.2 via Homebrew +
+# sdl12-compat, com as bibliotecas 1.2 compiladas em tools/sdl12-macos).
 #
 # Equivalente Linux do build.bat. Os arquivos de lib\ sao import libs do MinGW
 # (Windows) e nao servem aqui: no Linux o SDL 1.2 (SDL, SDL_image, SDL_gfx,
@@ -19,6 +21,12 @@
 set -u
 
 cd "$(dirname "$0")" || exit 1
+
+# No macOS o SDL 1.2 vem do sdl12-compat + bibliotecas compiladas por
+# tools/setup-sdl12-macos.sh; o build tem flags e empacotamento proprios.
+if [ "$(uname -s)" = "Darwin" ]; then
+	exec ./build-macos.sh "$@"
+fi
 
 # Mesmas flags do build.bat, sem o que e exclusivo do Windows (-Dmain=SDL_main,
 # -mwindows, -lmingw32/-lSDLmain e -static-libgcc/-static-libstdc++: no Linux

@@ -4,6 +4,8 @@
 #     124 - se o jogo travar ou sair antes, o smoke falha) + pacote .tar.gz;
 #   - build-windows: build com MinGW i686 (MSYS2) + o mesmo smoke test com
 #     drivers dummy + pacote .zip com o game.exe, as DLLs e os assets;
+#   - build-macos: compila o SDL 1.2 local (Homebrew + setup-sdl12-macos),
+#     gera o .app autocontido e roda o mesmo smoke test com drivers dummy;
 #   - build-web: build WebAssembly com o Emscripten + smoke test em um
 #     navegador headless (tools/smoke-web.mjs), que confere se o jogo desenha
 #     quadros, se o teclado responde e se o /save (IndexedDB) montou;
@@ -93,6 +95,56 @@ jobs:
         with:
           name: lokuras-linux-x86_64
           path: dist/lokuras-linux-x86_64.tar.gz
+          if-no-files-found: error
+
+  # O macOS nao traz o SDL 1.2 e o Homebrew nao empacota mais o SDL_image,
+  # SDL_ttf e SDL_mixer da API 1.2. O setup-sdl12-macos.sh compila as cinco
+  # bibliotecas dentro do projeto; o build-macos.sh --app gera um bundle
+  # autocontido (dylibs em Contents/Frameworks, assinatura ad-hoc).
+  build-macos:
+    name: macOS (app bundle)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Dependencias (Homebrew)
+        run: |
+          brew install \
+            sdl2-compat libpng jpeg-turbo freetype libogg libvorbis \
+            pkg-config cmake dylibbundler
+
+      - name: SDL 1.2 local (compila as cinco bibliotecas)
+        run: ./tools/setup-sdl12-macos.sh
+
+      - name: Build + app bundle
+        run: ./build-macos.sh --app
+
+      - name: Smoke test (drivers dummy, 5 s)
+        run: |
+          app="$PWD/dist/Lokuras no Espaço.app"
+          SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app/Contents/MacOS/Lokuras" >/dev/null 2>&1 &
+          pid=$!
+          sleep 5
+          if ! kill -0 "$pid" 2>/dev/null; then
+            status=0
+            wait "$pid" || status=$?
+            echo "O jogo saiu/crashou antes do timeout (exit $status)."
+            exit 1
+          fi
+          kill "$pid" 2>/dev/null || true
+          wait "$pid" 2>/dev/null || true
+          echo "OK: o jogo continuou rodando por 5 s."
+
+      - name: Empacotar (macOS)
+        run: |
+          tar -czf dist/lokuras-macos.tar.gz -C dist "Lokuras no Espaço.app"
+
+      - name: Publicar artefato (macOS)
+        uses: actions/upload-artifact@v7
+        with:
+          name: lokuras-macos
+          path: dist/lokuras-macos.tar.gz
           if-no-files-found: error
 
   # O jogo usa as import libs i686 da SDL versionadas em lib/, entao o

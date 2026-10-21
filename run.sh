@@ -1,6 +1,7 @@
 #!/bin/sh
 # Executa o jogo a partir da raiz do projeto (os assets usam caminhos relativos).
-# Se bin/game ainda nao existir, compila antes (o build.sh cuida do SDL 1.2).
+# Se bin/game ainda nao existir, compila antes (o build.sh cuida do SDL 1.2;
+# no macOS ele delega para o build-macos.sh).
 
 set -u
 
