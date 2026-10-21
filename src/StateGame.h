@@ -15,6 +15,7 @@
 #include "Sprite.h"
 #include "Camera.h"
 #include "PlanetRed.h"
+#include "Asteroid.h"
 #include "Mine.h"
 #include "Earth.h"
 #include "Moon.h"
@@ -56,6 +57,10 @@ class StateGame: public State
 		// Minas de proximidade (explodem em area e detonam umas as outras)
 		Sprite *mineSprite;
 		std::vector<Mine*> mineArray;
+
+		// Asteroides pequenos: perigos atravessaveis que ja nascem na partida
+		Sprite *asteroidSprite;
+		std::vector<Asteroid*> asteroidArray;
 
 		// Terra
 		Sprite *earthSprite;
@@ -165,7 +170,6 @@ class StateGame: public State
 		int invulnTime;     // ms de i-frames restantes
 		float gravX, gravY; // "corrente" gravitacional da Terra (px/ms)
 		int shakeTime;      // ms de tremor de tela restantes
-		float shipPrevX, shipPrevY; // posicao antes do update (quique em tiles)
 		bool paused;
 
 		// Variáveis de retorno
@@ -175,6 +179,7 @@ class StateGame: public State
 		void buildRandomMap();
 		void placeEarthAndUfo();
 		void spawnInitialPlanets();
+		void spawnInitialAsteroids();
 		void buildTurrets();
 		void updateTurrets(int dt);
 		bool lineIsClear(float x0, float y0, float x1, float y1);
@@ -184,7 +189,6 @@ class StateGame: public State
 		                  float speed, int damage, int spreadDeg);
 		void updateBullets(int dt);
 		bool bulletHit(const Bullet &bullet, GameObject *object);
-		void resolveShipTiles();
 		void addPlanet();
 		void spawnMineAt(int px, int py);
 		void detonateMine(std::vector<Mine*>::iterator vitima);

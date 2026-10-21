@@ -21,10 +21,11 @@ Você pilota a nave **Hyperion**, perdida no espaço e caçada por alienígenas.
   - **Fase 3** (menos de 1/3): ainda mais rápido, atira em **leque de 3** e invoca planetas extras.
 
   Destruí-lo **não encerra a partida**: após ~6,5 s uma **nova onda** chega mais forte (mais vida e +3% de velocidade por onda, com aviso na tela). Uma **seta vermelha** na borda indica a direção do UFO fora da tela. O UFO derrotado sempre larga **combustível + escudo** no ponto da morte — caçá-lo vira decisão de risco/recompensa. Encostar custa **30 de vida** (com i-frames de 0,8 s); o escudo bloqueia.
-- **Tiro:** `ESPAÇO` ou **Mouse 1** disparam na direção do bico da nave (cadência de ~4,5 tiros/s; uma linha curta no bico mostra a direção). Cada planeta vermelho cai com **2 tiros**; os tiros são **bloqueados pelos painéis sólidos** da estação — use-os como cobertura (o tiro que morre no painel deixa uma faísca).
-- **Mapa aleatório:** a cada partida o mapa é gerado com **18 a 22 tiles de lado** (máximo de 22×22 = 1650×1650 px, maior que a tela), em duas camadas com parallax. Os painéis da **camada da frente são sólidos**: a nave **quica** neles, os planetas ricocheteiam e os tiros (seus e inimigos) param ali. A câmera persegue a nave com **lookahead** (antecipa a direção do movimento) e nunca mostra fora do mundo.
-- **Início da partida:** a nave começa com **3 s de escudo** (anel visível) para ninguém morrer nos primeiros segundos, e o mapa já começa com **2 a 4 planetas** espalhados. A **Terra** e o **UFO** surgem em posições aleatórias, sempre longe da nave e um do outro.
+- **Tiro:** `ESPAÇO` ou **Mouse 1** disparam na direção do bico da nave (cadência de ~4,5 tiros/s; uma linha curta no bico mostra a direção). Cada planeta vermelho cai com **2 tiros**; os tiros são **bloqueados pelos painéis da estação** — use-os como cobertura (o tiro que morre no painel deixa uma faísca).
+- **Mapa aleatório:** a cada partida o mapa é gerado com **18 a 22 tiles de lado** (máximo de 22×22 = 1650×1650 px, maior que a tela), em duas camadas com parallax. Os painéis da **camada da frente não colidem com a nave** — ela os atravessa —, mas os planetas ricocheteiam neles e os tiros (seus e inimigos) param ali. A câmera persegue a nave com **lookahead** (antecipa a direção do movimento) e nunca mostra fora do mundo.
+- **Início da partida:** a nave começa com **3 s de escudo** (anel visível) para ninguém morrer nos primeiros segundos; o mapa já começa com **2 a 4 planetas** e **14 a 18 asteroides pequenos** espalhados. A **Terra** e o **UFO** surgem em posições aleatórias, sempre longe da nave e um do outro.
 - **Planetas:** os **vermelhos** (2 tiros, dano 5, 10 pts) surgem sozinhos em ritmo crescente (~4 s → ~1,3 s). Os **roxos** (novos: 4 tiros, deriva lenta, dano 8, 25 pts e **drop quase garantido**) aparecem em ~25% dos spawns. Colidir custa vida e destrói o planeta — e o abalroamento também pontua (metade do valor) e conta no combo. A lua orbita a Terra e custa **10**.
+- **Asteroides pequenos:** já nascem com a partida, derivam devagar e quicam nas bordas do mundo. Encostar causa **2 de dano** (bem menos que o planeta vermelho), mas eles são **atravessáveis**: não bloqueiam a nave, não somem e não param tiros.
 - **Torretas:** torres fixas ancoradas nos painéis do mapa (2 a 6, conforme a dificuldade). Giram na direção da nave e **só atiram com linha de visada livre** (painéis bloqueiam; tiro que morre no painel deixa uma faísca); caem com 2 tiros (30 pts, 40% de drop). Tiro inimigo (torres e UFO) causa 6/8/10 de dano no fácil/normal/difícil.
 - **Minas de proximidade:** a partir dos 45 s, 15% dos spawns viram minas (limite de 4 ativas). Derivam devagar e quicam como planetas, mas **armam espoleta de 600 ms** quando a nave chega a 110 px (com "!" de aviso) e **explodem em área** (raio 130, dano 12). Uma explosão **detona as vizinhas** a 140 px — limpe de longe: 1 tiro rende 15 pts.
 - **Pontuação e combo:** abates valem pontos (planeta 10/25, torreta 30, chefe 300×onda, abalroamento metade); abates emendados criam um **combo que multiplica em até ×3** (janela de 4 s no primeiro minuto e 3 s depois, exibido no HUD). Sobreviver rende +10 a cada 10 s; vencer soma +500.
@@ -337,6 +338,7 @@ GameObject (box AABB)
  │    ├── Earth        (objetivo da nave)
  │    ├── Moon         (orbita a Terra)
  │    └── PowerUp      (cristais de vida/escudo/turbo/combustível)
+ ├── Asteroid          (rocha pequena atravessável: dano leve e deriva própria)
  ├── FollowerObject    (UFO: chefe perseguidor autônomo, com fases e ondas)
  ├── Turret            (torretas fixas nos painéis, com linha de visada)
  └── AccObject         (nave Hyperion: aceleração, rotação, atrito, animação)
@@ -366,7 +368,7 @@ Padrões e técnicas aplicadas: **game loop com dt**, **singleton** (InputManage
 │   └── PlayStats.h          # recordes por dificuldade, contadores e conquistas (header-only)
 ├── lib/                     # SDL 1.2: headers (include/), libs de importação (lib/) e licenças (LICENSES/)
 ├── bin/                     # DLLs de runtime do Windows + binários compilados (game.exe/game, ignorados)
-├── img/                     # sprites (nave, planetas vermelho/roxo, UFO, torreta, power-ups), telas e Tileset.png
+├── img/                     # sprites (nave, planetas, asteroides, UFO, torreta, power-ups), telas e Tileset.png
 ├── map/tileMap.txt          # mapa de referência (o mapa da partida é gerado em código)
 ├── sfx/                     # músicas (ogg) e efeitos (boom/pickup/engine .wav)
 ├── ttf/                     # PirataOne e SpaceAge

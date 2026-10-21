@@ -11,6 +11,7 @@ mantendo exatamente os nomes, tamanhos e layouts esperados pelo codigo:
   img/ufo.png             32x32        (UFO do FollowerObject)
   img/PlanetaVermelho.png 44x44        (planetas vermelhos)
   img/PlanetaRoxo.png     52x52        (planeta roxo: 4 tiros, lento, valioso)
+  img/Asteroide.png       28x28        (asteroide pequeno: dano leve, atravessavel)
   img/Mina.png            48x48        (mina de proximidade: explode em area)
   img/Lua.png             16x16        (lua que orbita a Terra)
   img/PowerVida.png       24x24        (cristal: +20 de vida)
@@ -527,6 +528,43 @@ def draw_gem(name):
 
 # --------------------------------------------------------------------- torreta
 
+def draw_asteroid():
+    """Asteroide pequeno 28x28: rocha irregular com crateras e borda clara."""
+    w = 28
+    img = Image.new("RGBA", (w * SS, w * SS), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    rnd = random.Random(41)
+
+    def P(pts):
+        return [(x * SS, y * SS) for (x, y) in pts]
+
+    cx, cy = w / 2, w / 2
+    contorno = (38, 34, 36, 255)
+
+    # Silhueta irregular (sem simetria) para nao parecer um planeta.
+    pontos = []
+    lados = 9
+    for k in range(lados):
+        ang = math.pi * 2 * k / lados
+        raio = rnd.uniform(8.5, 12.0)
+        pontos.append((cx + math.cos(ang) * raio, cy + math.sin(ang) * raio))
+
+    d.polygon(P(pontos), fill=(118, 108, 102, 255), outline=contorno)
+
+    # Faceta iluminada e sombra interna, no estilo dos outros sprites.
+    d.polygon(P([(8, 8), (17, 6), (20, 12), (12, 15)]), fill=(158, 145, 134, 255))
+    d.polygon(P([(9, 19), (18, 20), (20, 23), (11, 24)]), fill=(78, 70, 68, 255))
+
+    # Crateras: aro escuro + fundo mais escuro + brilho na borda superior.
+    for (cx0, cy0, r) in [(11.0, 11.0, 2.6), (17.0, 16.5, 3.2), (10.0, 18.5, 1.8)]:
+        d.ellipse(P([(cx0 - r, cy0 - r), (cx0 + r, cy0 + r)]),
+                  fill=(72, 64, 64, 255), outline=(45, 40, 42, 255))
+        d.arc(P([(cx0 - r + 0.6, cy0 - r + 0.6), (cx0 + r - 0.6, cy0 + r - 0.6)]),
+              200, 340, fill=(190, 176, 164, 255), width=SS)
+
+    return img.resize((w, w), LANCZOS)
+
+
 def draw_mine():
     """Mina de proximidade 48x48: esfera escura com espinhos e nucleo vermelho."""
     w = 48
@@ -646,6 +684,8 @@ def main():
 
     purple = sphere(52, (150, 80, 215), (38, 16, 70), (230, 180, 255), seed=17, craters=5, glow=(190, 120, 255, ))
     purple.save(os.path.join(img_dir, "PlanetaRoxo.png"))
+
+    draw_asteroid().save(os.path.join(img_dir, "Asteroide.png"))
 
     draw_turret().save(os.path.join(img_dir, "Torreta.png"))
 

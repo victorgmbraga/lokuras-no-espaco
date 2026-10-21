@@ -99,7 +99,7 @@ void StateMenu::refreshTexts()
 	if(mode == MODE_PTS)
 		modeDescText->setText("Pontos: sem Terra; sobreviva 3:00 e some o maximo que der");
 	else
-		modeDescText->setText("Travessia: alcance a Terra desviando do UFO");
+		modeDescText->setText("Travessia: alcance a Terra desviando do UFO e dos asteroides");
 	modeDescText->setPos(SCREEN_W/2 - modeDescText->getWidth()/2, (SCREEN_H/4) * 3 - 138);
 
 	difficultyText->setText(std::string("Dificuldade: ") + GameSettings::difficultyName(diff) + "   (1 = facil, 2 = normal, 3 = dificil)");

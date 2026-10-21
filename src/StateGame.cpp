@@ -17,6 +17,9 @@
 // e multiplicado pelo ajuste da dificuldade (GameSettings::damageMult()).
 static const int UFO_COLLISION_DAMAGE = 30;
 static const int MOON_COLLISION_DAMAGE = 10;
+// Asteroide pequeno: bem menos que o planeta vermelho (5), e sem bloquear
+// o movimento da nave.
+static const int ASTEROID_COLLISION_DAMAGE = 2;
 static const float COMBO_WINDOW_MS = 3000.0f;
 
 // Utilitarios do gerador aleatorio do mapa/posicoes iniciais.
@@ -68,15 +71,14 @@ void StateGame::load(int stack)
 
 	// TileSet e mapa aleatorio. O tamanho maximo e TILEMAP_MAX_SIZE x
 	// TILEMAP_MAX_SIZE tiles; cada partida sorteia um mundo dentro do limite.
-	// Os tiles da camada 1 sao solidos (quique/los de visada).
+	// Os tiles da camada 1 continuam solidos para tiros e planetas, mas a
+	// nave atravessa os paineis (sem quique) para nao confundir o jogador.
 	tileSet = new TileSet(TILE_SIZE, TILE_SIZE, "img/Tileset.png");
 	buildRandomMap();
 
 	// Nave (criada antes da Terra e do UFO, que precisam da posicao dela)
 	shipAnimation = new Animation("img/NaveSheet.png", 200, 4);
 	ship = new AccObject(shipAnimation, 0, 0, 94, 100, 100);
-	shipPrevX = ship->x;
-	shipPrevY = ship->y;
 
 	// Terra (escala assada na surface: hitbox == imagem renderizada).
 	// No modo pontos nao ha Terra: sobreviver e a vitoria.
@@ -125,7 +127,9 @@ void StateGame::load(int stack)
 	redPlanetSprite = new Sprite("img/PlanetaVermelho.png");
 	purplePlanetSprite = new Sprite("img/PlanetaRoxo.png");
 	mineSprite = new Sprite("img/Mina.png");
+	asteroidSprite = new Sprite("img/Asteroide.png");
 	spawnInitialPlanets();
+	spawnInitialAsteroids();
 	redPlanetCooldown = (int)((2500 + (rand() % 1500)) * GameSettings::planetSpawnMult());
 
 	// Explosao (one-shot: toca uma vez e congela no ultimo quadro)
@@ -303,8 +307,9 @@ void StateGame::buildRandomMap()
 		++tentativas;
 	}
 
-	// Area de spawn da nave (canto 0,0): sempre livre, para a partida nao
-	// comeca com a nave presa dentro de um painel solido.
+	// Area de spawn da nave (canto 0,0): sempre livre, para a partida
+	// comecar num espaco aberto (a nave nao colide com os paineis, mas o
+	// canto tambem e a area inicial da camera).
 	for(int x = 0; x <= 1; ++x)
 		for(int y = 0; y <= 1; ++y)
 		{
@@ -609,6 +614,71 @@ void StateGame::spawnInitialPlanets()
 		                                    roxo ? 25 : 10, roxo ? 60 : 20,
 		                                    roxo ? 0.55f : 1.0f, tileMap,
 		                                    roxo ? 8 : 5));
+	}
+}
+
+// Asteroide pequeno: ja nasce espalhado pelo mundo, longe da nave, da Terra,
+// do UFO e dos outros asteroides. Nao usa colisao com tiles: e atravessavel.
+void StateGame::spawnInitialAsteroids()
+{
+	if(!asteroidSprite || !ship)
+		return;
+
+	float shipCX = ship->x + ship->w/2;
+	float shipCY = ship->y + ship->h/2;
+	float earthCX = earth ? earth->x + earth->w/2 : -1e9f;
+	float earthCY = earth ? earth->y + earth->h/2 : -1e9f;
+	float ufoCX = ufo ? ufo->x + ufo->w/2 : -1e9f;
+	float ufoCY = ufo ? ufo->y + ufo->h/2 : -1e9f;
+
+	int asteroidW = asteroidSprite->getRenderWidth();
+	int asteroidH = asteroidSprite->getRenderHeight();
+	int quantidade = 14 + rand() % 5;
+
+	for(int i = 0; i < quantidade; ++i)
+	{
+		float ax = 0.0f;
+		float ay = 0.0f;
+		bool valido = false;
+
+		for(int tentativa = 0; tentativa < 60 && !valido; ++tentativa)
+		{
+			ax = randomRange(0.0f, (float)(worldWidth - asteroidW));
+			ay = randomRange(0.0f, (float)(worldHeight - asteroidH));
+
+			float cx = ax + asteroidW / 2;
+			float cy = ay + asteroidH / 2;
+
+			if(distanceBetween(cx, cy, shipCX, shipCY) < 260.0f)
+				continue;
+			if(earth && distanceBetween(cx, cy, earthCX, earthCY) < 200.0f)
+				continue;
+			if(ufo && distanceBetween(cx, cy, ufoCX, ufoCY) < 160.0f)
+				continue;
+			if(tileMap && tileMap->solidAt(cx, cy))
+				continue;
+
+			bool pertoDemais = false;
+			for(std::vector<Asteroid*>::iterator it = asteroidArray.begin();
+			    it != asteroidArray.end(); ++it)
+			{
+				if(distanceBetween(cx, cy,
+				                   (*it)->x + (*it)->w/2,
+				                   (*it)->y + (*it)->h/2) < 70.0f)
+				{
+					pertoDemais = true;
+					break;
+				}
+			}
+			if(!pertoDemais)
+				valido = true;
+		}
+
+		if(!valido)
+			continue;
+
+		asteroidArray.push_back(new Asteroid(asteroidSprite, ax, ay,
+		                                     (float)worldWidth, (float)worldHeight));
 	}
 }
 
@@ -1147,6 +1217,7 @@ int StateGame::unload()
 	delete(redPlanetSprite);
 	delete(purplePlanetSprite);
 	delete(mineSprite);
+	delete(asteroidSprite);
 	delete(earth);
 	delete(earthSprite);
 	delete(moon);
@@ -1159,6 +1230,10 @@ int StateGame::unload()
 	for(std::vector<Mine*>::iterator it = mineArray.begin(); it != mineArray.end(); ++it)
 		delete(*it);
 	mineArray.clear();
+
+	for(std::vector<Asteroid*>::iterator it = asteroidArray.begin(); it != asteroidArray.end(); ++it)
+		delete(*it);
+	asteroidArray.clear();
 
 	for(std::vector<Turret*>::iterator it = turretArray.begin(); it != turretArray.end(); ++it)
 		delete(*it);
@@ -1243,6 +1318,31 @@ void StateGame::checkCollision(int dt)
 	float mult = GameSettings::damageMult();
 	float scx = ship->x + ship->w/2;
 	float scy = ship->y + ship->h/2;
+
+	// Asteroides pequenos: perigo atravessavel, dano bem menor que o do
+	// planeta vermelho. O asteroide nao bloqueia nem some: a nave passa por
+	// ele, leva o dano e ganha os i-frames normais.
+	for(std::vector<Asteroid*>::iterator it = asteroidArray.begin(); it != asteroidArray.end(); ++it)
+	{
+		if(!(*it)->collidesWith(ship))
+			continue;
+		if(invulnTime > 0 || ship->getShieldTime() > 0)
+			continue;
+
+		int dano = (int)(ASTEROID_COLLISION_DAMAGE * mult);
+		if(dano < 1)
+			dano = 1;
+
+		ship->hp -= dano;
+		hud->setLife(ship->hp);
+		invulnTime = 800;
+		shakeTime = 100;
+		tookDamage = true;
+
+		char buf[16];
+		snprintf(buf, sizeof(buf), "-%d", dano);
+		addFloater(buf, scx, scy, makeColor(255, 150, 120), false, 700);
+	}
 
 	// Tiros inimigos (chefe/torres): o escudo os absorve; os i-frames fazem
 	// atravessarem sem dano repetido.
@@ -1575,46 +1675,6 @@ void StateGame::updateBullets(int dt)
 		else
 			++it;
 	}
-}
-
-// Reversao do movimento da nave ao bater num painel solido: a posicao volta
-// para o frame anterior e a velocidade "quica" (meia forca, sentido oposto).
-void StateGame::resolveShipTiles()
-{
-	if(!ship || !tileMap)
-		return;
-
-	const float m = 10.0f; // margem interna dos cantos amostrados
-	float cx = ship->x + ship->w / 2;
-	float cy = ship->y + ship->h / 2;
-
-	bool bate = tileMap->solidAt(ship->x + m, ship->y + m) ||
-	            tileMap->solidAt(ship->x + ship->w - m, ship->y + m) ||
-	            tileMap->solidAt(ship->x + m, ship->y + ship->h - m) ||
-	            tileMap->solidAt(ship->x + ship->w - m, ship->y + ship->h - m) ||
-	            tileMap->solidAt(cx, ship->y + m) ||
-	            tileMap->solidAt(cx, ship->y + ship->h - m) ||
-	            tileMap->solidAt(ship->x + m, cy) ||
-	            tileMap->solidAt(ship->x + ship->w - m, cy);
-
-	if(!bate)
-		return;
-
-	float velAnterior = ship->getSpeed();
-	ship->x = shipPrevX;
-	ship->y = shipPrevY;
-
-	if(velAnterior > 0.03f || velAnterior < -0.03f)
-	{
-		ship->setSpeed(-velAnterior * 0.5f);
-		if(velAnterior > 0.12f || velAnterior < -0.12f)
-		{
-			if(shakeTime < 150)
-				shakeTime = 150;
-		}
-	}
-	else
-		ship->setSpeed(0.0f);
 }
 
 void StateGame::addPlanet()
@@ -1959,6 +2019,10 @@ int StateGame::update(int dt)
 	for(std::vector<Mine*>::iterator it = mineArray.begin(); it != mineArray.end(); ++it)
 		(*it)->update(dt);
 
+	// Asteroides pequenos: deriva propria, sem colisao com os tiles.
+	for(std::vector<Asteroid*>::iterator it = asteroidArray.begin(); it != asteroidArray.end(); ++it)
+		(*it)->update(dt);
+
 	// Terra, Lua (inexistentes no modo pontos)
 	if(earth)
 		earth->update(dt);
@@ -1971,13 +2035,9 @@ int StateGame::update(int dt)
 	// Torres de vigia.
 	updateTurrets(dt);
 
-	// Nave (guarda a posicao anterior para o quique nos tiles solidos).
+	// Nave: os paineis do mapa sao apenas visuais para ela; nao ha quique.
 	if(ship)
-	{
-		shipPrevX = ship->x;
-		shipPrevY = ship->y;
 		ship->update(dt);
-	}
 
 	// Gravidade da Terra: dentro do raio de influencia, a nave recebe uma
 	// "corrente" que a puxa para o nucleo, com damping independente
@@ -2013,9 +2073,6 @@ int StateGame::update(int dt)
 
 		ship->x += gravX * dt;
 		ship->y += gravY * dt;
-
-		// Colisao com os paineis solidos do mapa.
-		resolveShipTiles();
 	}
 
 	// Tiro: ESPACO ou botao 1 do mouse disparam continuamente (cadencia de
@@ -2286,6 +2343,10 @@ void StateGame::render()
 
 	// Planetas (vermelhos e roxos)
 	for(std::vector<Planet*>::iterator it = planetArray.begin(); it != planetArray.end(); ++it)
+		(*it)->render(cameraX, cameraY);
+
+	// Asteroides pequenos (visual proprio, sem colisao com os paineis)
+	for(std::vector<Asteroid*>::iterator it = asteroidArray.begin(); it != asteroidArray.end(); ++it)
 		(*it)->render(cameraX, cameraY);
 
 	// Minas (piscam quando armadas; fixas com flash reduzido)

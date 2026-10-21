@@ -174,11 +174,6 @@ bool AccObject::isAccelerating()
 	return !atrito;
 }
 
-float AccObject::getSpeed()
-{
-	return speed;
-}
-
 float AccObject::getVelX() const
 {
 	return speed * cos((rotation - 90) * PI / 180);
@@ -187,9 +182,4 @@ float AccObject::getVelX() const
 float AccObject::getVelY() const
 {
 	return speed * -sin((rotation - 90) * PI / 180);
-}
-
-void AccObject::setSpeed(float v)
-{
-	speed = v;
 }
